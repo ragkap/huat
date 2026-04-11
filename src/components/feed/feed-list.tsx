@@ -7,9 +7,10 @@ import type { Post, Profile } from "@/types/database";
 interface FeedListProps {
   tab: string;
   profile: Profile;
+  stockTicker?: string; // filter feed to posts tagged with this ticker
 }
 
-export function FeedList({ tab, profile }: FeedListProps) {
+export function FeedList({ tab, profile, stockTicker }: FeedListProps) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -19,7 +20,9 @@ export function FeedList({ tab, profile }: FeedListProps) {
   const fetchPosts = useCallback(async (p: number, reset = false) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/posts?tab=${tab}&page=${p}&limit=20`);
+      const params = new URLSearchParams({ tab, page: String(p), limit: "20" });
+      if (stockTicker) params.set("ticker", stockTicker);
+      const res = await fetch(`/api/posts?${params}`);
       const data = await res.json();
       const newPosts: Post[] = data.posts ?? [];
       if (reset) {
@@ -31,14 +34,14 @@ export function FeedList({ tab, profile }: FeedListProps) {
     } finally {
       setLoading(false);
     }
-  }, [tab]);
+  }, [tab, stockTicker]);
 
-  // Reset on tab change
+  // Reset on tab/ticker change
   useEffect(() => {
     setPage(0);
     setHasMore(true);
     fetchPosts(0, true);
-  }, [tab, fetchPosts]);
+  }, [tab, stockTicker, fetchPosts]);
 
   // Infinite scroll
   useEffect(() => {
@@ -81,20 +84,22 @@ export function FeedList({ tab, profile }: FeedListProps) {
     setPosts(prev => prev.filter(p => p.id !== postId));
   }
 
+  const showComposer = !stockTicker && (tab === "foryou" || tab === "followed");
+
   return (
     <div>
-      {/* Composer */}
-      {(tab === "foryou" || tab === "followed") && (
+      {showComposer && (
         <PostComposer profile={profile} onPost={() => fetchPosts(0, true)} />
       )}
 
-      {/* Posts */}
       {posts.length === 0 && !loading ? (
         <div className="flex flex-col items-center justify-center py-20 text-center px-8">
           <p className="text-4xl mb-4">发</p>
           <p className="text-[#F0F0F0] font-bold text-lg mb-2">Nothing here yet</p>
           <p className="text-[#9CA3AF] text-sm">
-            {tab === "followed"
+            {stockTicker
+              ? `No posts about $${stockTicker} yet. Be the first!`
+              : tab === "followed"
               ? "Follow some investors to see their posts here"
               : tab === "saved"
               ? "Save posts to read them later"
@@ -115,7 +120,6 @@ export function FeedList({ tab, profile }: FeedListProps) {
         ))
       )}
 
-      {/* Loader sentinel */}
       <div ref={loaderRef} className="h-10 flex items-center justify-center">
         {loading && (
           <div className="w-5 h-5 border-2 border-[#333333] border-t-[#E8311A] rounded-full animate-spin" />

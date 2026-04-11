@@ -29,6 +29,7 @@ export interface SGStock {
   slug: string | null;
   yahoo_ticker: string | null;
   market_status: string | null;
+  description: string | null;
 }
 
 const BASE_SELECT = `
@@ -41,7 +42,8 @@ const BASE_SELECT = `
     e.isin,
     e.slug,
     e.yahoo_ticker,
-    e.market_status
+    e.market_status,
+    e.description
   FROM entities e
   WHERE e.exchange_code = 'SP'
     AND e.market_status NOT IN ('private', 'delisted')

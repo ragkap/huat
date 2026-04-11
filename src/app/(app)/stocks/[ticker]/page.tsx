@@ -29,23 +29,34 @@ export default async function StockPage({ params }: StockPageProps) {
   try { stock = await getStockBySlugOrTicker(identifier); } catch { /* */ }
   if (!stock) notFound();
 
-  const [quote, smartScore, stats] = await Promise.all([
-    getQuote(stock.bloomberg_ticker ?? identifier).catch(() => null),
+  const ticker = stock.bloomberg_ticker ?? identifier;
+
+  const [quote, smartScore, stats, watchlistRes, followerRes, postCountRes] = await Promise.all([
+    getQuote(ticker).catch(() => null),
     stock.slug ? getSmartScore(stock.slug).catch(() => null) : null,
     stock.isin ? getCurrentStats(stock.isin).catch(() => null) : null,
+    user
+      ? supabase.from("stock_watchlist").select("ticker").eq("user_id", user.id).eq("ticker", ticker).maybeSingle()
+      : { data: null },
+    supabase.from("stock_watchlist").select("user_id", { count: "exact", head: true }).eq("ticker", ticker),
+    supabase.from("posts").select("id", { count: "exact", head: true }).contains("tagged_stocks", [ticker]),
   ]);
 
   const isPositive = (quote?.change ?? 0) >= 0;
+  const isFollowing = !!watchlistRes.data;
+  const followerCount = followerRes.count ?? 0;
+  const postCount = postCountRes.count ?? 0;
 
   return (
     <div>
-      {/* Header */}
+      {/* Sticky header */}
       <div className="sticky top-0 z-10 bg-[#0A0A0A]/90 backdrop-blur-md border-b border-[#282828] px-5 py-4">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl font-black text-[#F0F0F0]">{stock.name}</h1>
             <p className="text-xs text-[#71717A] font-mono mt-0.5">
-              {stock.bloomberg_ticker} · {stock.exchange_code ?? "SGX"}
+              {ticker} · {stock.exchange_code ?? "SGX"}
+              {stock.sector && ` · ${stock.sector}`}
             </p>
           </div>
           {smartScore?.score != null && (
@@ -69,6 +80,11 @@ export default async function StockPage({ params }: StockPageProps) {
             <span className={`text-sm font-bold ${isPositive ? "text-[#22C55E]" : "text-[#EF4444]"}`}>
               {isPositive ? "+" : ""}{quote.change?.toFixed(3)} ({isPositive ? "+" : ""}{quote.change_pct?.toFixed(2)}%)
             </span>
+            {quote.last_updated && (
+              <span className="text-xs text-[#71717A] ml-auto">
+                {new Date(quote.last_updated).toLocaleTimeString("en-SG", { hour: "2-digit", minute: "2-digit" })}
+              </span>
+            )}
           </div>
           {stats && (
             <div className="grid grid-cols-3 gap-x-4 gap-y-3 mt-4">
@@ -91,16 +107,21 @@ export default async function StockPage({ params }: StockPageProps) {
       ) : (
         <div className="px-5 py-4 border-b border-[#282828] bg-[#080808]">
           <p className="text-[#71717A] text-sm">Price data unavailable</p>
-          {stock.sector && <p className="text-xs text-[#71717A] mt-1">Sector: {stock.sector}</p>}
         </div>
       )}
 
-      {/* Community feed */}
-      <div className="border-b border-[#282828] px-5 py-3">
-        <p className="text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">Community</p>
-      </div>
-
-      {profile && <StockPageClient ticker={rawTicker} profile={profile as Profile} />}
+      {profile && (
+        <StockPageClient
+          ticker={rawTicker}
+          displayTicker={ticker}
+          profile={profile as Profile}
+          initialFollowing={isFollowing}
+          followerCount={followerCount}
+          postCount={postCount}
+          isPositive={isPositive}
+          description={stock.description ?? null}
+        />
+      )}
     </div>
   );
 }
