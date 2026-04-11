@@ -28,21 +28,23 @@ export interface SGStock {
   isin: string | null;
   slug: string | null;
   yahoo_ticker: string | null;
+  market_status: string | null;
 }
 
 const BASE_SELECT = `
   SELECT
     e.id,
-    e.short_name AS name,
+    e.pretty_name AS name,
     e.bloomberg_ticker,
     e.exchange_code,
     e.sector,
     e.isin,
     e.slug,
-    e.yahoo_ticker
+    e.yahoo_ticker,
+    e.market_status
   FROM entities e
-  WHERE e.country = 'Singapore'
-    AND e.public = true
+  WHERE e.exchange_code = 'SP'
+    AND e.market_status NOT IN ('private', 'delisted')
     AND e.bloomberg_ticker IS NOT NULL
     AND e.bloomberg_ticker != ''
 `;
@@ -52,7 +54,7 @@ export async function getSingaporeStocks(limit = 500): Promise<SGStock[]> {
   try {
     const result = await client.query<SGStock>(
       `${BASE_SELECT}
-       ORDER BY e.short_name ASC
+       ORDER BY e.market_cap DESC
        LIMIT $1`,
       [limit]
     );
@@ -68,13 +70,13 @@ export async function searchStocks(query: string, limit = 20): Promise<SGStock[]
     const result = await client.query<SGStock>(
       `${BASE_SELECT}
        AND (
-         e.short_name ILIKE $1
+         e.pretty_name ILIKE $1
          OR e.bloomberg_ticker ILIKE $1
          OR e.slug ILIKE $1
        )
        ORDER BY
          CASE WHEN e.bloomberg_ticker ILIKE $2 THEN 0 ELSE 1 END,
-         e.short_name ASC
+         e.market_cap DESC
        LIMIT $3`,
       [`%${query}%`, `${query}%`, limit]
     );
