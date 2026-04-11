@@ -13,37 +13,47 @@ function getPool(): Pool {
       ssl: { rejectUnauthorized: false },
       max: 5,
       idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 5000,
+      connectionTimeoutMillis: 8000,
     });
   }
   return pool;
 }
 
 export interface SGStock {
-  ticker: string;
+  id: number;
   name: string;
-  exchange: string;
+  bloomberg_ticker: string | null;
+  exchange_code: string | null;
   sector: string | null;
   isin: string | null;
   slug: string | null;
+  yahoo_ticker: string | null;
 }
+
+const BASE_SELECT = `
+  SELECT
+    e.id,
+    e.short_name AS name,
+    e.bloomberg_ticker,
+    e.exchange_code,
+    e.sector,
+    e.isin,
+    e.slug,
+    e.yahoo_ticker
+  FROM entities e
+  WHERE e.country = 'Singapore'
+    AND e.public = true
+    AND e.bloomberg_ticker IS NOT NULL
+    AND e.bloomberg_ticker != ''
+`;
 
 export async function getSingaporeStocks(limit = 500): Promise<SGStock[]> {
   const client = await getPool().connect();
   try {
     const result = await client.query<SGStock>(
-      `SELECT
-        e.ticker,
-        e.name,
-        e.exchange,
-        e.sector,
-        e.isin,
-        e.slug
-      FROM entities e
-      WHERE e.country = 'Singapore'
-        AND e.is_active = true
-      ORDER BY e.name ASC
-      LIMIT $1`,
+      `${BASE_SELECT}
+       ORDER BY e.short_name ASC
+       LIMIT $1`,
       [limit]
     );
     return result.rows;
@@ -56,24 +66,16 @@ export async function searchStocks(query: string, limit = 20): Promise<SGStock[]
   const client = await getPool().connect();
   try {
     const result = await client.query<SGStock>(
-      `SELECT
-        e.ticker,
-        e.name,
-        e.exchange,
-        e.sector,
-        e.isin,
-        e.slug
-      FROM entities e
-      WHERE e.country = 'Singapore'
-        AND e.is_active = true
-        AND (
-          e.name ILIKE $1
-          OR e.ticker ILIKE $1
-        )
-      ORDER BY
-        CASE WHEN e.ticker ILIKE $2 THEN 0 ELSE 1 END,
-        e.name ASC
-      LIMIT $3`,
+      `${BASE_SELECT}
+       AND (
+         e.short_name ILIKE $1
+         OR e.bloomberg_ticker ILIKE $1
+         OR e.slug ILIKE $1
+       )
+       ORDER BY
+         CASE WHEN e.bloomberg_ticker ILIKE $2 THEN 0 ELSE 1 END,
+         e.short_name ASC
+       LIMIT $3`,
       [`%${query}%`, `${query}%`, limit]
     );
     return result.rows;
@@ -82,22 +84,18 @@ export async function searchStocks(query: string, limit = 20): Promise<SGStock[]
   }
 }
 
-export async function getStockByTicker(ticker: string): Promise<SGStock | null> {
+export async function getStockBySlugOrTicker(identifier: string): Promise<SGStock | null> {
   const client = await getPool().connect();
   try {
     const result = await client.query<SGStock>(
-      `SELECT
-        e.ticker,
-        e.name,
-        e.exchange,
-        e.sector,
-        e.isin,
-        e.slug
-      FROM entities e
-      WHERE e.country = 'Singapore'
-        AND (e.ticker = $1 OR e.slug = $1)
-      LIMIT 1`,
-      [ticker]
+      `${BASE_SELECT}
+       AND (
+         e.slug = $1
+         OR LOWER(e.bloomberg_ticker) = LOWER($1)
+         OR e.bloomberg_ticker ILIKE $2
+       )
+       LIMIT 1`,
+      [identifier, `${identifier} %`]
     );
     return result.rows[0] ?? null;
   } finally {

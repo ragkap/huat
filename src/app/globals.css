@@ -5,13 +5,13 @@
   --bullish: #22C55E;
   --bearish: #EF4444;
   --surface: #0A0A0A;
-  --surface-2: #111111;
-  --surface-3: #1A1A1A;
+  --surface-2: #141414;
+  --surface-3: #282828;
   --border: #222222;
   --border-hover: #333333;
   --text: #F0F0F0;
-  --text-muted: #6B7280;
-  --text-dim: #374151;
+  --text-muted: #9CA3AF;
+  --text-dim: #71717A;
 }
 
 @theme inline {
