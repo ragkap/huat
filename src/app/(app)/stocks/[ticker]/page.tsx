@@ -3,6 +3,7 @@ import { getStockBySlugOrTicker } from "@/lib/stocks-db/client";
 import { getQuote, getSmartScore, getCurrentStats } from "@/lib/smartkarma/client";
 import { createClient } from "@/lib/supabase/server";
 import { StockPageClient } from "@/components/stock/stock-page-client";
+import { FollowButton } from "@/components/stock/follow-button";
 import { formatPrice, formatLargeNumber } from "@/lib/utils";
 import type { Profile } from "@/types/database";
 
@@ -51,16 +52,25 @@ export default async function StockPage({ params }: StockPageProps) {
     <div>
       {/* Sticky header */}
       <div className="sticky top-0 z-10 bg-[#0A0A0A]/90 backdrop-blur-md border-b border-[#282828] px-5 py-4">
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
             <h1 className="text-xl font-black text-[#F0F0F0]">{stock.name}</h1>
             <p className="text-xs text-[#71717A] font-mono mt-0.5">
               {ticker} · {stock.exchange_code ?? "SGX"}
               {stock.sector && ` · ${stock.sector}`}
             </p>
+            {profile && (
+              <FollowButton
+                ticker={rawTicker}
+                displayTicker={ticker}
+                initialFollowing={isFollowing}
+                initialFollowerCount={followerCount}
+                postCount={postCount}
+              />
+            )}
           </div>
           {smartScore?.score != null && (
-            <div className="text-right">
+            <div className="text-right flex-shrink-0">
               <p className="text-xs text-[#71717A] mb-0.5">SmartScore</p>
               <p className={`text-2xl font-black ${smartScore.score >= 7 ? "text-[#22C55E]" : smartScore.score >= 4 ? "text-[#F0F0F0]" : "text-[#EF4444]"}`}>
                 {smartScore.score.toFixed(1)}
@@ -115,9 +125,6 @@ export default async function StockPage({ params }: StockPageProps) {
           ticker={rawTicker}
           displayTicker={ticker}
           profile={profile as Profile}
-          initialFollowing={isFollowing}
-          followerCount={followerCount}
-          postCount={postCount}
           isPositive={isPositive}
           description={stock.description ?? null}
         />
