@@ -73,6 +73,14 @@ export function FeedList({ tab, profile }: FeedListProps) {
     setPosts(prev => prev.map(p => p.id === postId ? { ...p, is_saved: !p.is_saved } : p));
   }
 
+  function handleEdit(postId: string, newContent: string) {
+    setPosts(prev => prev.map(p => p.id === postId ? { ...p, content: newContent } : p));
+  }
+
+  function handleDelete(postId: string) {
+    setPosts(prev => prev.filter(p => p.id !== postId));
+  }
+
   return (
     <div>
       {/* Composer */}
@@ -98,8 +106,11 @@ export function FeedList({ tab, profile }: FeedListProps) {
           <PostCard
             key={post.id}
             post={post}
+            currentUserId={profile.id}
             onReact={handleReact}
             onSave={handleSave}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
           />
         ))
       )}
