@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation";
 import { getStockBySlugOrTicker } from "@/lib/stocks-db/client";
-import { getQuote, getSmartScore, getCurrentStats } from "@/lib/smartkarma/client";
+import { getQuote, getCurrentStats } from "@/lib/smartkarma/client";
 import { createClient } from "@/lib/supabase/server";
 import { StockPageClient } from "@/components/stock/stock-page-client";
 import { FollowButton } from "@/components/stock/follow-button";
-import { formatPrice, formatLargeNumber } from "@/lib/utils";
+import { formatPrice } from "@/lib/utils";
 import type { Profile } from "@/types/database";
 
 interface StockPageProps {
@@ -35,9 +35,8 @@ export default async function StockPage({ params }: StockPageProps) {
 
   const ticker = stock.bloomberg_ticker ?? identifier;
 
-  const [quote, smartScore, stats, watchlistRes, followerRes, postCountRes] = await Promise.all([
+  const [quote, stats, watchlistRes, followerRes, postCountRes] = await Promise.all([
     getQuote(ticker).catch(() => null),
-    stock.slug ? getSmartScore(stock.slug).catch(() => null) : null,
     stock.isin ? getCurrentStats(stock.isin).catch(() => null) : null,
     user
       ? supabase.from("stock_watchlist").select("ticker").eq("user_id", user.id).eq("ticker", ticker).maybeSingle()
@@ -53,8 +52,8 @@ export default async function StockPage({ params }: StockPageProps) {
 
   return (
     <div>
-      {/* Sticky header */}
-      <div className="sticky top-14 z-10 bg-[#0A0A0A]/90 backdrop-blur-md border-b border-[#282828] px-5 py-4">
+      {/* Stock header */}
+      <div className="border-b border-[#282828] px-5 py-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
             <h1 className="text-xl font-black text-[#F0F0F0]">{stock.name}</h1>
@@ -62,58 +61,33 @@ export default async function StockPage({ params }: StockPageProps) {
               {ticker} · {stock.exchange_code ?? "SGX"}
               {stock.sector && ` · ${stock.sector}`}
             </p>
-            {profile && (
-              <FollowButton
-                ticker={rawTicker}
-                displayTicker={ticker}
-                initialFollowing={isFollowing}
-                initialFollowerCount={followerCount}
-                postCount={postCount}
-              />
-            )}
           </div>
-          {smartScore?.score != null && (
-            <div className="text-right flex-shrink-0">
-              <p className="text-xs text-[#71717A] mb-0.5">SmartScore</p>
-              <p className={`text-2xl font-black ${smartScore.score >= 7 ? "text-[#22C55E]" : smartScore.score >= 4 ? "text-[#F0F0F0]" : "text-[#EF4444]"}`}>
-                {smartScore.score.toFixed(1)}
-              </p>
-            </div>
+          {profile && (
+            <FollowButton
+              ticker={rawTicker}
+              displayTicker={ticker}
+              initialFollowing={isFollowing}
+              initialFollowerCount={followerCount}
+            />
           )}
+        </div>
+        <div className="flex items-center gap-4 mt-3">
+          <span className="text-sm font-bold text-[#F0F0F0]">{followerCount.toLocaleString()} <span className="text-xs text-[#71717A] font-normal">followers</span></span>
+          <span className="text-sm font-bold text-[#F0F0F0]">{postCount.toLocaleString()} <span className="text-xs text-[#71717A] font-normal">posts</span></span>
         </div>
       </div>
 
       {/* Quote bar */}
       {quote?.price != null ? (
         <div className="px-5 py-5 border-b border-[#282828] bg-[#080808]">
-          <div className="flex items-baseline gap-3">
+          <div className="flex flex-wrap items-baseline gap-2 sm:gap-3">
             <span className="text-4xl font-black text-[#F0F0F0] font-mono">
               {formatPrice(quote.price, quote.currency ?? "SGD")}
             </span>
             <span className={`text-sm font-bold ${isPositive ? "text-[#22C55E]" : "text-[#EF4444]"}`}>
               {isPositive ? "+" : ""}{quote.change?.toFixed(3)} ({isPositive ? "+" : ""}{quote.change_pct?.toFixed(2)}%)
             </span>
-            {quote.last_updated && (
-              <span className="text-xs text-[#71717A] ml-auto">
-                {new Date(quote.last_updated).toLocaleTimeString("en-SG", { hour: "2-digit", minute: "2-digit" })}
-              </span>
-            )}
           </div>
-          {stats && (
-            <div className="grid grid-cols-4 gap-x-4 mt-4">
-              {[
-                { label: "Mkt Cap", value: formatLargeNumber(stats.market_cap) },
-                { label: "P/E", value: stats.pe_ratio?.toFixed(1) ?? "--" },
-                { label: "P/B", value: stats.pb_ratio?.toFixed(2) ?? "--" },
-                { label: "Div Yield", value: stats.dividend_yield ? `${stats.dividend_yield.toFixed(2)}%` : "--" },
-              ].map(item => (
-                <div key={item.label}>
-                  <p className="text-xs text-[#71717A] uppercase tracking-wider">{item.label}</p>
-                  <p className="text-sm font-bold text-[#F0F0F0] font-mono mt-0.5">{item.value}</p>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       ) : (
         <div className="px-5 py-4 border-b border-[#282828] bg-[#080808]">
@@ -128,6 +102,14 @@ export default async function StockPage({ params }: StockPageProps) {
           profile={profile as Profile}
           isPositive={isPositive}
           description={stock.description ?? null}
+          stats={stats ?? null}
+          quote={quote ? {
+            currency: quote.currency,
+            year_high: quote.year_high,
+            year_low: quote.year_low,
+            pct_change_1m: quote.pct_change_1m,
+            pct_change_ytd: quote.pct_change_ytd,
+          } : null}
         />
       )}
     </div>

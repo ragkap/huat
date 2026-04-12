@@ -14,7 +14,7 @@ interface SearchResult {
   secondary: string;
 }
 
-export function SearchBar() {
+export function SearchBar({ autoFocus }: { autoFocus?: boolean } = {}) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [open, setOpen] = useState(false);
@@ -23,6 +23,8 @@ export function SearchBar() {
   const containerRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const router = useRouter();
+
+  useEffect(() => { if (autoFocus) inputRef.current?.focus(); }, [autoFocus]);
 
   useEffect(() => {
     if (!query.trim()) { setResults([]); setOpen(false); return; }
@@ -195,23 +197,54 @@ function ProfileMenu({ profile }: { profile: Profile }) {
   );
 }
 
+function MobileSearchOverlay() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="sm:hidden relative w-10 h-10 flex items-center justify-center rounded-lg text-[#71717A] hover:text-[#F0F0F0] hover:bg-[#141414] transition-colors"
+      >
+        <Search style={{ width: 20, height: 20 }} />
+      </button>
+      {open && (
+        <div className="sm:hidden fixed inset-0 z-50 bg-[#0A0A0A]/95 backdrop-blur-md px-4 pt-4">
+          <div className="flex items-center gap-2">
+            <div className="flex-1 min-w-0">
+              <SearchBar autoFocus />
+            </div>
+            <button
+              onClick={() => setOpen(false)}
+              className="flex-shrink-0 w-10 h-10 flex items-center justify-center text-[#71717A] hover:text-[#F0F0F0]"
+            >
+              <X style={{ width: 20, height: 20 }} />
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 export function TopNav({ unreadNotifs = 0, unreadMessages = 0, profile }: { unreadNotifs?: number; unreadMessages?: number; profile?: Profile }) {
   return (
     <header className="fixed top-0 left-0 right-0 z-30 bg-[#0A0A0A]/95 backdrop-blur-md border-b border-[#282828] h-14">
       <div className="max-w-6xl mx-auto h-full px-4 flex items-center gap-4">
         {/* Logo — aligns with sidebar width */}
-        <Link href="/feed" className="flex items-baseline gap-2 flex-shrink-0 w-64">
+        <Link href="/feed" className="flex items-baseline gap-2 flex-shrink-0 lg:w-64">
           <span className="text-[#E8311A] font-black text-2xl tracking-tighter leading-none">huat</span>
           <span className="text-[#E8311A] font-black text-2xl">发</span>
         </Link>
 
-        {/* Search — spans middle pane, grows to fill */}
-        <div className="flex-1 min-w-0">
+        {/* Search — hidden on mobile (collapsed to icon), visible sm+ */}
+        <div className="hidden sm:flex flex-1 min-w-0">
           <SearchBar />
         </div>
 
-        {/* Right — notifications, messages, profile — mirrors aside width + its p-6 padding */}
-        <div className="flex items-center justify-end gap-3 flex-shrink-0 xl:w-80 xl:pr-6">
+        {/* Right icons */}
+        <div className="flex items-center justify-end gap-1 sm:gap-2 flex-shrink-0 xl:w-80 xl:pr-6 ml-auto sm:ml-0">
+          {/* Mobile search icon */}
+          <MobileSearchOverlay />
           <Link
             href="/notifications"
             title="Notifications"

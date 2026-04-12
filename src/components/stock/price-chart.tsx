@@ -152,7 +152,7 @@ function SVGChart({
 }
 
 export function PriceChart({ ticker, initialPositive }: { ticker: string; initialPositive: boolean }) {
-  const [interval, setInterval] = useState<string>("d1");
+  const [interval, setInterval] = useState<string>("y1");
   const [data, setData] = useState<ChartData | null>(null);
   const [loading, setLoading] = useState(true);
   const [prevData, setPrevData] = useState<ChartData | null>(null);
@@ -177,7 +177,7 @@ export function PriceChart({ ticker, initialPositive }: { ticker: string; initia
   return (
     <div className="px-5 pt-4 pb-3 border-b border-[#282828]">
       {/* Interval selector */}
-      <div className="flex items-center gap-1 mb-3">
+      <div className="flex items-center gap-1 mb-3 overflow-x-auto no-scrollbar">
         {INTERVALS.map(iv => (
           <button
             key={iv.value}

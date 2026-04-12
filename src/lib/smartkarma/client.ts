@@ -31,11 +31,20 @@ export interface StockQuote {
   volume: number | null;
   currency: string | null;
   last_updated: string | null;
+  year_high: number | null;
+  year_low: number | null;
+  pct_change_1m: number | null;
+  pct_change_ytd: number | null;
 }
 
 export interface SmartScore {
   score: number | null;
   trend: string | null;
+  value: number | null;
+  dividend: number | null;
+  growth: number | null;
+  resilience: number | null;
+  momentum: number | null;
 }
 
 export interface ChartData {
@@ -54,29 +63,41 @@ export async function getQuote(ticker: string): Promise<StockQuote> {
   try {
     const encodedTicker = encodeURIComponent(ticker);
     const data = (await skFetch(`${SK_API_BASE}/price-api/get-compact?ticker=${encodedTicker}`)) as Record<string, unknown>;
+    const parseNum = (v: unknown) => v != null && v !== "" ? Number(v) : null;
     return {
       ticker,
-      price: (data.price as number) ?? null,
-      change: (data.change as number) ?? null,
-      change_pct: (data.change_pct as number) ?? null,
-      volume: (data.volume as number) ?? null,
+      price: parseNum(data.price),
+      change: parseNum(data.netChange),
+      change_pct: parseNum(data.percentage),
+      volume: parseNum(data.volume),
       currency: (data.currency as string) ?? null,
-      last_updated: (data.last_updated as string) ?? null,
+      last_updated: data.lastPriceTime ? new Date((data.lastPriceTime as number) * 1000).toISOString() : null,
+      year_high: parseNum(data.yearHigh),
+      year_low: parseNum(data.yearLow),
+      pct_change_1m: parseNum(data.pctChange1M),
+      pct_change_ytd: parseNum(data.pctChangeYTD),
     };
   } catch {
-    return { ticker, price: null, change: null, change_pct: null, volume: null, currency: null, last_updated: null };
+    return { ticker, price: null, change: null, change_pct: null, volume: null, currency: null, last_updated: null, year_high: null, year_low: null, pct_change_1m: null, pct_change_ytd: null };
   }
 }
 
 export async function getSmartScore(slug: string): Promise<SmartScore> {
   try {
-    const data = (await skFetch(`${SK_API_BASE}/entities/${slug}/smart-score?`, 3600)) as Record<string, unknown>;
+    const res = (await skFetch(`${SK_API_BASE}/entities/${slug}/smart-score?`, 3600)) as
+      { data?: { attributes?: Record<string, unknown> } } & Record<string, unknown>;
+    const attrs: Record<string, unknown> = res.data?.attributes ?? res;
     return {
-      score: (data.smart_score as number) ?? null,
-      trend: (data.trend as string) ?? null,
+      score: (attrs["country-and-sector-score"] as number) ?? (attrs["country-score"] as number) ?? (attrs.smart_score as number) ?? null,
+      trend: (attrs.trend as string) ?? null,
+      value: (attrs["country-and-sector-value"] as number) ?? null,
+      dividend: (attrs["country-and-sector-dividend"] as number) ?? null,
+      growth: (attrs["country-and-sector-growth"] as number) ?? null,
+      resilience: (attrs["country-and-sector-resilience"] as number) ?? null,
+      momentum: (attrs["country-and-sector-momentum"] as number) ?? null,
     };
   } catch {
-    return { score: null, trend: null };
+    return { score: null, trend: null, value: null, dividend: null, growth: null, resilience: null, momentum: null };
   }
 }
 
@@ -93,6 +114,51 @@ export async function getChart(ticker: string, yahooTicker: string, interval = "
     };
   } catch {
     return { dates: [], prices: [] };
+  }
+}
+
+export interface NewsItem {
+  title: string;
+  link: string;
+  source: string;
+  pubDate: string;
+  description: string;
+}
+
+export async function getNews(keyword: string): Promise<NewsItem[]> {
+  try {
+    const encoded = encodeURIComponent(keyword);
+    const data = (await skFetch(
+      `${SK_DATA_BASE.replace("/v4", "/v3")}/news/search/${encoded}`,
+      300
+    )) as { news?: NewsItem[] };
+    return data.news ?? [];
+  } catch {
+    return [];
+  }
+}
+
+export interface AnnouncementItem {
+  title: string;
+  attachments: string[];
+  pubDate: string;
+}
+
+export async function getAnnouncements(slug: string): Promise<AnnouncementItem[]> {
+  try {
+    const data = (await skFetch(
+      `${SK_API_BASE}/entities/${encodeURIComponent(slug)}/exchange-announcements?include=entity&page%5Bsize%5D=20&page%5Bnumber%5D=1&sort=-release-time`,
+      300
+    )) as { data?: { attributes: { title: string; "release-time": string; attachment: string[] } }[] };
+    return (data.data ?? [])
+      .filter(item => item.attributes.attachment?.length > 0)
+      .map(item => ({
+        title: item.attributes.title,
+        attachments: item.attributes.attachment,
+        pubDate: item.attributes["release-time"],
+      }));
+  } catch {
+    return [];
   }
 }
 

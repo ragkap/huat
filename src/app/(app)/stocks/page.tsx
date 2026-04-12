@@ -15,7 +15,7 @@ export default async function StocksPage() {
   return (
     <div>
       {/* Header */}
-      <div className="sticky top-14 z-10 bg-[#0A0A0A]/90 backdrop-blur-md border-b border-[#282828] px-5 py-4">
+      <div className="sticky top-14 z-10 bg-[#0A0A0A]/90 backdrop-blur-md border-b border-[#282828] hidden sm:flex sm:items-center px-5 py-4">
         <h1 className="text-xl font-black text-[#F0F0F0]">Singapore Stocks</h1>
         <p className="text-[#9CA3AF] text-sm mt-0.5">
           {stocks.length > 0 ? `${stocks.length} SGX-listed companies` : "SGX-listed companies"}
@@ -41,13 +41,13 @@ export default async function StocksPage() {
                 href={`/stocks/${encodeURIComponent(stock.slug ?? stock.bloomberg_ticker ?? String(stock.id))}`}
                 className="flex items-center justify-between py-3 border-b border-[#141414] hover:bg-[#0D0D0D] -mx-5 px-5 transition-colors group"
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
                   <div className="w-10 h-10 rounded bg-[#282828] border border-[#333333] flex items-center justify-center text-xs font-bold text-[#9CA3AF] font-mono flex-shrink-0">
                     {(stock.bloomberg_ticker ?? "??").split(" ")[0].slice(0, 4)}
                   </div>
                   <div className="min-w-0">
                     <p className="font-bold text-sm text-[#F0F0F0] group-hover:text-white truncate">{stock.name}</p>
-                    <p className="text-xs text-[#71717A] font-mono">{stock.bloomberg_ticker}</p>
+                    <p className="text-xs text-[#71717A] font-mono truncate">{stock.bloomberg_ticker}</p>
                   </div>
                 </div>
                 {stock.sector && (

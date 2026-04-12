@@ -332,22 +332,37 @@ export function PostCard({ post, currentUserId, onReact, onSave, onRepost, onEdi
               <MoreMenu isOwn={isOwn} onEdit={() => setEditing(true)} onDelete={handleDelete} />
             </div>
 
-            {/* Sentiment + Type badges */}
-            {(post.sentiment || post.post_type !== "post") && (
+            {/* Type badge (poll/forecast only) */}
+            {post.post_type !== "post" && (
               <div className="flex items-center gap-1.5 mb-2">
-                {post.sentiment && (
-                  <Badge variant={sentimentVariant}>
-                    <SentimentIcon sentiment={post.sentiment} />
-                    <span className="ml-1 capitalize">{post.sentiment}</span>
-                  </Badge>
-                )}
                 {post.post_type === "poll" && <Badge variant="brand">Poll</Badge>}
                 {post.post_type === "forecast" && <Badge variant="brand">Forecast</Badge>}
               </div>
             )}
 
-            {/* Post text */}
-            <p className="text-sm text-[#F0F0F0] leading-relaxed whitespace-pre-wrap">{localContent}</p>
+            {/* Post text — parse news embeds and render as link card */}
+            {(() => {
+              // News posts have format: "{user text}\n\n📰 {title} — {source}\n{url}"
+              const newsMatch = localContent.match(/^([\s\S]*?)\n\n📰 ([\s\S]+?) — (.+?)\n(https?:\/\/\S+)\s*$/);
+              if (newsMatch) {
+                const [, userText, title, source, url] = newsMatch;
+                return (
+                  <>
+                    {userText.trim() && <p className="text-sm text-[#F0F0F0] leading-relaxed whitespace-pre-wrap mb-2">{userText.trim()}</p>}
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block border border-[#282828] rounded p-3 bg-[#141414] hover:border-[#444444] transition-colors"
+                    >
+                      <p className="text-xs text-[#71717A] mb-1">{source}</p>
+                      <p className="text-sm font-semibold text-[#F0F0F0] leading-snug line-clamp-2">{title}</p>
+                    </a>
+                  </>
+                );
+              }
+              return <p className="text-sm text-[#F0F0F0] leading-relaxed whitespace-pre-wrap">{localContent}</p>;
+            })()}
 
             {/* Attachments */}
             {post.post_type === "post" && <AttachmentGrid attachments={post.attachments} />}
@@ -358,10 +373,16 @@ export function PostCard({ post, currentUserId, onReact, onSave, onRepost, onEdi
             {/* Forecast */}
             {post.post_type === "forecast" && post.forecast && <ForecastDisplay forecast={post.forecast} />}
 
-            {/* Stock tags */}
-            {post.tagged_stocks?.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-3">
-                {post.tagged_stocks.map(ticker => (
+            {/* Sentiment + Stock tags */}
+            {(post.sentiment || post.tagged_stocks?.length > 0) && (
+              <div className="flex flex-wrap items-center gap-1.5 mt-3">
+                {post.sentiment && (
+                  <Badge variant={sentimentVariant}>
+                    <SentimentIcon sentiment={post.sentiment} />
+                    <span className="ml-1 capitalize">{post.sentiment}</span>
+                  </Badge>
+                )}
+                {post.tagged_stocks?.map(ticker => (
                   <Link
                     key={ticker}
                     href={`/stocks/${ticker}`}

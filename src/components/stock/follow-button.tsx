@@ -7,7 +7,6 @@ interface FollowButtonProps {
   displayTicker: string;
   initialFollowing: boolean;
   initialFollowerCount: number;
-  postCount: number;
 }
 
 export function FollowButton({
@@ -15,7 +14,6 @@ export function FollowButton({
   displayTicker,
   initialFollowing,
   initialFollowerCount,
-  postCount,
 }: FollowButtonProps) {
   const [following, setFollowing] = useState(initialFollowing);
   const [followerCount, setFollowerCount] = useState(initialFollowerCount);
@@ -37,20 +35,7 @@ export function FollowButton({
   }
 
   return (
-    <div className="flex items-center justify-between gap-4 mt-3">
-      {/* Stats */}
-      <div className="flex items-center gap-4">
-        <div>
-          <span className="text-[#F0F0F0] font-bold text-sm">{followerCount.toLocaleString()}</span>
-          <span className="text-[#71717A] text-xs ml-1">followers</span>
-        </div>
-        <div>
-          <span className="text-[#F0F0F0] font-bold text-sm">{postCount.toLocaleString()}</span>
-          <span className="text-[#71717A] text-xs ml-1">posts</span>
-        </div>
-      </div>
-
-      {/* Follow button */}
+    <div className="flex flex-col items-center gap-1">
       {following ? (
         <button
           onClick={toggle}
@@ -61,24 +46,22 @@ export function FollowButton({
           Following
         </button>
       ) : (
-        <div className="relative">
-          {/* Pulsating eyebrow */}
-          <span className="absolute -top-5 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] font-bold text-[#E8311A] uppercase tracking-widest animate-pulse pointer-events-none">
+        <>
+          <div className="relative">
+            <span className="absolute inset-0 rounded animate-ping bg-[#E8311A] opacity-20 pointer-events-none" />
+            <button
+              onClick={toggle}
+              disabled={toggling}
+              className="relative flex items-center gap-2 px-4 py-1.5 rounded bg-[#E8311A] text-white text-sm font-bold hover:bg-[#c9280f] transition-colors disabled:opacity-50"
+            >
+              <Bell className="w-3.5 h-3.5" />
+              Follow
+            </button>
+          </div>
+          <span className="text-[10px] font-bold text-[#E8311A] uppercase tracking-widest animate-pulse">
             Stay updated
           </span>
-
-          {/* Glow ring */}
-          <span className="absolute inset-0 rounded animate-ping bg-[#E8311A] opacity-20 pointer-events-none" />
-
-          <button
-            onClick={toggle}
-            disabled={toggling}
-            className="relative flex items-center gap-2 px-5 py-2 rounded bg-[#E8311A] text-white text-sm font-black hover:bg-[#c9280f] transition-colors disabled:opacity-50 shadow-[0_0_16px_rgba(232,49,26,0.4)]"
-          >
-            <Bell className="w-4 h-4" />
-            Follow {displayTicker}
-          </button>
-        </div>
+        </>
       )}
     </div>
   );
