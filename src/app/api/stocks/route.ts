@@ -6,7 +6,7 @@ export async function GET(request: Request) {
   const q = searchParams.get("q");
 
   try {
-    const stocks = q ? await searchStocks(q) : await getSingaporeStocks(100);
+    const stocks = q ? await searchStocks(q) : await getSingaporeStocks();
     return NextResponse.json({ stocks }, {
       headers: { "Cache-Control": q ? "public, s-maxage=60, stale-while-revalidate=300" : "public, s-maxage=300, stale-while-revalidate=600" },
     });

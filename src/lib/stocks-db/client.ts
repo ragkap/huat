@@ -31,6 +31,7 @@ export interface SGStock {
   yahoo_ticker: string | null;
   market_status: string | null;
   description: string | null;
+  market_cap: number | null;
 }
 
 const BASE_SELECT = `
@@ -44,22 +45,22 @@ const BASE_SELECT = `
     e.slug,
     e.yahoo_ticker,
     e.market_status,
-    e.description
+    e.description,
+    e.market_cap
   FROM entities e
   WHERE e.exchange_code = 'SP'
-    AND e.market_status NOT IN ('private', 'delisted')
-    AND e.bloomberg_ticker IS NOT NULL
-    AND e.bloomberg_ticker != ''
+    AND (e.market_status IN ('listed', 'pending-listing') OR e.market_status IS NULL)
+    AND e.bloomberg_ticker NOT LIKE 'SK %'
+    AND e.sector IS NOT NULL
+    AND e.sector != ''
 `;
 
-async function _getSingaporeStocks(limit: number): Promise<SGStock[]> {
+async function _getSingaporeStocks(): Promise<SGStock[]> {
   const client = await getPool().connect();
   try {
     const result = await client.query<SGStock>(
       `${BASE_SELECT}
-       ORDER BY e.market_cap DESC
-       LIMIT $1`,
-      [limit]
+       ORDER BY e.market_cap DESC NULLS LAST`
     );
     return result.rows;
   } finally {
@@ -69,8 +70,8 @@ async function _getSingaporeStocks(limit: number): Promise<SGStock[]> {
 
 export const getSingaporeStocks = unstable_cache(
   _getSingaporeStocks,
-  ["sg-stocks"],
-  { revalidate: 300 } // 5 min — stock list doesn't change often
+  ["sg-stocks-v3"],
+  { revalidate: 300 }
 );
 
 export async function searchStocks(query: string, limit = 20): Promise<SGStock[]> {
@@ -85,7 +86,7 @@ export async function searchStocks(query: string, limit = 20): Promise<SGStock[]
        )
        ORDER BY
          CASE WHEN e.bloomberg_ticker ILIKE $2 THEN 0 ELSE 1 END,
-         e.market_cap DESC
+         e.market_cap DESC NULLS LAST
        LIMIT $3`,
       [`%${query}%`, `${query}%`, limit]
     );

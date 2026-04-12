@@ -4,7 +4,8 @@ import { usePathname } from "next/navigation";
 export function RightAside({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   // Stock ticker pages have their own RHS column via nested layout
-  const isStockPage = /^\/stocks\/[^/]+/.test(pathname);
+  // /stocks list page doesn't need the sidebar either
+  const isStockPage = /^\/stocks(\/|$)/.test(pathname);
 
   if (isStockPage) return null;
 

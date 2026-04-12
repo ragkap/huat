@@ -2,7 +2,7 @@ export async function TrendingStocks() {
   let stocks: { name: string; bloomberg_ticker: string | null; sector: string | null; slug: string | null }[] = [];
   try {
     const { getSingaporeStocks } = await import("@/lib/stocks-db/client");
-    const all = await getSingaporeStocks(200);
+    const all = await getSingaporeStocks();
     stocks = all.sort(() => Math.random() - 0.5).slice(0, 10);
   } catch {
     stocks = [];
