@@ -7,24 +7,27 @@ interface ChartData {
 }
 
 const INTERVALS = [
-  { label: "1W", value: "w1" },
-  { label: "1M", value: "m1" },
+  { label: "1D", value: "d1" },
   { label: "3M", value: "m3" },
-  { label: "6M", value: "m6" },
   { label: "1Y", value: "y1" },
-  { label: "All", value: "max" },
+  { label: "5Y", value: "y5" },
 ] as const;
 
 function formatDateLabel(dateStr: string, interval: string): string {
   const d = new Date(dateStr);
-  if (interval === "w1") {
-    return d.toLocaleDateString("en-SG", { weekday: "short", day: "numeric" });
+  if (interval === "d1") {
+    return d.toLocaleTimeString("en-SG", { hour: "2-digit", minute: "2-digit" });
   }
-  if (interval === "m1" || interval === "m3") {
+  if (interval === "m3") {
     return d.toLocaleDateString("en-SG", { day: "numeric", month: "short" });
   }
   return d.toLocaleDateString("en-SG", { month: "short", year: "2-digit" });
 }
+
+const LABEL_COUNT = 5;
+const CHART_H = 300;
+const PAD = { top: 8, right: 8, bottom: 8, left: 8 };
+const W = 800;
 
 function SVGChart({
   data,
@@ -36,100 +39,111 @@ function SVGChart({
   interval: string;
 }) {
   const svgRef = useRef<SVGSVGElement>(null);
-  const [hovered, setHovered] = useState<{ x: number; y: number; price: number; date: string } | null>(null);
-
-  const W = 800;
-  const H = 200;
-  const PAD = { top: 16, right: 16, bottom: 32, left: 8 };
+  const [hovered, setHovered] = useState<{ x: number; y: number; idx: number } | null>(null);
 
   const prices = data.prices;
   if (!prices.length) return null;
 
-  const minP = Math.min(...prices);
-  const maxP = Math.max(...prices);
-  const range = maxP - minP || 1;
+  const rawMin = Math.min(...prices);
+  const rawMax = Math.max(...prices);
+  const yPad = (rawMax - rawMin) * 0.05 || 1;
+  const minP = rawMin - yPad;
+  const maxP = rawMax + yPad;
+  const range = maxP - minP;
 
-  const px = (i: number) => PAD.left + (i / (prices.length - 1)) * (W - PAD.left - PAD.right);
-  const py = (p: number) => PAD.top + (1 - (p - minP) / range) * (H - PAD.top - PAD.bottom);
+  const H = CHART_H;
+  const px = (i: number) =>
+    PAD.left + (i / (prices.length - 1)) * (W - PAD.left - PAD.right);
+  const py = (p: number) =>
+    PAD.top + (1 - (p - minP) / range) * (H - PAD.top - PAD.bottom);
 
-  const pathD = prices.map((p, i) => `${i === 0 ? "M" : "L"} ${px(i).toFixed(1)} ${py(p).toFixed(1)}`).join(" ");
-  const areaD = `${pathD} L ${px(prices.length - 1).toFixed(1)} ${(H - PAD.bottom).toFixed(1)} L ${px(0).toFixed(1)} ${(H - PAD.bottom).toFixed(1)} Z`;
+  const pathD = prices
+    .map((p, i) => `${i === 0 ? "M" : "L"} ${px(i).toFixed(1)} ${py(p).toFixed(1)}`)
+    .join(" ");
+  const areaD = `${pathD} L ${px(prices.length - 1).toFixed(1)} ${H} L ${px(0).toFixed(1)} ${H} Z`;
 
   const color = isPositive ? "#22C55E" : "#EF4444";
   const gradId = `grad-${isPositive ? "pos" : "neg"}`;
 
-  // x-axis labels: pick ~5 evenly spaced
-  const labelCount = 5;
-  const labelIndices = Array.from({ length: labelCount }, (_, i) =>
-    Math.round((i / (labelCount - 1)) * (prices.length - 1))
+  // Label positions as percentages of width for HTML overlay
+  const labelIndices = Array.from({ length: LABEL_COUNT }, (_, i) =>
+    Math.round((i / (LABEL_COUNT - 1)) * (prices.length - 1))
   );
 
   function handleMouseMove(e: React.MouseEvent<SVGSVGElement>) {
     const svg = svgRef.current;
     if (!svg) return;
     const rect = svg.getBoundingClientRect();
-    const scaleX = W / rect.width;
-    const mx = (e.clientX - rect.left) * scaleX;
-    const idx = Math.max(0, Math.min(prices.length - 1, Math.round(((mx - PAD.left) / (W - PAD.left - PAD.right)) * (prices.length - 1))));
-    setHovered({ x: px(idx), y: py(prices[idx]), price: prices[idx], date: data.dates[idx] ?? "" });
+    const mx = ((e.clientX - rect.left) / rect.width) * W;
+    const idx = Math.max(
+      0,
+      Math.min(
+        prices.length - 1,
+        Math.round(((mx - PAD.left) / (W - PAD.left - PAD.right)) * (prices.length - 1))
+      )
+    );
+    setHovered({ x: px(idx), y: py(prices[idx]), idx });
   }
 
   return (
     <div className="relative w-full">
+      {/* SVG chart */}
       <svg
         ref={svgRef}
         viewBox={`0 0 ${W} ${H}`}
-        className="w-full"
-        style={{ height: 200 }}
+        className="w-full block"
+        preserveAspectRatio="none"
+        style={{ height: CHART_H }}
         onMouseMove={handleMouseMove}
         onMouseLeave={() => setHovered(null)}
       >
         <defs>
           <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity="0.2" />
+            <stop offset="0%" stopColor={color} stopOpacity="0.25" />
             <stop offset="100%" stopColor={color} stopOpacity="0" />
           </linearGradient>
         </defs>
 
-        {/* Area fill */}
         <path d={areaD} fill={`url(#${gradId})`} />
-
-        {/* Line */}
         <path d={pathD} fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round" />
 
-        {/* X-axis labels */}
-        {labelIndices.map(i => (
-          <text
-            key={i}
-            x={px(i)}
-            y={H - 4}
-            textAnchor="middle"
-            fontSize="9"
-            fill="#71717A"
-            fontFamily="ui-monospace,monospace"
-          >
-            {data.dates[i] ? formatDateLabel(data.dates[i], interval) : ""}
-          </text>
-        ))}
-
-        {/* Hover crosshair */}
         {hovered && (
           <>
-            <line x1={hovered.x} y1={PAD.top} x2={hovered.x} y2={H - PAD.bottom} stroke="#444444" strokeWidth="1" strokeDasharray="3 3" />
-            <circle cx={hovered.x} cy={hovered.y} r="4" fill={color} stroke="#0A0A0A" strokeWidth="2" />
+            <line
+              x1={hovered.x} y1={PAD.top}
+              x2={hovered.x} y2={H}
+              stroke="#3A3A3A" strokeWidth="1" strokeDasharray="4 3"
+            />
+            <circle cx={hovered.x} cy={hovered.y} r="5" fill={color} stroke="#0A0A0A" strokeWidth="2" />
           </>
         )}
       </svg>
 
-      {/* Tooltip */}
+      {/* HTML date labels — immune to preserveAspectRatio distortion */}
+      <div className="relative flex justify-between mt-1 px-0">
+        {labelIndices.map(i => (
+          <span key={i} className="text-xs text-[#9CA3AF] font-mono leading-none" style={{ minWidth: 0 }}>
+            {data.dates[i] ? formatDateLabel(data.dates[i], interval) : ""}
+          </span>
+        ))}
+      </div>
+
+      {/* Hover tooltip */}
       {hovered && (
         <div
           className="absolute top-2 pointer-events-none bg-[#141414] border border-[#333333] rounded px-2.5 py-1.5 text-xs shadow-lg"
-          style={{ left: hovered.x / 8 < 50 ? "8px" : "auto", right: hovered.x / 8 >= 50 ? "8px" : "auto" }}
+          style={{
+            left: hovered.x / W < 0.6 ? "8px" : "auto",
+            right: hovered.x / W >= 0.6 ? "8px" : "auto",
+          }}
         >
-          <p className="text-[#F0F0F0] font-bold font-mono">{hovered.price.toFixed(3)}</p>
+          <p className="text-[#F0F0F0] font-bold font-mono">{prices[hovered.idx].toFixed(3)}</p>
           <p className="text-[#71717A] mt-0.5">
-            {hovered.date ? new Date(hovered.date).toLocaleDateString("en-SG", { day: "numeric", month: "short", year: "numeric" }) : ""}
+            {data.dates[hovered.idx]
+              ? interval === "d1"
+                ? new Date(data.dates[hovered.idx]).toLocaleTimeString("en-SG", { hour: "2-digit", minute: "2-digit" })
+                : new Date(data.dates[hovered.idx]).toLocaleDateString("en-SG", { day: "numeric", month: "short", year: "numeric" })
+              : ""}
           </p>
         </div>
       )}
@@ -138,7 +152,7 @@ function SVGChart({
 }
 
 export function PriceChart({ ticker, initialPositive }: { ticker: string; initialPositive: boolean }) {
-  const [interval, setInterval] = useState<string>("y1");
+  const [interval, setInterval] = useState<string>("d1");
   const [data, setData] = useState<ChartData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -156,7 +170,7 @@ export function PriceChart({ ticker, initialPositive }: { ticker: string; initia
     : initialPositive;
 
   return (
-    <div className="px-5 py-4 border-b border-[#282828]">
+    <div className="px-5 pt-4 pb-3 border-b border-[#282828]">
       {/* Interval selector */}
       <div className="flex items-center gap-1 mb-3">
         {INTERVALS.map(iv => (
@@ -174,8 +188,8 @@ export function PriceChart({ ticker, initialPositive }: { ticker: string; initia
         ))}
       </div>
 
-      {/* Chart area */}
-      <div className="relative min-h-[200px] flex items-center justify-center">
+      {/* Chart */}
+      <div className="relative" style={{ minHeight: CHART_H }}>
         {loading ? (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="w-5 h-5 border-2 border-[#333333] border-t-[#E8311A] rounded-full animate-spin" />
@@ -183,7 +197,9 @@ export function PriceChart({ ticker, initialPositive }: { ticker: string; initia
         ) : data ? (
           <SVGChart data={data} isPositive={isPositive} interval={interval} />
         ) : (
-          <p className="text-xs text-[#71717A]">Chart data unavailable</p>
+          <div className="flex items-center justify-center" style={{ height: CHART_H }}>
+            <p className="text-xs text-[#71717A]">Chart data unavailable</p>
+          </div>
         )}
       </div>
     </div>
