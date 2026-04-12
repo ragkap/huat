@@ -7,7 +7,9 @@ export async function GET(request: Request) {
 
   try {
     const stocks = q ? await searchStocks(q) : await getSingaporeStocks(100);
-    return NextResponse.json({ stocks });
+    return NextResponse.json({ stocks }, {
+      headers: { "Cache-Control": q ? "public, s-maxage=60, stale-while-revalidate=300" : "public, s-maxage=300, stale-while-revalidate=600" },
+    });
   } catch (error) {
     console.error("Stocks DB error:", error);
     return NextResponse.json({ stocks: [], error: "Could not fetch stocks" }, { status: 200 });

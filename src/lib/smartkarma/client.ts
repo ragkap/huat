@@ -5,7 +5,7 @@ const SK_DATA_BASE = process.env.SMARTKARMA_DATA_BASE ?? "https://datacloud1.sma
 
 const AUTH_HEADER = `Token token="${SK_TOKEN}", email="${SK_EMAIL}"`;
 
-async function skFetch(url: string): Promise<unknown> {
+async function skFetch(url: string, revalidate = 60): Promise<unknown> {
   const res = await fetch(url, {
     headers: {
       accept: "*/*",
@@ -13,7 +13,7 @@ async function skFetch(url: string): Promise<unknown> {
       authorization: AUTH_HEADER,
       "x-sk-authorization": AUTH_HEADER,
     },
-    next: { revalidate: 60 },
+    next: { revalidate },
   });
 
   if (!res.ok) {
@@ -70,7 +70,7 @@ export async function getQuote(ticker: string): Promise<StockQuote> {
 
 export async function getSmartScore(slug: string): Promise<SmartScore> {
   try {
-    const data = (await skFetch(`${SK_API_BASE}/entities/${slug}/smart-score?`)) as Record<string, unknown>;
+    const data = (await skFetch(`${SK_API_BASE}/entities/${slug}/smart-score?`, 3600)) as Record<string, unknown>;
     return {
       score: (data.smart_score as number) ?? null,
       trend: (data.trend as string) ?? null,
@@ -98,7 +98,7 @@ export async function getChart(ticker: string, yahooTicker: string, interval = "
 
 export async function getCurrentStats(isin: string): Promise<CurrentStats> {
   try {
-    const data = (await skFetch(`${SK_DATA_BASE}/financials/entities/${isin}/current-stats`)) as Record<string, unknown>;
+    const data = (await skFetch(`${SK_DATA_BASE}/financials/entities/${isin}/current-stats`, 3600)) as Record<string, unknown>;
     return {
       pe_ratio: (data.pe as number) ?? null,
       pb_ratio: (data.pb as number) ?? null,

@@ -21,14 +21,17 @@ export default async function StockPage({ params }: StockPageProps) {
   const identifier = decodeURIComponent(rawTicker);
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  const { data: profile } = user
-    ? await supabase.from("profiles").select("*").eq("id", user.id).single()
-    : { data: null };
+  const [{ data: { user } }, stockResult] = await Promise.all([
+    supabase.auth.getUser(),
+    getStockBySlugOrTicker(identifier).catch(() => null),
+  ]);
 
-  let stock = null;
-  try { stock = await getStockBySlugOrTicker(identifier); } catch { /* */ }
+  const stock = stockResult;
   if (!stock) notFound();
+
+  const { data: profile } = user
+    ? await supabase.from("profiles").select("id, username, display_name, avatar_url, bio, country, is_verified, created_at").eq("id", user.id).single()
+    : { data: null };
 
   const ticker = stock.bloomberg_ticker ?? identifier;
 

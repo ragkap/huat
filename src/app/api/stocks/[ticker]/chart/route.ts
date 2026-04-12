@@ -16,7 +16,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ tick
       stock.yahoo_ticker ?? "",
       interval
     );
-    return NextResponse.json(chart);
+    return NextResponse.json(chart, {
+      headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" },
+    });
   } catch (error) {
     console.error("Chart fetch error:", error);
     return NextResponse.json({ dates: [], prices: [] });

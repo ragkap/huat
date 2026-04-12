@@ -1,4 +1,5 @@
 import { Pool } from "pg";
+import { unstable_cache } from "next/cache";
 
 let pool: Pool | null = null;
 
@@ -51,7 +52,7 @@ const BASE_SELECT = `
     AND e.bloomberg_ticker != ''
 `;
 
-export async function getSingaporeStocks(limit = 500): Promise<SGStock[]> {
+async function _getSingaporeStocks(limit: number): Promise<SGStock[]> {
   const client = await getPool().connect();
   try {
     const result = await client.query<SGStock>(
@@ -65,6 +66,12 @@ export async function getSingaporeStocks(limit = 500): Promise<SGStock[]> {
     client.release();
   }
 }
+
+export const getSingaporeStocks = unstable_cache(
+  _getSingaporeStocks,
+  ["sg-stocks"],
+  { revalidate: 300 } // 5 min — stock list doesn't change often
+);
 
 export async function searchStocks(query: string, limit = 20): Promise<SGStock[]> {
   const client = await getPool().connect();
