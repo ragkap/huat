@@ -106,7 +106,7 @@ export function MessageThread({ threadId, initialMessages, currentUserId, otherU
           onChange={e => setContent(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
           placeholder="Type a message..."
-          className="flex-1 bg-[#141414] border border-[#333333] rounded px-3 py-2 text-sm text-[#F0F0F0] placeholder:text-[#71717A] focus:outline-none focus:border-[#E8311A] transition-colors"
+          className="flex-1 bg-[#141414] border border-[#333333] rounded px-3 py-2 text-sm text-[#F0F0F0] placeholder:text-[#71717A] focus:outline-none focus:border-[#444444] transition-colors"
         />
         <Button
           size="sm"

@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/layout/sidebar";
+import { TopNav } from "@/components/layout/top-nav";
 import type { Profile } from "@/types/database";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -8,24 +10,30 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
-
+  const [profileRes, notifsRes, messagesRes] = await Promise.all([
+    supabase.from("profiles").select("*").eq("id", user.id).single(),
+    supabase.from("notifications").select("id", { count: "exact", head: true }).eq("recipient_id", user.id).eq("is_read", false),
+    supabase.from("messages").select("id", { count: "exact", head: true }).eq("is_read", false).neq("sender_id", user.id),
+  ]);
+  const profile = profileRes.data;
   if (!profile) redirect("/onboarding");
 
+  const unreadNotifs = notifsRes.count ?? 0;
+  const unreadMessages = messagesRes.count ?? 0;
+
   return (
-    <div className="min-h-screen bg-[#0A0A0A] flex justify-center">
-      <div className="flex w-full max-w-6xl">
-        <Sidebar profile={profile as Profile} />
-        <main className="flex-1 ml-64 min-h-screen border-x border-[#282828]">
+    <div className="min-h-screen bg-[#0A0A0A]">
+      <TopNav unreadNotifs={unreadNotifs} unreadMessages={unreadMessages} profile={profile as Profile} />
+      <div className="flex max-w-6xl mx-auto pt-14">
+        <Sidebar />
+        <main className="flex-1 min-h-screen border-x border-[#282828]">
           {children}
         </main>
         <aside className="w-72 xl:w-80 flex-shrink-0 p-6 hidden xl:block">
-          <div className="sticky top-6">
-            <TrendingStocks />
+          <div className="sticky top-20">
+            <Suspense fallback={<div className="border border-[#282828] rounded p-4"><p className="text-xs text-[#71717A]">Loading...</p></div>}>
+              <TrendingStocks />
+            </Suspense>
           </div>
         </aside>
       </div>

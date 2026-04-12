@@ -15,7 +15,7 @@ export default async function StocksPage() {
   return (
     <div>
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-[#0A0A0A]/90 backdrop-blur-md border-b border-[#282828] px-5 py-4">
+      <div className="sticky top-14 z-10 bg-[#0A0A0A]/90 backdrop-blur-md border-b border-[#282828] px-5 py-4">
         <h1 className="text-xl font-black text-[#F0F0F0]">Singapore Stocks</h1>
         <p className="text-[#9CA3AF] text-sm mt-0.5">
           {stocks.length > 0 ? `${stocks.length} SGX-listed companies` : "SGX-listed companies"}
@@ -25,7 +25,11 @@ export default async function StocksPage() {
       <div className="px-5 py-4">
         {stocks.length === 0 ? (
           <div className="text-center py-20">
-            <p className="text-3xl mb-4">📊</p>
+            <div className="flex items-end gap-0.5 mb-5 justify-center">
+              {[0.5, 1, 0.7].map((h, i) => (
+                <span key={i} className="w-1 rounded-full bg-[#E8311A] opacity-40" style={{ height: `${h * 24}px` }} />
+              ))}
+            </div>
             <p className="text-[#F0F0F0] font-bold mb-2">Could not load stocks</p>
             <p className="text-[#71717A] text-sm">DB connection unavailable</p>
           </div>

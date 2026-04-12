@@ -171,7 +171,7 @@ function EditModal({
           onChange={e => setText(e.target.value)}
           maxLength={1000}
           rows={5}
-          className="w-full bg-[#0A0A0A] border border-[#333333] rounded px-3 py-2 text-sm text-[#F0F0F0] placeholder:text-[#71717A] resize-none focus:outline-none focus:border-[#E8311A] transition-colors"
+          className="w-full bg-[#0A0A0A] border border-[#333333] rounded px-3 py-2 text-sm text-[#F0F0F0] placeholder:text-[#71717A] resize-none focus:outline-none focus:border-[#444444] transition-colors"
         />
         <div className="flex items-center justify-between mt-3">
           <span className="text-xs text-[#71717A]">{text.length}/1000</span>

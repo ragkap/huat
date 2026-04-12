@@ -10,10 +10,24 @@ export async function GET(request: Request) {
   const page = Number(searchParams.get("page") ?? 0);
   const ticker = searchParams.get("ticker");
   const authorId = searchParams.get("author_id");
+  const postType = searchParams.get("post_type");
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  // For saved/followed tabs, pre-fetch the filter IDs in parallel with nothing
+  // (we need them before building the query, but fetch them fast)
+  let filterIds: string[] | null = null;
+  if (tab === "saved") {
+    const { data: saved } = await supabase.from("saved_posts").select("post_id").eq("user_id", user.id);
+    filterIds = (saved ?? []).map(s => s.post_id as string);
+    if (!filterIds.length) return NextResponse.json({ posts: [] });
+  } else if (tab === "followed") {
+    const { data: follows } = await supabase.from("social_graph").select("subject_id").eq("actor_id", user.id).eq("rel_type", "follow");
+    filterIds = (follows ?? []).map(f => f.subject_id as string);
+    if (!filterIds.length) return NextResponse.json({ posts: [] });
+  }
 
   let query = supabase
     .from("posts")
@@ -26,33 +40,12 @@ export async function GET(request: Request) {
     .is("parent_id", null)
     .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
-  if (tab === "saved") {
-    const { data: saved } = await supabase
-      .from("saved_posts")
-      .select("post_id")
-      .eq("user_id", user.id);
-    const ids = (saved ?? []).map(s => s.post_id as string);
-    if (!ids.length) return NextResponse.json({ posts: [] });
-    query = query.in("id", ids);
-  } else if (tab === "followed") {
-    const { data: follows } = await supabase
-      .from("social_graph")
-      .select("subject_id")
-      .eq("actor_id", user.id)
-      .eq("rel_type", "follow");
-    const ids = (follows ?? []).map(f => f.subject_id as string);
-    if (!ids.length) return NextResponse.json({ posts: [] });
-    query = query.in("author_id", ids);
-  } else if (tab === "trending") {
-    query = query.order("created_at", { ascending: false });
-  }
+  if (tab === "saved" && filterIds) query = query.in("id", filterIds);
+  else if (tab === "followed" && filterIds) query = query.in("author_id", filterIds);
 
-  if (ticker) {
-    query = query.contains("tagged_stocks", [ticker]);
-  }
-  if (authorId) {
-    query = query.eq("author_id", authorId);
-  }
+  if (ticker) query = query.contains("tagged_stocks", [ticker]);
+  if (authorId) query = query.eq("author_id", authorId);
+  if (postType) query = query.eq("post_type", postType);
 
   query = query.order("created_at", { ascending: false });
 
@@ -154,25 +147,14 @@ export async function POST(request: Request) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // Create poll
-  if (post_type === "poll" && poll) {
-    await supabase.from("polls").insert({
-      post_id: post.id,
-      question: content,
-      options: poll.options,
-      ends_at: poll.ends_at ?? null,
-    });
-  }
-
-  // Create forecast
-  if (post_type === "forecast" && forecast) {
-    await supabase.from("forecasts").insert({
-      post_id: post.id,
-      ticker: forecast.ticker,
-      target_price: parseFloat(forecast.targetPrice),
-      target_date: forecast.targetDate,
-    });
-  }
+  await Promise.all([
+    post_type === "poll" && poll
+      ? supabase.from("polls").insert({ post_id: post.id, question: content, options: poll.options, ends_at: poll.ends_at ?? null })
+      : null,
+    post_type === "forecast" && forecast
+      ? supabase.from("forecasts").insert({ post_id: post.id, ticker: forecast.ticker, target_price: parseFloat(forecast.targetPrice), target_date: forecast.targetDate })
+      : null,
+  ].filter(Boolean));
 
   return NextResponse.json({ post }, { status: 201 });
 }

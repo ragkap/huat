@@ -41,7 +41,7 @@ function SVGChart({
   const svgRef = useRef<SVGSVGElement>(null);
   const [hovered, setHovered] = useState<{ x: number; y: number; idx: number } | null>(null);
 
-  const prices = data.prices;
+  const prices = data.prices.filter((p): p is number => p != null);
   if (!prices.length) return null;
 
   const rawMin = Math.min(...prices);
@@ -137,7 +137,7 @@ function SVGChart({
             right: hovered.x / W >= 0.6 ? "8px" : "auto",
           }}
         >
-          <p className="text-[#F0F0F0] font-bold font-mono">{prices[hovered.idx].toFixed(3)}</p>
+          <p className="text-[#F0F0F0] font-bold font-mono">{prices[hovered.idx]?.toFixed(3) ?? "--"}</p>
           <p className="text-[#71717A] mt-0.5">
             {data.dates[hovered.idx]
               ? interval === "d1"
@@ -155,12 +155,17 @@ export function PriceChart({ ticker, initialPositive }: { ticker: string; initia
   const [interval, setInterval] = useState<string>("d1");
   const [data, setData] = useState<ChartData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [prevData, setPrevData] = useState<ChartData | null>(null);
 
   useEffect(() => {
     setLoading(true);
     fetch(`/api/stocks/${encodeURIComponent(ticker)}/chart?interval=${interval}`)
       .then(r => r.json())
-      .then((d: ChartData) => setData(d.prices?.length ? d : null))
+      .then((d: ChartData) => {
+        const next = d.prices?.length ? d : null;
+        setPrevData(next);
+        setData(next);
+      })
       .catch(() => setData(null))
       .finally(() => setLoading(false));
   }, [ticker, interval]);
@@ -188,17 +193,21 @@ export function PriceChart({ ticker, initialPositive }: { ticker: string; initia
         ))}
       </div>
 
-      {/* Chart */}
-      <div className="relative" style={{ minHeight: CHART_H }}>
-        {loading ? (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-5 h-5 border-2 border-[#333333] border-t-[#E8311A] rounded-full animate-spin" />
+      {/* Chart — fixed height, no layout shift */}
+      <div className="relative" style={{ height: CHART_H + 20 }}>
+        {/* Show previous data while loading to avoid shift */}
+        {(data ?? prevData) ? (
+          <div className={loading ? "opacity-40 pointer-events-none" : ""} style={{ transition: "opacity 0.15s" }}>
+            <SVGChart data={(data ?? prevData)!} isPositive={isPositive} interval={interval} />
           </div>
-        ) : data ? (
-          <SVGChart data={data} isPositive={isPositive} interval={interval} />
-        ) : (
-          <div className="flex items-center justify-center" style={{ height: CHART_H }}>
+        ) : !loading ? (
+          <div className="absolute inset-0 flex items-center justify-center">
             <p className="text-xs text-[#71717A]">Chart data unavailable</p>
+          </div>
+        ) : null}
+        {loading && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="w-5 h-5 border-2 border-[#333333] border-t-[#E8311A] rounded-full animate-spin" />
           </div>
         )}
       </div>

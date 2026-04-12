@@ -14,18 +14,14 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user!.id)
-    .single();
-
+  if (!user) return null;
+  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single();
   if (!profile) return null;
 
   return (
     <div>
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-[#0A0A0A]/90 backdrop-blur-md border-b border-[#282828]">
+      <div className="sticky top-14 z-10 bg-[#0A0A0A]/90 backdrop-blur-md border-b border-[#282828]">
         <div className="px-5 py-4">
           <h1 className="text-xl font-black text-[#F0F0F0]">Feed</h1>
         </div>

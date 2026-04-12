@@ -18,20 +18,17 @@ export async function generateMetadata({ params }: ProfilePageProps) {
 export default async function ProfilePage({ params }: ProfilePageProps) {
   const { username } = await params;
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("username", username)
-    .single();
+  const [{ data: { user } }, { data: profile }] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.from("profiles").select("*").eq("username", username).single(),
+  ]);
 
   if (!profile) notFound();
 
   const [followersRes, followingRes, postsCountRes, myRelRes, myProfileRes] = await Promise.all([
-    supabase.from("social_graph").select("id", { count: "exact" }).eq("subject_id", profile.id).eq("rel_type", "follow"),
-    supabase.from("social_graph").select("id", { count: "exact" }).eq("actor_id", profile.id).eq("rel_type", "follow"),
-    supabase.from("posts").select("id", { count: "exact" }).eq("author_id", profile.id).is("parent_id", null),
+    supabase.from("social_graph").select("id", { count: "exact", head: true }).eq("subject_id", profile.id).eq("rel_type", "follow"),
+    supabase.from("social_graph").select("id", { count: "exact", head: true }).eq("actor_id", profile.id).eq("rel_type", "follow"),
+    supabase.from("posts").select("id", { count: "exact", head: true }).eq("author_id", profile.id).is("parent_id", null),
     user ? supabase.from("social_graph").select("rel_type").eq("actor_id", user.id).eq("subject_id", profile.id) : Promise.resolve({ data: [] }),
     user ? supabase.from("profiles").select("*").eq("id", user.id).single() : Promise.resolve({ data: null }),
   ]);
@@ -44,7 +41,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   return (
     <div>
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-[#0A0A0A]/90 backdrop-blur-md border-b border-[#282828] px-5 py-4">
+      <div className="sticky top-14 z-10 bg-[#0A0A0A]/90 backdrop-blur-md border-b border-[#282828] px-5 py-4">
         <h1 className="text-xl font-black text-[#F0F0F0]">Profile</h1>
       </div>
 

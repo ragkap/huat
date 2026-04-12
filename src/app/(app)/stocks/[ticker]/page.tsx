@@ -51,7 +51,7 @@ export default async function StockPage({ params }: StockPageProps) {
   return (
     <div>
       {/* Sticky header */}
-      <div className="sticky top-0 z-10 bg-[#0A0A0A]/90 backdrop-blur-md border-b border-[#282828] px-5 py-4">
+      <div className="sticky top-14 z-10 bg-[#0A0A0A]/90 backdrop-blur-md border-b border-[#282828] px-5 py-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
             <h1 className="text-xl font-black text-[#F0F0F0]">{stock.name}</h1>
@@ -97,14 +97,12 @@ export default async function StockPage({ params }: StockPageProps) {
             )}
           </div>
           {stats && (
-            <div className="grid grid-cols-3 gap-x-4 gap-y-3 mt-4">
+            <div className="grid grid-cols-4 gap-x-4 mt-4">
               {[
+                { label: "Mkt Cap", value: formatLargeNumber(stats.market_cap) },
                 { label: "P/E", value: stats.pe_ratio?.toFixed(1) ?? "--" },
                 { label: "P/B", value: stats.pb_ratio?.toFixed(2) ?? "--" },
-                { label: "Mkt Cap", value: formatLargeNumber(stats.market_cap) },
                 { label: "Div Yield", value: stats.dividend_yield ? `${stats.dividend_yield.toFixed(2)}%` : "--" },
-                { label: "52W High", value: formatPrice(stats.week_52_high, quote.currency ?? "SGD") },
-                { label: "52W Low", value: formatPrice(stats.week_52_low, quote.currency ?? "SGD") },
               ].map(item => (
                 <div key={item.label}>
                   <p className="text-xs text-[#71717A] uppercase tracking-wider">{item.label}</p>

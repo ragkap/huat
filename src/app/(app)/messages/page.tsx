@@ -10,6 +10,7 @@ export default async function MessagesPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
+  // Join thread_participants directly to get threads with other participant profiles and last message in one pass
   const { data: participations } = await supabase
     .from("thread_participants")
     .select("thread_id")
@@ -51,13 +52,17 @@ export default async function MessagesPage() {
 
   return (
     <div>
-      <div className="sticky top-0 z-10 bg-[#0A0A0A]/90 backdrop-blur-md border-b border-[#282828] px-5 py-4">
+      <div className="sticky top-14 z-10 bg-[#0A0A0A]/90 backdrop-blur-md border-b border-[#282828] px-5 py-4">
         <h1 className="text-xl font-black text-[#F0F0F0]">Messages</h1>
       </div>
 
       {!threads.length ? (
         <div className="flex flex-col items-center justify-center py-20 text-center px-8">
-          <p className="text-4xl mb-4">💬</p>
+          <div className="flex items-end gap-0.5 mb-5">
+            {[0.5, 1, 0.7].map((h, i) => (
+              <span key={i} className="w-1 rounded-full bg-[#E8311A] opacity-40" style={{ height: `${h * 24}px` }} />
+            ))}
+          </div>
           <p className="text-[#F0F0F0] font-bold text-lg mb-2">No messages yet</p>
           <p className="text-[#9CA3AF] text-sm">Connect with investors to start a conversation</p>
         </div>

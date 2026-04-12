@@ -48,8 +48,6 @@ export interface CurrentStats {
   pb_ratio: number | null;
   market_cap: number | null;
   dividend_yield: number | null;
-  week_52_high: number | null;
-  week_52_low: number | null;
 }
 
 export async function getQuote(ticker: string): Promise<StockQuote> {
@@ -102,21 +100,12 @@ export async function getCurrentStats(isin: string): Promise<CurrentStats> {
   try {
     const data = (await skFetch(`${SK_DATA_BASE}/financials/entities/${isin}/current-stats`)) as Record<string, unknown>;
     return {
-      pe_ratio: (data.pe_ratio as number) ?? null,
-      pb_ratio: (data.pb_ratio as number) ?? null,
-      market_cap: (data.market_cap as number) ?? null,
-      dividend_yield: (data.dividend_yield as number) ?? null,
-      week_52_high: (data.week_52_high as number) ?? null,
-      week_52_low: (data.week_52_low as number) ?? null,
+      pe_ratio: (data.pe as number) ?? null,
+      pb_ratio: (data.pb as number) ?? null,
+      market_cap: (data.market_value_usd as number) ?? null,
+      dividend_yield: (data.div_yld as number) ?? null,
     };
   } catch {
-    return {
-      pe_ratio: null,
-      pb_ratio: null,
-      market_cap: null,
-      dividend_yield: null,
-      week_52_high: null,
-      week_52_low: null,
-    };
+    return { pe_ratio: null, pb_ratio: null, market_cap: null, dividend_yield: null };
   }
 }

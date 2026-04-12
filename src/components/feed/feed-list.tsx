@@ -7,10 +7,11 @@ import type { Post, Profile } from "@/types/database";
 interface FeedListProps {
   tab: string;
   profile: Profile;
-  stockTicker?: string; // filter feed to posts tagged with this ticker
+  stockTicker?: string;
+  postType?: string;
 }
 
-export function FeedList({ tab, profile, stockTicker }: FeedListProps) {
+export function FeedList({ tab, profile, stockTicker, postType }: FeedListProps) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -22,6 +23,7 @@ export function FeedList({ tab, profile, stockTicker }: FeedListProps) {
     try {
       const params = new URLSearchParams({ tab, page: String(p), limit: "20" });
       if (stockTicker) params.set("ticker", stockTicker);
+      if (postType) params.set("post_type", postType);
       const res = await fetch(`/api/posts?${params}`);
       const data = await res.json();
       const newPosts: Post[] = data.posts ?? [];
@@ -34,14 +36,14 @@ export function FeedList({ tab, profile, stockTicker }: FeedListProps) {
     } finally {
       setLoading(false);
     }
-  }, [tab, stockTicker]);
+  }, [tab, stockTicker, postType]);
 
-  // Reset on tab/ticker change
+  // Reset on tab/ticker/postType change
   useEffect(() => {
     setPage(0);
     setHasMore(true);
     fetchPosts(0, true);
-  }, [tab, stockTicker, fetchPosts]);
+  }, [tab, stockTicker, postType, fetchPosts]);
 
   // Infinite scroll
   useEffect(() => {
@@ -84,17 +86,21 @@ export function FeedList({ tab, profile, stockTicker }: FeedListProps) {
     setPosts(prev => prev.filter(p => p.id !== postId));
   }
 
-  const showComposer = !stockTicker && (tab === "foryou" || tab === "followed");
+  const showComposer = tab === "foryou" || tab === "followed" || !!stockTicker;
 
   return (
     <div>
       {showComposer && (
-        <PostComposer profile={profile} onPost={() => fetchPosts(0, true)} />
+        <PostComposer profile={profile} onPost={() => fetchPosts(0, true)} defaultTicker={stockTicker} />
       )}
 
       {posts.length === 0 && !loading ? (
         <div className="flex flex-col items-center justify-center py-20 text-center px-8">
-          <p className="text-4xl mb-4">发</p>
+          <div className="flex items-end gap-0.5 mb-5">
+            {[0.5, 1, 0.7].map((h, i) => (
+              <span key={i} className="w-1 rounded-full bg-[#E8311A] opacity-40" style={{ height: `${h * 24}px` }} />
+            ))}
+          </div>
           <p className="text-[#F0F0F0] font-bold text-lg mb-2">Nothing here yet</p>
           <p className="text-[#9CA3AF] text-sm">
             {stockTicker

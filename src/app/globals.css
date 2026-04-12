@@ -51,4 +51,9 @@ body {
 
 ::selection { background: rgba(232, 49, 26, 0.25); }
 
-:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* Only show focus ring on keyboard-navigable interactive elements, not text inputs */
+:focus-visible:not(input):not(textarea):not(select) { outline: 2px solid var(--brand); outline-offset: 2px; }
+input:focus-visible, textarea:focus-visible, select:focus-visible { outline: none; }
