@@ -136,10 +136,10 @@ const FORCES: { key: keyof NonNullable<StockPrimer["porters_five_forces_score"]>
 ];
 
 function forceColor(score: number): string {
-  // Higher score = stronger force = more threatening (red), lower = less (green)
-  if (score >= 4) return "#EF4444";
+  // 5 = good (green), 1 = bad (red)
+  if (score >= 4) return "#22C55E";
   if (score >= 3) return "#F59E0B";
-  return "#22C55E";
+  return "#EF4444";
 }
 
 export function PortersWidget({ porters, swot }: { porters: NonNullable<StockPrimer["porters_five_forces_score"]>; swot?: string[] }) {

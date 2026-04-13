@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { getStockBySlugOrTicker } from "@/lib/stocks-db/client";
 import { getQuote, getCurrentStats } from "@/lib/smartkarma/client";
@@ -6,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { StockPageClient } from "@/components/stock/stock-page-client";
 import { FollowButton } from "@/components/stock/follow-button";
 import { formatPrice } from "@/lib/utils";
+import { StockPageSkeleton } from "@/components/stock/stock-page-skeleton";
 import type { Profile } from "@/types/database";
 
 interface StockPageProps {
@@ -17,31 +19,27 @@ export async function generateMetadata({ params }: StockPageProps) {
   return { title: `${decodeURIComponent(ticker)} — Huat.co` };
 }
 
-export default async function StockPage({ params }: StockPageProps) {
-  const { ticker: rawTicker } = await params;
-  const identifier = decodeURIComponent(rawTicker);
-
-  const supabase = await createClient();
-  const [{ data: { user } }, stockResult] = await Promise.all([
-    supabase.auth.getUser(),
-    getStockBySlugOrTicker(identifier).catch(() => null),
-  ]);
-
-  const stock = stockResult;
-  if (!stock) notFound();
-
-  const { data: profile } = user
-    ? await supabase.from("profiles").select("id, username, display_name, avatar_url, bio, country, is_verified, created_at").eq("id", user.id).single()
-    : { data: null };
-
+async function StockPageContent({
+  identifier,
+  rawTicker,
+  stock,
+  profile,
+}: {
+  identifier: string;
+  rawTicker: string;
+  stock: Awaited<ReturnType<typeof getStockBySlugOrTicker>>;
+  profile: Profile | null;
+}) {
+  if (!stock) return null;
   const ticker = stock.bloomberg_ticker ?? identifier;
 
+  const supabase = await createClient();
   const [quote, stats, primer, watchlistRes, followerRes, postCountRes] = await Promise.all([
     getQuote(ticker).catch(() => null),
     stock.isin ? getCurrentStats(stock.isin).catch(() => null) : null,
     stock.bloomberg_ticker ? getPrimer(stock.bloomberg_ticker).catch(() => null) : null,
-    user
-      ? supabase.from("stock_watchlist").select("ticker").eq("user_id", user.id).eq("ticker", ticker).maybeSingle()
+    profile
+      ? supabase.from("stock_watchlist").select("ticker").eq("user_id", profile.id).eq("ticker", ticker).maybeSingle()
       : { data: null },
     supabase.from("stock_watchlist").select("user_id", { count: "exact", head: true }).eq("ticker", ticker),
     supabase.from("posts").select("id", { count: "exact", head: true }).contains("tagged_stocks", [ticker]),
@@ -53,15 +51,15 @@ export default async function StockPage({ params }: StockPageProps) {
   const postCount = postCountRes.count ?? 0;
 
   return (
-    <div>
-      {/* Stock header + quote merged */}
+    <>
+      {/* Unified header */}
       <div className="border-b border-[#282828] px-5 py-4 bg-[#080808]">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <h1 className="text-base sm:text-xl font-black text-[#F0F0F0] leading-snug">{stock.name}</h1>
+            <h1 className="text-base sm:text-xl font-black text-[#F0F0F0] leading-snug">{stock!.name}</h1>
             <p className="text-xs text-[#71717A] font-mono mt-0.5">
-              {ticker} · {stock.exchange_code ?? "SGX"}
-              {stock.sector && ` · ${stock.sector}`}
+              {ticker} · {stock!.exchange_code ?? "SGX"}
+              {stock!.sector && ` · ${stock!.sector}`}
             </p>
             <div className="flex flex-wrap items-baseline gap-2 mt-2">
               {quote?.price != null ? (
@@ -101,7 +99,7 @@ export default async function StockPage({ params }: StockPageProps) {
           ticker={rawTicker}
           displayTicker={ticker}
           stockName={stock.name}
-          profile={profile as Profile}
+          profile={profile}
           isPositive={isPositive}
           description={stock.description ?? null}
           stats={stats ?? null}
@@ -120,6 +118,36 @@ export default async function StockPage({ params }: StockPageProps) {
           } : null}
         />
       )}
+    </>
+  );
+}
+
+export default async function StockPage({ params }: StockPageProps) {
+  const { ticker: rawTicker } = await params;
+  const identifier = decodeURIComponent(rawTicker);
+
+  const supabase = await createClient();
+  const [{ data: { user } }, stock] = await Promise.all([
+    supabase.auth.getUser(),
+    getStockBySlugOrTicker(identifier).catch(() => null),
+  ]);
+
+  if (!stock) notFound();
+
+  const { data: profile } = user
+    ? await supabase.from("profiles").select("id, username, display_name, avatar_url, bio, country, is_verified, created_at").eq("id", user.id).single()
+    : { data: null };
+
+  return (
+    <div>
+      <Suspense fallback={<StockPageSkeleton />}>
+        <StockPageContent
+          identifier={identifier}
+          rawTicker={rawTicker}
+          stock={stock}
+          profile={profile as Profile | null}
+        />
+      </Suspense>
     </div>
   );
 }

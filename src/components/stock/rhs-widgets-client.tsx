@@ -37,17 +37,20 @@ function mergeScore(primer: StockPrimer | null, smartScore: SmartScore | null) {
 const POLL_INTERVAL = 15_000; // 15s
 
 export function RHSWidgetsClient({ ticker, initialStatus, initialPrimer, smartScore }: Props) {
-  const [status, setStatus] = useState(initialStatus);
-  const [primer, setPrimer] = useState(initialPrimer);
+  const [polledPrimer, setPolledPrimer] = useState<StockPrimer | null>(null);
+  const [polledStatus, setPolledStatus] = useState<"success" | "enqueued" | "error" | null>(null);
+
+  const status = polledStatus ?? initialStatus;
+  const primer = polledPrimer ?? initialPrimer;
 
   const poll = useCallback(async () => {
     try {
-      const res = await fetch(`/api/stocks/${encodeURIComponent(ticker)}/primer`, { cache: "no-store" });
+      const res = await fetch(`/api/stocks/${encodeURIComponent(ticker)}/primer?fresh=1`, { cache: "no-store" });
       if (!res.ok) return;
       const data = await res.json();
       if (data.status === "success" && data.primer) {
-        setPrimer(data.primer);
-        setStatus("success");
+        setPolledPrimer(data.primer);
+        setPolledStatus("success");
       }
     } catch {
       // silent — keep showing the generating widget

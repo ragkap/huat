@@ -2,9 +2,10 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { TrendingUp, User, Search, X, Bell, MessageSquare, LogOut } from "lucide-react";
+import { TrendingUp, User, Search, X, Bell, MessageSquare, LogOut, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import { ThemeToggle } from "@/components/theme-toggle";
 import type { Profile } from "@/types/database";
 
 interface SearchResult {
@@ -14,9 +15,26 @@ interface SearchResult {
   secondary: string;
 }
 
+const RECENT_KEY = "search_recent";
+const MAX_RECENT = 5;
+
+function getRecent(): SearchResult[] {
+  try { return JSON.parse(localStorage.getItem(RECENT_KEY) ?? "[]"); } catch { return []; }
+}
+
+function addRecent(item: SearchResult) {
+  const prev = getRecent().filter(r => r.href !== item.href);
+  localStorage.setItem(RECENT_KEY, JSON.stringify([item, ...prev].slice(0, MAX_RECENT)));
+}
+
+function removeRecent(href: string) {
+  localStorage.setItem(RECENT_KEY, JSON.stringify(getRecent().filter(r => r.href !== href)));
+}
+
 export function SearchBar({ autoFocus }: { autoFocus?: boolean } = {}) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
+  const [recent, setRecent] = useState<SearchResult[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -71,12 +89,40 @@ export function SearchBar({ autoFocus }: { autoFocus?: boolean } = {}) {
     inputRef.current?.focus();
   }
 
+  function handleFocus() {
+    if (query.trim()) {
+      if (results.length) setOpen(true);
+    } else {
+      const r = getRecent();
+      setRecent(r);
+      if (r.length) setOpen(true);
+    }
+  }
+
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === "Enter" && query.trim()) {
       setOpen(false);
       router.push(`/explore?q=${encodeURIComponent(query.trim())}`);
     }
   }
+
+  function handleResultClick(item: SearchResult) {
+    addRecent(item);
+    setOpen(false);
+    setQuery("");
+  }
+
+  function handleRemoveRecent(e: React.MouseEvent, href: string) {
+    e.preventDefault();
+    e.stopPropagation();
+    removeRecent(href);
+    const updated = getRecent();
+    setRecent(updated);
+    if (!updated.length) setOpen(false);
+  }
+
+  const showRecent = !query.trim() && open && recent.length > 0;
+  const showResults = !!query.trim() && open && results.length > 0;
 
   return (
     <div ref={containerRef} className="relative w-full">
@@ -90,7 +136,7 @@ export function SearchBar({ autoFocus }: { autoFocus?: boolean } = {}) {
           type="text"
           value={query}
           onChange={e => setQuery(e.target.value)}
-          onFocus={() => results.length && setOpen(true)}
+          onFocus={handleFocus}
           onKeyDown={handleKeyDown}
           placeholder="Search stocks, people…"
           className="flex-1 bg-transparent text-sm text-[#F0F0F0] placeholder:text-[#71717A] outline-none min-w-0"
@@ -105,13 +151,41 @@ export function SearchBar({ autoFocus }: { autoFocus?: boolean } = {}) {
         )}
       </div>
 
-      {open && results.length > 0 && (
+      {showRecent && (
+        <div className="absolute top-full left-0 right-0 mt-1.5 bg-[#141414] border border-[#282828] rounded-lg shadow-xl overflow-hidden z-50">
+          <p className="px-3 pt-2.5 pb-1 text-[10px] font-semibold text-[#71717A] uppercase tracking-wider">Recent</p>
+          {recent.map((r, i) => (
+            <Link
+              key={i}
+              href={r.href}
+              onClick={() => handleResultClick(r)}
+              className="flex items-center gap-3 px-3 py-2.5 hover:bg-[#1C1C1C] transition-colors group"
+            >
+              <div className="w-7 h-7 rounded flex items-center justify-center flex-shrink-0 bg-[#1C1C1C] text-[#71717A]">
+                <Clock className="w-3.5 h-3.5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm text-[#F0F0F0] font-medium truncate">{r.primary}</p>
+                <p className="text-xs text-[#71717A] font-mono truncate">{r.secondary}</p>
+              </div>
+              <button
+                onClick={e => handleRemoveRecent(e, r.href)}
+                className="opacity-0 group-hover:opacity-100 text-[#71717A] hover:text-[#F0F0F0] transition-opacity flex-shrink-0 p-1"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {showResults && (
         <div className="absolute top-full left-0 right-0 mt-1.5 bg-[#141414] border border-[#282828] rounded-lg shadow-xl overflow-hidden z-50">
           {results.map((r, i) => (
             <Link
               key={i}
               href={r.href}
-              onClick={() => { setOpen(false); setQuery(""); }}
+              onClick={() => handleResultClick(r)}
               className="flex items-center gap-3 px-3 py-2.5 hover:bg-[#1C1C1C] transition-colors"
             >
               <div className={cn(
@@ -269,6 +343,7 @@ export function TopNav({ unreadNotifs = 0, unreadMessages = 0, profile }: { unre
               </span>
             )}
           </Link>
+          <ThemeToggle />
           {profile && <ProfileMenu profile={profile} />}
         </div>
       </div>

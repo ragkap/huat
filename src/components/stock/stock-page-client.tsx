@@ -602,6 +602,7 @@ export function StockPageClient({
   const [topTab, setTopTab] = useState("posts");
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
     recordStockVisit({ ticker: displayTicker, name: stockName, slug: ticker });
   }, [ticker, displayTicker, stockName]);
 

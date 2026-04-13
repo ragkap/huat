@@ -1,29 +1,13 @@
+import { StockPageSkeleton } from "@/components/stock/stock-page-skeleton";
+
 export default function StockLoading() {
   return (
-    <div className="flex items-center justify-center min-h-[70vh]">
-      <div className="flex flex-col items-center gap-4">
-        <div className="relative flex items-center gap-1">
-          {[0.6, 1, 0.75].map((h, i) => (
-            <span
-              key={i}
-              className="w-1 rounded-full bg-[#E8311A]"
-              style={{
-                height: `${h * 28}px`,
-                animation: `huat-bar 0.9s ease-in-out infinite`,
-                animationDelay: `${i * 0.15}s`,
-              }}
-            />
-          ))}
-        </div>
-        <div className="flex items-baseline gap-1.5">
-          <span className="text-[#E8311A] font-black text-xl tracking-tighter leading-none" style={{ animation: "huat-fade 0.9s ease-in-out infinite" }}>Huat</span>
-          <span className="text-[#E8311A] font-black text-xl" style={{ animation: "huat-fade 0.9s ease-in-out infinite", animationDelay: "0.15s" }}>发</span>
-        </div>
+    <div>
+      <div className="border-b border-[#282828] px-5 pt-4 pb-4 bg-[#080808]">
+        <div style={{ background: "linear-gradient(90deg,#1a1a1a 25%,#242424 50%,#1a1a1a 75%)", backgroundSize: "600px 100%", animation: "sk-shimmer 1.4s infinite linear", borderRadius: 4, height: 20, width: 180, marginBottom: 8 }} />
+        <div style={{ background: "linear-gradient(90deg,#1a1a1a 25%,#242424 50%,#1a1a1a 75%)", backgroundSize: "600px 100%", animation: "sk-shimmer 1.4s infinite linear", borderRadius: 4, height: 12, width: 120 }} />
       </div>
-      <style>{`
-        @keyframes huat-bar { 0%, 100% { transform: scaleY(0.4); opacity: 0.4; } 50% { transform: scaleY(1); opacity: 1; } }
-        @keyframes huat-fade { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
-      `}</style>
+      <StockPageSkeleton />
     </div>
   );
 }

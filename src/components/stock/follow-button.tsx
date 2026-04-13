@@ -8,6 +8,16 @@ interface FollowButtonProps {
   initialFollowerCount: number;
 }
 
+const PARTICLES = [
+  { angle: -60,  d: 22 },
+  { angle: -30,  d: 26 },
+  { angle:   0,  d: 24 },
+  { angle:  30,  d: 26 },
+  { angle:  60,  d: 22 },
+  { angle: -90,  d: 20 },
+  { angle:  90,  d: 20 },
+];
+
 export function FollowButton({
   ticker,
   initialFollowing,
@@ -15,33 +25,74 @@ export function FollowButton({
 }: FollowButtonProps) {
   const [following, setFollowing] = useState(initialFollowing);
   const [followerCount, setFollowerCount] = useState(initialFollowerCount);
-  const [toggling, setToggling] = useState(false);
+  const [burst, setBurst] = useState(false);
 
   async function toggle() {
-    setToggling(true);
-    try {
-      const res = await fetch(`/api/stocks/${encodeURIComponent(ticker)}/watch`, {
-        method: following ? "DELETE" : "POST",
-      });
-      if (res.ok) {
-        setFollowing(f => !f);
-        setFollowerCount(c => c + (following ? -1 : 1));
-      }
-    } finally {
-      setToggling(false);
+    if (following) {
+      // unwatch — no burst, just fire and forget
+      setFollowing(false);
+      setFollowerCount(c => c - 1);
+      fetch(`/api/stocks/${encodeURIComponent(ticker)}/watch`, { method: "DELETE" });
+      return;
     }
+    // watch — instant optimistic + burst
+    setFollowing(true);
+    setFollowerCount(c => c + 1);
+    setBurst(true);
+    setTimeout(() => setBurst(false), 700);
+    fetch(`/api/stocks/${encodeURIComponent(ticker)}/watch`, { method: "POST" });
   }
 
   return (
     <button
       onClick={toggle}
-      disabled={toggling}
       className={following
-        ? "flex items-center gap-1.5 px-3 py-1.5 rounded border border-[#333333] bg-[#1C1C1C] text-[#9CA3AF] text-sm font-medium hover:border-[#EF4444] hover:text-[#EF4444] transition-colors disabled:opacity-50"
-        : "flex items-center gap-1.5 px-3 py-1.5 rounded border border-[#E8311A]/40 text-[#E8311A] text-sm font-medium hover:bg-[#E8311A]/10 transition-colors disabled:opacity-50"
+        ? "relative flex items-center gap-1.5 px-3 py-1.5 rounded border border-[#333333] bg-[#1C1C1C] text-[#9CA3AF] text-sm font-medium hover:border-[#EF4444] hover:text-[#EF4444] transition-colors"
+        : "relative flex items-center gap-1.5 px-3 py-1.5 rounded border border-[#E8311A]/40 text-[#E8311A] text-sm font-medium hover:bg-[#E8311A]/10 transition-colors"
       }
     >
-      <Star className={following ? "w-3.5 h-3.5 fill-current" : "w-3.5 h-3.5"} />
+      <style>{`
+        @keyframes watch-glow {
+          0%,100% { box-shadow: 0 0 0 2px rgba(232,49,26,0.2); }
+          50%      { box-shadow: 0 0 6px 5px rgba(232,49,26,0.35); }
+        }
+        @keyframes particle-fly {
+          0%   { transform: translate(-50%,-50%) rotate(var(--a)) translateY(0px) scale(1); opacity: 1; }
+          100% { transform: translate(-50%,-50%) rotate(var(--a)) translateY(var(--d)) scale(0); opacity: 0; }
+        }
+        @keyframes star-pop {
+          0%   { transform: scale(1); }
+          40%  { transform: scale(1.5); }
+          70%  { transform: scale(0.85); }
+          100% { transform: scale(1); }
+        }
+      `}</style>
+
+      {/* Idle glow pulse on Watch */}
+      {!following && (
+        <span className="absolute inset-0 rounded" style={{ animation: "watch-glow 2s ease-in-out infinite" }} />
+      )}
+
+      {/* Burst particles */}
+      {burst && PARTICLES.map((p, i) => (
+        <span
+          key={i}
+          className="pointer-events-none absolute left-1/2 top-1/2 w-1.5 h-1.5 rounded-full bg-[#E8311A]"
+          style={{
+            "--a": `${p.angle}deg`,
+            "--d": `-${p.d}px`,
+            animation: `particle-fly 0.6s ease-out ${i * 30}ms forwards`,
+          } as React.CSSProperties}
+        />
+      ))}
+
+      <Star
+        className="w-3.5 h-3.5"
+        style={{
+          fill: following ? "currentColor" : "none",
+          animation: burst ? "star-pop 0.4s ease-out forwards" : undefined,
+        }}
+      />
       {following ? "Watching" : "Watch"}
     </button>
   );

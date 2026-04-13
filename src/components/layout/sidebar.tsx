@@ -72,21 +72,19 @@ function useStockPanelData(ticker: string | null): StockPanelData {
     fetch(`/api/stocks/${encodeURIComponent(ticker)}/primer`)
       .then(r => r.ok ? r.json() : null)
       .then(d => {
-        if (!d) return;
         setData({
-          primer: d.primer ? {
+          primer: d?.primer ? {
             company_overview: d.primer.company_overview ?? [],
             industry_overview: d.primer.industry_overview ?? [],
             competitive_landscape: d.primer.competitive_landscape ?? [],
             management: d.primer.management ?? [],
             key_products_and_services: d.primer.key_products_and_services ?? [],
           } : null,
-          rhsPrimer: d.primer ?? null,
-          rhsSmartScore: null, // SmartScore not available client-side here
-          rhsStatus: (d.status as "success" | "enqueued" | "error") ?? "error",
+          rhsPrimer: d?.primer ?? null,
+          rhsSmartScore: null,
+          rhsStatus: (d?.status as "success" | "enqueued" | "error") ?? "error",
         });
-      })
-      .catch(() => null);
+      }).catch(() => null);
   }, [ticker]);
 
   return data;

@@ -154,61 +154,6 @@ export function PostComposer({ profile, onPost, defaultTicker }: PostComposerPro
       <div className="flex gap-3">
         <Avatar src={profile.avatar_url} alt={profile.display_name} size="md" />
         <div className="flex-1">
-          {/* Text area */}
-          <textarea
-            value={content}
-            onChange={e => setContent(e.target.value.slice(0, MAX_CHARS))}
-            placeholder={
-              postType === "poll" ? "Ask a question..." :
-              postType === "forecast" ? "What's your thesis?" :
-              "What are your thoughts? 发!"
-            }
-            className="w-full bg-[#141414] border border-[#333333] rounded-lg px-3 py-2.5 text-[#F0F0F0] placeholder:text-[#555555] text-base resize-none focus:outline-none focus:border-[#444444] min-h-[80px] transition-colors"
-            rows={3}
-          />
-
-          {/* Link preview */}
-          {linkPreview && !linkPreviewDismissed && (linkPreview.og_title || linkPreview.og_image) && (
-            <div className="relative mt-2 mb-2 border border-[#333333] rounded-lg overflow-hidden bg-[#0D0D0D]">
-              <button
-                onClick={() => setLinkPreviewDismissed(true)}
-                className="absolute top-2 right-2 z-10 w-5 h-5 flex items-center justify-center rounded-full bg-black/60 text-[#9CA3AF] hover:text-white"
-              >
-                <X className="w-3 h-3" />
-              </button>
-              {linkPreview.og_image && (
-                <img src={linkPreview.og_image} alt="" className="w-full h-36 object-cover" />
-              )}
-              <div className="px-3 py-2">
-                {linkPreview.og_site_name && <p className="text-[10px] text-[#555555] uppercase tracking-wide">{linkPreview.og_site_name}</p>}
-                {linkPreview.og_title && <p className="text-xs font-semibold text-[#F0F0F0] leading-snug mt-0.5 line-clamp-2">{linkPreview.og_title}</p>}
-                {linkPreview.og_description && <p className="text-[11px] text-[#71717A] mt-0.5 line-clamp-2">{linkPreview.og_description}</p>}
-              </div>
-            </div>
-          )}
-
-          {/* Sentiment selector */}
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-xs text-[#71717A] uppercase tracking-wider">Sentiment:</span>
-            {([
-              { value: "bullish", color: "#22C55E" },
-              { value: "bearish", color: "#EF4444" },
-              { value: "neutral", color: "#9CA3AF" },
-            ] as { value: Sentiment; color: string }[]).map(({ value: s, color }) => (
-              <button
-                key={s}
-                onClick={() => setSentiment(prev => prev === s ? null : s)}
-                className="text-xs px-2 py-1 rounded border transition-colors capitalize"
-                style={sentiment === s
-                  ? { borderColor: color, color, backgroundColor: `${color}18` }
-                  : { borderColor: "#333333", color, opacity: 0.5 }
-                }
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-
           {/* Stock tagger */}
           <div ref={stockContainerRef} className="relative mb-3">
             <div className="flex flex-wrap items-center gap-1.5">

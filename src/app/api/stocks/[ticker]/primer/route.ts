@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { getStockBySlugOrTicker } from "@/lib/stocks-db/client";
-import { getPrimerFresh } from "@/lib/smartkarma/primer";
+import { getPrimer, getPrimerFresh } from "@/lib/smartkarma/primer";
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ ticker: string }> }
 ) {
   const { ticker } = await params;
   const identifier = decodeURIComponent(ticker);
+  const fresh = new URL(req.url).searchParams.get("fresh") === "1";
 
   try {
     const stock = await getStockBySlugOrTicker(identifier);
@@ -15,7 +16,7 @@ export async function GET(
       return NextResponse.json({ primer: null, error: "Stock not found" }, { status: 404 });
     }
 
-    const result = await getPrimerFresh(stock.bloomberg_ticker);
+    const result = await (fresh ? getPrimerFresh : getPrimer)(stock.bloomberg_ticker);
 
     // Don't cache enqueued responses — they'll be ready soon
     const cacheHeader = result.status === "enqueued"
