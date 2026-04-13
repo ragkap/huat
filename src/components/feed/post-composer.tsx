@@ -36,6 +36,9 @@ export function PostComposer({ profile, onPost, defaultTicker }: PostComposerPro
   const [posting, setPosting] = useState(false);
   const [attachmentUrls, setAttachmentUrls] = useState<string[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [linkPreview, setLinkPreview] = useState<{ url: string; og_title?: string | null; og_description?: string | null; og_image?: string | null; og_site_name?: string | null } | null>(null);
+  const [linkPreviewDismissed, setLinkPreviewDismissed] = useState(false);
+  const linkDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     function onClick(e: MouseEvent) {
@@ -46,6 +49,25 @@ export function PostComposer({ profile, onPost, defaultTicker }: PostComposerPro
     document.addEventListener("mousedown", onClick);
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
+
+  // Detect URLs in content and fetch OG preview
+  useEffect(() => {
+    if (linkPreviewDismissed) return;
+    const urlMatch = content.match(/https?:\/\/[^\s]+/);
+    const url = urlMatch?.[0];
+    if (!url) { setLinkPreview(null); return; }
+    if (linkPreview?.url === url) return;
+    if (linkDebounceRef.current) clearTimeout(linkDebounceRef.current);
+    linkDebounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/og?url=${encodeURIComponent(url)}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        setLinkPreview({ url, ...data });
+      } catch { /* silent */ }
+    }, 600);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [content, linkPreviewDismissed]);
 
   function handleStockSearchChange(val: string) {
     setStockSearch(val);
@@ -84,7 +106,17 @@ export function PostComposer({ profile, onPost, defaultTicker }: PostComposerPro
           sentiment,
           post_type: postType,
           tagged_stocks: taggedStocks,
-          attachments: attachmentUrls.map(url => ({ url, type: "image" })),
+          attachments: [
+            ...attachmentUrls.map(url => ({ url, type: "image" })),
+            ...(linkPreview && !linkPreviewDismissed ? [{
+              url: linkPreview.url,
+              type: "link",
+              og_title: linkPreview.og_title,
+              og_description: linkPreview.og_description,
+              og_image: linkPreview.og_image,
+              og_site_name: linkPreview.og_site_name,
+            }] : []),
+          ],
           ...(postType === "poll" && { poll: { options: pollOptions.filter(o => o.text.trim()) } }),
           ...(postType === "forecast" && { forecast }),
         }),
@@ -94,6 +126,8 @@ export function PostComposer({ profile, onPost, defaultTicker }: PostComposerPro
       setPostType("post");
       setTaggedStocks([]);
       setAttachmentUrls([]);
+      setLinkPreview(null);
+      setLinkPreviewDismissed(false);
       onPost?.();
     } finally {
       setPosting(false);
@@ -132,6 +166,26 @@ export function PostComposer({ profile, onPost, defaultTicker }: PostComposerPro
             className="w-full bg-[#141414] border border-[#333333] rounded-lg px-3 py-2.5 text-[#F0F0F0] placeholder:text-[#555555] text-base resize-none focus:outline-none focus:border-[#444444] min-h-[80px] transition-colors"
             rows={3}
           />
+
+          {/* Link preview */}
+          {linkPreview && !linkPreviewDismissed && (linkPreview.og_title || linkPreview.og_image) && (
+            <div className="relative mt-2 mb-2 border border-[#333333] rounded-lg overflow-hidden bg-[#0D0D0D]">
+              <button
+                onClick={() => setLinkPreviewDismissed(true)}
+                className="absolute top-2 right-2 z-10 w-5 h-5 flex items-center justify-center rounded-full bg-black/60 text-[#9CA3AF] hover:text-white"
+              >
+                <X className="w-3 h-3" />
+              </button>
+              {linkPreview.og_image && (
+                <img src={linkPreview.og_image} alt="" className="w-full h-36 object-cover" />
+              )}
+              <div className="px-3 py-2">
+                {linkPreview.og_site_name && <p className="text-[10px] text-[#555555] uppercase tracking-wide">{linkPreview.og_site_name}</p>}
+                {linkPreview.og_title && <p className="text-xs font-semibold text-[#F0F0F0] leading-snug mt-0.5 line-clamp-2">{linkPreview.og_title}</p>}
+                {linkPreview.og_description && <p className="text-[11px] text-[#71717A] mt-0.5 line-clamp-2">{linkPreview.og_description}</p>}
+              </div>
+            </div>
+          )}
 
           {/* Sentiment selector */}
           <div className="flex items-center gap-2 mb-3">

@@ -2,7 +2,7 @@ import { LoginForm } from "@/components/auth/login-form";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "Sign in — huat.co" };
+export const metadata = { title: "Sign in — Huat.co" };
 
 export default function LoginPage() {
   return (
@@ -12,7 +12,7 @@ export default function LoginPage() {
       <div className="hidden lg:flex flex-col justify-between w-1/2 p-16 border-r border-[#282828] bg-[#080808]">
         <div>
           <div className="flex items-baseline gap-2">
-            <span className="text-[#E8311A] font-black text-5xl tracking-tighter leading-none">huat</span>
+            <span className="text-[#E8311A] font-black text-5xl tracking-tighter leading-none">Huat</span>
             <span className="text-[#E8311A] font-black text-5xl">发</span>
           </div>
           <p className="text-[#71717A] text-sm mt-2 font-mono">huat.co</p>
@@ -47,7 +47,7 @@ export default function LoginPage() {
         <div className="w-full max-w-sm">
           {/* Mobile logo */}
           <div className="lg:hidden mb-10 flex items-baseline gap-2">
-            <span className="text-[#E8311A] font-black text-4xl tracking-tighter">huat</span>
+            <span className="text-[#E8311A] font-black text-4xl tracking-tighter">Huat</span>
             <span className="text-[#E8311A] font-black text-4xl">发</span>
           </div>
 

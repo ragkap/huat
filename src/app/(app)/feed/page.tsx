@@ -20,8 +20,8 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 
   return (
     <div>
-      {/* Header */}
-      <div className="sticky top-14 z-10 bg-[#0A0A0A]/90 backdrop-blur-md border-b border-[#282828]">
+      {/* Tabs */}
+      <div className="border-b border-[#282828]">
         <Suspense>
           <FeedTabs />
         </Suspense>

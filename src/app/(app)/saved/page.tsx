@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { FeedList } from "@/components/feed/feed-list";
 import type { Profile } from "@/types/database";
 
-export const metadata = { title: "Saved — huat.co" };
+export const metadata = { title: "Saved — Huat.co" };
 
 export default async function SavedPage() {
   const supabase = await createClient();

@@ -7,7 +7,7 @@ export default function LandingPage() {
       {/* Nav */}
       <nav className="border-b border-[#282828] px-8 py-4 flex items-center justify-between">
         <div className="flex items-baseline gap-2">
-          <span className="text-[#E8311A] font-black text-3xl tracking-tighter leading-none">huat</span>
+          <span className="text-[#E8311A] font-black text-3xl tracking-tighter leading-none">Huat</span>
           <span className="text-[#E8311A] font-black text-3xl">发</span>
         </div>
         <Link
@@ -87,7 +87,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="border-t border-[#282828] px-8 py-6 flex items-center justify-between">
         <div className="flex items-baseline gap-1.5">
-          <span className="text-[#E8311A] font-black text-xl tracking-tighter">huat</span>
+          <span className="text-[#E8311A] font-black text-xl tracking-tighter">Huat</span>
           <span className="text-[#E8311A] font-black text-xl">发</span>
           <span className="text-[#71717A] text-xs ml-1">huat.co</span>
         </div>

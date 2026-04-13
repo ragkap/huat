@@ -24,7 +24,7 @@ export default function Loading() {
             className="text-[#E8311A] font-black text-xl tracking-tighter leading-none"
             style={{ animation: "huat-fade 0.9s ease-in-out infinite" }}
           >
-            huat
+            Huat
           </span>
           <span
             className="text-[#E8311A] font-black text-xl"

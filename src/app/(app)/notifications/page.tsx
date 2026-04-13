@@ -3,7 +3,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { timeAgo } from "@/lib/utils";
 import type { Notification } from "@/types/database";
 
-export const metadata = { title: "Notifications — huat.co" };
+export const metadata = { title: "Notifications — Huat.co" };
 
 const notifLabel: Record<string, string> = {
   reaction: "reacted to your post",

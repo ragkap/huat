@@ -16,7 +16,7 @@ export default function StockLoading() {
           ))}
         </div>
         <div className="flex items-baseline gap-1.5">
-          <span className="text-[#E8311A] font-black text-xl tracking-tighter leading-none" style={{ animation: "huat-fade 0.9s ease-in-out infinite" }}>huat</span>
+          <span className="text-[#E8311A] font-black text-xl tracking-tighter leading-none" style={{ animation: "huat-fade 0.9s ease-in-out infinite" }}>Huat</span>
           <span className="text-[#E8311A] font-black text-xl" style={{ animation: "huat-fade 0.9s ease-in-out infinite", animationDelay: "0.15s" }}>发</span>
         </div>
       </div>

@@ -5,6 +5,7 @@ import { PriceChart } from "@/components/stock/price-chart";
 import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { PenLine, X, FileText, ExternalLink } from "lucide-react";
+import { recordStockVisit } from "@/components/layout/last-visited-widget";
 import { formatPrice, formatMarketCap } from "@/lib/utils";
 import { stripHtml } from "@/lib/smartkarma/primer";
 import type { Profile, Sentiment } from "@/types/database";
@@ -41,6 +42,7 @@ interface PrimerSummary {
 interface StockPageClientProps {
   ticker: string;
   displayTicker: string;
+  stockName: string;
   profile: Profile;
   isPositive: boolean;
   description: string | null;
@@ -366,6 +368,7 @@ function NewsTab({ ticker, displayTicker, profile }: { ticker: string; displayTi
 export function StockPageClient({
   ticker,
   displayTicker,
+  stockName,
   profile,
   isPositive,
   description,
@@ -379,6 +382,10 @@ export function StockPageClient({
   const [bearishExpanded, setBearishExpanded] = useState(false);
   const [risksExpanded, setRisksExpanded] = useState(false);
   const [topTab, setTopTab] = useState("posts");
+
+  useEffect(() => {
+    recordStockVisit({ ticker: displayTicker, name: stockName, slug: ticker });
+  }, [ticker, displayTicker, stockName]);
 
   function switchTab(id: string) {
     setTopTab(id);

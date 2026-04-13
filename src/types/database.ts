@@ -30,10 +30,15 @@ export interface Profile {
 
 export interface Attachment {
   url: string;
-  type: "image" | "video";
+  type: "image" | "video" | "link";
   width?: number;
   height?: number;
   thumbnail_url?: string;
+  // link preview fields (type === "link")
+  og_title?: string;
+  og_description?: string;
+  og_image?: string;
+  og_site_name?: string;
 }
 
 export interface Post {

@@ -1,6 +1,18 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+
+function renderTextWithLinks(text: string) {
+  const parts = text.split(/(https?:\/\/[^\s]+)/g);
+  return parts.map((part, i) =>
+    /^https?:\/\//.test(part) ? (
+      <a key={i} href={part} target="_blank" rel="noopener noreferrer"
+        className="text-[#E8311A] underline underline-offset-2 break-all hover:text-[#c9280f] transition-colors"
+        onClick={e => e.stopPropagation()}
+      >{part}</a>
+    ) : part
+  );
+}
 import { Heart, MessageCircle, Repeat2, Share2, Bookmark, MoreHorizontal, TrendingUp, TrendingDown, Flag, Pencil, Trash2 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -340,7 +352,7 @@ export function PostCard({ post, currentUserId, onReact, onSave, onRepost, onEdi
               </div>
             )}
 
-            {/* Post text — parse news embeds and render as link card */}
+            {/* Post text — parse news embeds, render URLs as links */}
             {(() => {
               // News posts have format: "{user text}\n\n📰 {title} — {source}\n{url}"
               const newsMatch = localContent.match(/^([\s\S]*?)\n\n📰 ([\s\S]+?) — (.+?)\n(https?:\/\/\S+)\s*$/);
@@ -348,12 +360,10 @@ export function PostCard({ post, currentUserId, onReact, onSave, onRepost, onEdi
                 const [, userText, title, source, url] = newsMatch;
                 return (
                   <>
-                    {userText.trim() && <p className="text-sm text-[#F0F0F0] leading-relaxed whitespace-pre-wrap mb-2">{userText.trim()}</p>}
-                    <a
-                      href={url}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    {userText.trim() && <p className="text-sm text-[#F0F0F0] leading-relaxed whitespace-pre-wrap mb-2">{renderTextWithLinks(userText.trim())}</p>}
+                    <a href={url} target="_blank" rel="noopener noreferrer"
                       className="block border border-[#282828] rounded p-3 bg-[#141414] hover:border-[#444444] transition-colors"
+                      onClick={e => e.stopPropagation()}
                     >
                       <p className="text-xs text-[#71717A] mb-1">{source}</p>
                       <p className="text-sm font-semibold text-[#F0F0F0] leading-snug line-clamp-2">{title}</p>
@@ -361,11 +371,32 @@ export function PostCard({ post, currentUserId, onReact, onSave, onRepost, onEdi
                   </>
                 );
               }
-              return <p className="text-sm text-[#F0F0F0] leading-relaxed whitespace-pre-wrap">{localContent}</p>;
+              return <p className="text-sm text-[#F0F0F0] leading-relaxed whitespace-pre-wrap">{renderTextWithLinks(localContent)}</p>;
             })()}
 
-            {/* Attachments */}
-            {post.post_type === "post" && <AttachmentGrid attachments={post.attachments} />}
+            {/* Link preview attachment */}
+            {(() => {
+              const linkAttachment = post.attachments?.find(a => a.type === "link");
+              if (!linkAttachment) return null;
+              return (
+                <a href={linkAttachment.url} target="_blank" rel="noopener noreferrer"
+                  className="block mt-2 border border-[#282828] rounded-lg overflow-hidden bg-[#0D0D0D] hover:border-[#444444] transition-colors"
+                  onClick={e => e.stopPropagation()}
+                >
+                  {linkAttachment.og_image && (
+                    <img src={linkAttachment.og_image} alt="" className="w-full h-44 object-cover" />
+                  )}
+                  <div className="px-3 py-2.5">
+                    {linkAttachment.og_site_name && <p className="text-[10px] text-[#555555] uppercase tracking-wide">{linkAttachment.og_site_name}</p>}
+                    {linkAttachment.og_title && <p className="text-sm font-semibold text-[#F0F0F0] leading-snug mt-0.5 line-clamp-2">{linkAttachment.og_title}</p>}
+                    {linkAttachment.og_description && <p className="text-xs text-[#71717A] mt-0.5 line-clamp-2">{linkAttachment.og_description}</p>}
+                  </div>
+                </a>
+              );
+            })()}
+
+            {/* Attachments (images/video only) */}
+            {post.post_type === "post" && <AttachmentGrid attachments={post.attachments?.filter(a => a.type !== "link")} />}
 
             {/* Poll */}
             {post.post_type === "poll" && post.poll && <PollDisplay poll={post.poll} />}

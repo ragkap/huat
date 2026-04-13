@@ -14,7 +14,7 @@ interface StockPageProps {
 
 export async function generateMetadata({ params }: StockPageProps) {
   const { ticker } = await params;
-  return { title: `${decodeURIComponent(ticker)} — huat.co` };
+  return { title: `${decodeURIComponent(ticker)} — Huat.co` };
 }
 
 export default async function StockPage({ params }: StockPageProps) {
@@ -101,6 +101,7 @@ export default async function StockPage({ params }: StockPageProps) {
         <StockPageClient
           ticker={rawTicker}
           displayTicker={ticker}
+          stockName={stock.name}
           profile={profile as Profile}
           isPositive={isPositive}
           description={stock.description ?? null}

@@ -6,12 +6,18 @@ const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "huat.co — Invest Together, Prosper Together",
+  title: "Huat.co — Invest Together, Prosper Together",
   description: "Singapore's social network for retail investors. Follow stocks, share forecasts, and grow your wealth.",
   openGraph: {
-    title: "huat.co",
-    description: "Singapore's social network for retail investors",
-    siteName: "huat.co",
+    title: "Huat.co — Invest Together, Prosper Together",
+    description: "Singapore's social network for retail investors. Follow stocks, share forecasts, and grow your wealth.",
+    siteName: "Huat.co",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Huat.co — Invest Together, Prosper Together",
+    description: "Singapore's social network for retail investors.",
   },
 };
 

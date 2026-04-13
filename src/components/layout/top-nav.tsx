@@ -232,7 +232,7 @@ export function TopNav({ unreadNotifs = 0, unreadMessages = 0, profile }: { unre
       <div className="max-w-[1290px] mx-auto h-full flex items-center">
         {/* Logo — aligns with sidebar width */}
         <Link href="/feed" className="flex items-baseline gap-2 flex-shrink-0 lg:w-80 px-4">
-          <span className="text-[#E8311A] font-black text-2xl tracking-tighter leading-none">huat</span>
+          <span className="text-[#E8311A] font-black text-2xl tracking-tighter leading-none">Huat</span>
           <span className="text-[#E8311A] font-black text-2xl">发</span>
         </Link>
 

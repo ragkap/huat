@@ -12,7 +12,7 @@ interface ProfilePageProps {
 
 export async function generateMetadata({ params }: ProfilePageProps) {
   const { username } = await params;
-  return { title: `@${username} — huat.co` };
+  return { title: `@${username} — Huat.co` };
 }
 
 export default async function ProfilePage({ params }: ProfilePageProps) {

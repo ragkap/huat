@@ -10,7 +10,7 @@ export function RightAside({ children }: { children: React.ReactNode }) {
   if (isStockPage) return null;
 
   return (
-    <aside className="w-80 flex-shrink-0 p-5 hidden xl:block">
+    <aside className="w-80 flex-shrink-0 p-5 hidden xl:block border-l border-[#282828]">
       <div className="sticky top-20">
         {children}
       </div>

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { timeAgo } from "@/lib/utils";
 
-export const metadata = { title: "Messages — huat.co" };
+export const metadata = { title: "Messages — Huat.co" };
 
 export default async function MessagesPage() {
   const supabase = await createClient();
