@@ -1,11 +1,15 @@
+"use client";
+
+import { useState } from "react";
 import type { SmartScore } from "@/lib/smartkarma/client";
+import { stripHtml } from "@/lib/smartkarma/primer";
 
 const DIMENSIONS = [
-  { key: "value",      label: "Value" },
   { key: "dividend",   label: "Dividend" },
   { key: "growth",     label: "Growth" },
-  { key: "resilience", label: "Resilience" },
   { key: "momentum",   label: "Momentum" },
+  { key: "resilience", label: "Resilience" },
+  { key: "value",      label: "Value" },
 ] as const;
 
 function scoreColor(score: number): string {
@@ -14,16 +18,21 @@ function scoreColor(score: number): string {
   return "#EF4444";
 }
 
-export function SmartScoreWidget({ smartScore }: { smartScore: SmartScore }) {
+export function SmartScoreWidget({ smartScore, analysis }: { smartScore: SmartScore; analysis?: string[] }) {
+  const [expanded, setExpanded] = useState(false);
   const hasDimensions = DIMENSIONS.some(d => smartScore[d.key] != null);
+  const analysisBullets = analysis
+    ?.map(a => stripHtml(a))
+    .sort((a, b) => a.localeCompare(b)) ?? [];
+  const BULLET_LIMIT = 1;
 
   return (
-    <div className="border border-[#282828] rounded-lg p-4">
+    <div className="widget-hover border border-[#282828] rounded-lg p-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
           <p className="text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">SmartScore</p>
-          <p className="text-[10px] text-[#555555] mt-0.5">by Smartkarma</p>
+          <a href="https://www.smartkarma.com/home/smartwealth/" target="_blank" rel="noopener noreferrer" className="text-[10px] text-[#555555] hover:text-[#9CA3AF] transition-colors mt-0.5">by Smartkarma</a>
         </div>
         {smartScore.score != null && (
           <div className="flex flex-col items-end">
@@ -58,6 +67,28 @@ export function SmartScoreWidget({ smartScore }: { smartScore: SmartScore }) {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* SmartScore analysis */}
+      {analysisBullets.length > 0 && (
+        <div className="mt-3 pt-3 border-t border-[#1C1C1C]">
+          <ul className="space-y-1.5">
+            {(expanded ? analysisBullets : analysisBullets.slice(0, BULLET_LIMIT)).map((item, i) => (
+              <li key={i} className="flex items-start gap-1.5">
+                <span className="text-[#555555] mt-0.5 flex-shrink-0">·</span>
+                <span className="widget-text-muted text-xs text-[#9CA3AF] leading-relaxed">{item}</span>
+              </li>
+            ))}
+          </ul>
+          {analysisBullets.length > BULLET_LIMIT && (
+            <button
+              onClick={() => setExpanded(e => !e)}
+              className="mt-2 text-[11px] text-[#71717A] hover:text-[#F0F0F0] transition-colors"
+            >
+              {expanded ? "Show less" : `Show ${analysisBullets.length - BULLET_LIMIT} more`}
+            </button>
+          )}
         </div>
       )}
     </div>

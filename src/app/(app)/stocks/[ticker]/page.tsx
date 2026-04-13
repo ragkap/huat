@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getStockBySlugOrTicker } from "@/lib/stocks-db/client";
 import { getQuote, getCurrentStats } from "@/lib/smartkarma/client";
+import { getPrimer } from "@/lib/smartkarma/primer";
 import { createClient } from "@/lib/supabase/server";
 import { StockPageClient } from "@/components/stock/stock-page-client";
 import { FollowButton } from "@/components/stock/follow-button";
@@ -35,9 +36,10 @@ export default async function StockPage({ params }: StockPageProps) {
 
   const ticker = stock.bloomberg_ticker ?? identifier;
 
-  const [quote, stats, watchlistRes, followerRes, postCountRes] = await Promise.all([
+  const [quote, stats, primer, watchlistRes, followerRes, postCountRes] = await Promise.all([
     getQuote(ticker).catch(() => null),
     stock.isin ? getCurrentStats(stock.isin).catch(() => null) : null,
+    stock.bloomberg_ticker ? getPrimer(stock.bloomberg_ticker).catch(() => null) : null,
     user
       ? supabase.from("stock_watchlist").select("ticker").eq("user_id", user.id).eq("ticker", ticker).maybeSingle()
       : { data: null },
@@ -52,48 +54,48 @@ export default async function StockPage({ params }: StockPageProps) {
 
   return (
     <div>
-      {/* Stock header */}
-      <div className="border-b border-[#282828] px-5 py-4">
+      {/* Stock header + quote merged */}
+      <div className="border-b border-[#282828] px-5 py-4 bg-[#080808]">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-black text-[#F0F0F0]">{stock.name}</h1>
+            <h1 className="text-base sm:text-xl font-black text-[#F0F0F0] leading-snug">{stock.name}</h1>
             <p className="text-xs text-[#71717A] font-mono mt-0.5">
               {ticker} · {stock.exchange_code ?? "SGX"}
               {stock.sector && ` · ${stock.sector}`}
             </p>
+            <div className="flex flex-wrap items-baseline gap-2 mt-2">
+              {quote?.price != null ? (
+                <>
+                  <span className="text-2xl sm:text-3xl font-black text-[#F0F0F0] font-mono">
+                    {formatPrice(quote.price, quote.currency ?? "SGD")}
+                  </span>
+                  <span className={`text-sm font-bold ${isPositive ? "text-[#22C55E]" : "text-[#EF4444]"}`}>
+                    {isPositive ? "+" : ""}{quote.change?.toFixed(3)} ({isPositive ? "+" : ""}{quote.change_pct?.toFixed(2)}%)
+                  </span>
+                </>
+              ) : (
+                <span className="text-[#71717A] text-sm">Price unavailable</span>
+              )}
+            </div>
           </div>
-          {profile && (
-            <FollowButton
-              ticker={rawTicker}
-              displayTicker={ticker}
-              initialFollowing={isFollowing}
-              initialFollowerCount={followerCount}
-            />
-          )}
-        </div>
-        <div className="flex items-center gap-4 mt-3">
-          <span className="text-sm font-bold text-[#F0F0F0]">{followerCount.toLocaleString()} <span className="text-xs text-[#71717A] font-normal">followers</span></span>
-          <span className="text-sm font-bold text-[#F0F0F0]">{postCount.toLocaleString()} <span className="text-xs text-[#71717A] font-normal">posts</span></span>
+          <div className="flex flex-col items-end gap-2 flex-shrink-0">
+            {(followerCount > 100 || postCount > 100) && (
+              <div className="flex items-center gap-3">
+                {followerCount > 100 && <span className="text-sm font-bold text-[#F0F0F0]">{followerCount.toLocaleString()} <span className="text-xs text-[#71717A] font-normal">followers</span></span>}
+                {postCount > 100 && <span className="text-sm font-bold text-[#F0F0F0]">{postCount.toLocaleString()} <span className="text-xs text-[#71717A] font-normal">posts</span></span>}
+              </div>
+            )}
+            {profile && (
+              <FollowButton
+                ticker={rawTicker}
+                displayTicker={ticker}
+                initialFollowing={isFollowing}
+                initialFollowerCount={followerCount}
+              />
+            )}
+          </div>
         </div>
       </div>
-
-      {/* Quote bar */}
-      {quote?.price != null ? (
-        <div className="px-5 py-5 border-b border-[#282828] bg-[#080808]">
-          <div className="flex flex-wrap items-baseline gap-2 sm:gap-3">
-            <span className="text-4xl font-black text-[#F0F0F0] font-mono">
-              {formatPrice(quote.price, quote.currency ?? "SGD")}
-            </span>
-            <span className={`text-sm font-bold ${isPositive ? "text-[#22C55E]" : "text-[#EF4444]"}`}>
-              {isPositive ? "+" : ""}{quote.change?.toFixed(3)} ({isPositive ? "+" : ""}{quote.change_pct?.toFixed(2)}%)
-            </span>
-          </div>
-        </div>
-      ) : (
-        <div className="px-5 py-4 border-b border-[#282828] bg-[#080808]">
-          <p className="text-[#71717A] text-sm">Price data unavailable</p>
-        </div>
-      )}
 
       {profile && (
         <StockPageClient
@@ -103,6 +105,12 @@ export default async function StockPage({ params }: StockPageProps) {
           isPositive={isPositive}
           description={stock.description ?? null}
           stats={stats ?? null}
+          primer={primer?.primer ? {
+            executive_summary: primer.primer.executive_summary,
+            three_bullish_points: primer.primer.three_bullish_points,
+            three_bearish_points: primer.primer.three_bearish_points,
+            key_risks: primer.primer.key_risks,
+          } : null}
           quote={quote ? {
             currency: quote.currency,
             year_high: quote.year_high,

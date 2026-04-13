@@ -6,6 +6,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { PenLine, X, FileText, ExternalLink } from "lucide-react";
 import { formatPrice, formatMarketCap } from "@/lib/utils";
+import { stripHtml } from "@/lib/smartkarma/primer";
 import type { Profile, Sentiment } from "@/types/database";
 
 interface StatsData {
@@ -30,6 +31,13 @@ interface NewsItem {
   pubDate: string;
 }
 
+interface PrimerSummary {
+  executive_summary: string[];
+  three_bullish_points: string[];
+  three_bearish_points: string[];
+  key_risks: string[];
+}
+
 interface StockPageClientProps {
   ticker: string;
   displayTicker: string;
@@ -38,6 +46,7 @@ interface StockPageClientProps {
   description: string | null;
   stats: StatsData | null;
   quote: QuoteData | null;
+  primer: PrimerSummary | null;
 }
 
 
@@ -362,8 +371,13 @@ export function StockPageClient({
   description,
   stats,
   quote,
+  primer,
 }: StockPageClientProps) {
   const [showFullDesc, setShowFullDesc] = useState(false);
+  const [summaryExpanded, setSummaryExpanded] = useState(false);
+  const [bullishExpanded, setBullishExpanded] = useState(false);
+  const [bearishExpanded, setBearishExpanded] = useState(false);
+  const [risksExpanded, setRisksExpanded] = useState(false);
   const [topTab, setTopTab] = useState("posts");
 
   function switchTab(id: string) {
@@ -386,7 +400,7 @@ export function StockPageClient({
       {/* Stats grid */}
       {(stats || quote) && (
         <div className="px-5 py-4 border-b border-[#282828] bg-[#080808]">
-          <div className="grid grid-cols-4 gap-x-2 sm:gap-x-4 gap-y-2 sm:gap-y-3">
+          <div className="grid grid-cols-4 gap-x-4 gap-y-3">
             {[
               { label: "Mkt Cap",   value: formatMarketCap(stats?.market_cap ?? null), color: null },
               { label: "P/E",       value: stats?.pe_ratio?.toFixed(1) ?? "--", color: null },
@@ -406,29 +420,137 @@ export function StockPageClient({
         </div>
       )}
 
-      {/* Description */}
-      {description && (
+      {/* Fallback About — only shown if no primer data (left panel handles primer overview) */}
+      {!primer && description && (
         <div className="px-5 py-4 border-b border-[#282828]">
-          <p className="text-sm text-[#C0C0C0] leading-relaxed">
-            {showFullDesc ? (
-              <>{description}<button onClick={() => setShowFullDesc(false)} className="ml-1.5 text-xs text-[#E8311A] hover:underline">Show less</button></>
-            ) : (
-              <>{description.slice(0, 100)}…<button onClick={() => setShowFullDesc(true)} className="ml-1 text-xs text-[#E8311A] hover:underline">Show more</button></>
-            )}
-          </p>
+          <div className="border border-[#282828] rounded-lg p-4">
+            <p className="text-xs font-bold text-[#9CA3AF] uppercase tracking-wider mb-3">About</p>
+            <p className="text-xs text-[#C0C0C0] leading-relaxed">
+              {showFullDesc ? (
+                <>{description}<button onClick={() => setShowFullDesc(false)} className="ml-1.5 text-[11px] text-[#71717A] hover:text-[#F0F0F0] transition-colors">Show less</button></>
+              ) : (
+                <>{description.slice(0, 200)}…<button onClick={() => setShowFullDesc(true)} className="ml-1 text-[11px] text-[#71717A] hover:text-[#F0F0F0] transition-colors">Show more</button></>
+              )}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Primer: Executive Summary + Bull/Bear */}
+      {primer && (primer.executive_summary.length > 0 || primer.three_bullish_points.length > 0 || primer.three_bearish_points.length > 0 || primer.key_risks.length > 0) && (
+        <div className="px-5 py-4 border-b border-[#282828] space-y-3">
+          {/* Executive Summary */}
+          {primer.executive_summary.length > 0 && (
+            <div className="widget-hover border border-[#282828] rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">Executive Summary</p>
+                <a href="https://www.smartkarma.com/home/smartwealth/" target="_blank" rel="noopener noreferrer" className="text-[10px] text-[#555555] hover:text-[#9CA3AF] transition-colors">by Smartkarma</a>
+              </div>
+              <ul className="space-y-2">
+                {(summaryExpanded ? primer.executive_summary : primer.executive_summary.slice(0, 1)).map((point, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="text-[#555555] flex-shrink-0 mt-0.5">·</span>
+                    <span className="text-xs text-[#C0C0C0] leading-relaxed"
+                      style={(!summaryExpanded && i === 0) ? { display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" } : undefined}>
+                      {stripHtml(point)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <button onClick={() => setSummaryExpanded(e => !e)} className="mt-2 text-[11px] text-[#71717A] hover:text-[#F0F0F0] transition-colors">
+                {summaryExpanded ? "Show less" : "Show more"}
+              </button>
+            </div>
+          )}
+
+          {/* Bullish + Bearish side by side */}
+          {(primer.three_bullish_points.length > 0 || primer.three_bearish_points.length > 0) && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {primer.three_bullish_points.length > 0 && (
+                <div className="widget-hover border border-[#282828] rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-xs font-bold text-[#22C55E] uppercase tracking-wider">Bullish</p>
+                    <a href="https://www.smartkarma.com/home/smartwealth/" target="_blank" rel="noopener noreferrer" className="text-[10px] text-[#555555] hover:text-[#9CA3AF] transition-colors">by Smartkarma</a>
+                  </div>
+                  <ul className="space-y-2">
+                    {(bullishExpanded ? primer.three_bullish_points : primer.three_bullish_points.slice(0, 1)).map((point, i) => (
+                      <li key={i} className="flex items-start gap-1.5">
+                        <span className="text-[#22C55E] flex-shrink-0 mt-0.5 text-xs font-bold">+</span>
+                        <span className="text-xs text-[#9CA3AF] leading-relaxed"
+                          style={(!bullishExpanded && i === 0) ? { display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" } : undefined}>
+                          {stripHtml(point)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  <button onClick={() => setBullishExpanded(e => !e)} className="mt-2 text-[11px] text-[#71717A] hover:text-[#F0F0F0] transition-colors">
+                    {bullishExpanded ? "Show less" : "Show more"}
+                  </button>
+                </div>
+              )}
+              {primer.three_bearish_points.length > 0 && (
+                <div className="widget-hover border border-[#282828] rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-xs font-bold text-[#EF4444] uppercase tracking-wider">Bearish</p>
+                    <a href="https://www.smartkarma.com/home/smartwealth/" target="_blank" rel="noopener noreferrer" className="text-[10px] text-[#555555] hover:text-[#9CA3AF] transition-colors">by Smartkarma</a>
+                  </div>
+                  <ul className="space-y-2">
+                    {(bearishExpanded ? primer.three_bearish_points : primer.three_bearish_points.slice(0, 1)).map((point, i) => (
+                      <li key={i} className="flex items-start gap-1.5">
+                        <span className="text-[#EF4444] flex-shrink-0 mt-0.5 text-xs font-bold">−</span>
+                        <span className="text-xs text-[#9CA3AF] leading-relaxed"
+                          style={(!bearishExpanded && i === 0) ? { display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" } : undefined}>
+                          {stripHtml(point)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  <button onClick={() => setBearishExpanded(e => !e)} className="mt-2 text-[11px] text-[#71717A] hover:text-[#F0F0F0] transition-colors">
+                    {bearishExpanded ? "Show less" : "Show more"}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Key Risks */}
+          {primer.key_risks.length > 0 && (
+            <div className="widget-hover border border-[#282828] rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-bold text-[#EF4444] uppercase tracking-wider">Key Risks</p>
+                <a href="https://www.smartkarma.com/home/smartwealth/" target="_blank" rel="noopener noreferrer" className="text-[10px] text-[#555555] hover:text-[#9CA3AF] transition-colors">by Smartkarma</a>
+              </div>
+              <ul className="space-y-2">
+                {(risksExpanded ? primer.key_risks : primer.key_risks.slice(0, 1)).map((point, i) => (
+                  <li key={i} className="flex items-start gap-1.5">
+                    <span className="text-[#EF4444] flex-shrink-0 mt-0.5 text-xs font-bold">!</span>
+                    <span className="text-xs text-[#9CA3AF] leading-relaxed"
+                      style={(!risksExpanded && i === 0) ? { display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" } : undefined}>
+                      {stripHtml(point)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <button onClick={() => setRisksExpanded(e => !e)} className="mt-2 text-[11px] text-[#71717A] hover:text-[#F0F0F0] transition-colors">
+                {risksExpanded ? "Show less" : "Show more"}
+              </button>
+            </div>
+          )}
         </div>
       )}
 
       {/* Tabs */}
       <div className="sticky top-14 z-10 bg-[#0A0A0A]/95 backdrop-blur-md overflow-anchor-none" style={{ overflowAnchor: "none" }}>
-        {/* Top row */}
+        <div className="px-5 pt-3 pb-0">
+          <p className="text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">Community</p>
+        </div>
         <div className="flex border-b border-[#282828]">
           {TOP_TABS.map(({ id, label }) => (
             <button
               key={id}
               onClick={() => switchTab(id)}
               className={cn(
-                "flex-1 py-3.5 text-sm font-medium transition-colors relative",
+                "flex-1 py-3 text-xs font-medium transition-colors relative",
                 topTab === id ? "text-[#F0F0F0]" : "text-[#9CA3AF] hover:text-[#F0F0F0]"
               )}
             >

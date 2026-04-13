@@ -129,7 +129,7 @@ export function PostComposer({ profile, onPost, defaultTicker }: PostComposerPro
               postType === "forecast" ? "What's your thesis?" :
               "What are your thoughts? 发!"
             }
-            className="w-full bg-transparent text-[#F0F0F0] placeholder:text-[#71717A] text-base resize-none focus:outline-none min-h-[80px]"
+            className="w-full bg-[#141414] border border-[#333333] rounded-lg px-3 py-2.5 text-[#F0F0F0] placeholder:text-[#555555] text-base resize-none focus:outline-none focus:border-[#444444] min-h-[80px] transition-colors"
             rows={3}
           />
 

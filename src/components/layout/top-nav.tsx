@@ -229,20 +229,20 @@ function MobileSearchOverlay() {
 export function TopNav({ unreadNotifs = 0, unreadMessages = 0, profile }: { unreadNotifs?: number; unreadMessages?: number; profile?: Profile }) {
   return (
     <header className="fixed top-0 left-0 right-0 z-30 bg-[#0A0A0A]/95 backdrop-blur-md border-b border-[#282828] h-14">
-      <div className="max-w-6xl mx-auto h-full px-4 flex items-center gap-4">
+      <div className="max-w-[1290px] mx-auto h-full flex items-center">
         {/* Logo — aligns with sidebar width */}
-        <Link href="/feed" className="flex items-baseline gap-2 flex-shrink-0 lg:w-64">
+        <Link href="/feed" className="flex items-baseline gap-2 flex-shrink-0 lg:w-80 px-4">
           <span className="text-[#E8311A] font-black text-2xl tracking-tighter leading-none">huat</span>
           <span className="text-[#E8311A] font-black text-2xl">发</span>
         </Link>
 
         {/* Search — hidden on mobile (collapsed to icon), visible sm+ */}
-        <div className="hidden sm:flex flex-1 min-w-0">
+        <div className="hidden sm:flex flex-1 lg:w-[650px] lg:flex-shrink-0 px-5">
           <SearchBar />
         </div>
 
         {/* Right icons */}
-        <div className="flex items-center justify-end gap-1 sm:gap-2 flex-shrink-0 xl:w-80 xl:pr-6 ml-auto sm:ml-0">
+        <div className="flex items-center justify-end gap-1 sm:gap-2 flex-shrink-0 xl:w-80 px-4 ml-auto sm:ml-0">
           {/* Mobile search icon */}
           <MobileSearchOverlay />
           <Link

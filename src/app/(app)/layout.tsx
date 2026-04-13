@@ -26,9 +26,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-screen bg-[#0A0A0A]">
       <TopNav unreadNotifs={unreadNotifs} unreadMessages={unreadMessages} profile={profile as Profile} />
-      <div className="flex max-w-6xl mx-auto pt-14">
+      <div className="flex max-w-[1290px] mx-auto pt-14">
         <Sidebar />
-        <main className="flex-1 min-h-screen border-l border-[#282828] pb-16 lg:pb-0">
+        <main className="flex-1 min-h-screen border-l border-[#282828] pb-16 lg:pb-0 min-w-0 overflow-x-hidden">
           {children}
         </main>
         <RightAside>

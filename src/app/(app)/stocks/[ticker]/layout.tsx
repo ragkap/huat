@@ -1,43 +1,49 @@
 import { Suspense } from "react";
 import { getSmartScore } from "@/lib/smartkarma/client";
+import { getPrimer } from "@/lib/smartkarma/primer";
 import { getStockBySlugOrTicker } from "@/lib/stocks-db/client";
-import { SmartScoreWidget } from "@/components/stock/smart-score-widget";
+import { RHSWidgetsClient } from "@/components/stock/rhs-widgets-client";
 
 interface Props {
   children: React.ReactNode;
   params: Promise<{ ticker: string }>;
 }
 
-async function SmartScoreLoader({ identifier }: { identifier: string }) {
-  try {
-    const stock = await getStockBySlugOrTicker(identifier);
-    if (!stock?.slug) return null;
-    const smartScore = await getSmartScore(stock.slug);
-    if (smartScore?.score == null) return null;
-    return <SmartScoreWidget smartScore={smartScore} />;
-  } catch {
-    return null;
-  }
+async function RHSWidgets({ identifier }: { identifier: string }) {
+  const stock = await getStockBySlugOrTicker(identifier);
+  if (!stock) return null;
+
+  const [smartScore, primerResult] = await Promise.all([
+    stock.slug ? getSmartScore(stock.slug).catch(() => null) : null,
+    stock.bloomberg_ticker ? getPrimer(stock.bloomberg_ticker) : { status: "error" as const, primer: null },
+  ]);
+
+  return (
+    <RHSWidgetsClient
+      ticker={identifier}
+      initialStatus={primerResult.status}
+      initialPrimer={primerResult.primer}
+      smartScore={smartScore ?? null}
+    />
+  );
 }
 
-export default function StockTickerLayout({ children, params }: Props) {
-  const identifierPromise = params.then(p => decodeURIComponent(p.ticker));
+export default async function StockTickerLayout({ children, params }: Props) {
+  const identifier = decodeURIComponent((await params).ticker);
 
   return (
     <div className="flex min-h-screen">
-      <div className="flex-1 min-w-0 min-h-screen">{children}</div>
-      <aside className="w-72 xl:w-80 flex-shrink-0 p-5 hidden xl:block border-l border-[#282828]">
-        <div className="sticky top-20 space-y-4">
+      <div className="flex-1 min-w-0 min-h-screen">
+        {children}
+      </div>
+      {/* Desktop RHS sidebar */}
+      <aside className="w-80 flex-shrink-0 p-5 hidden xl:block border-l border-[#282828]">
+        <div className="sticky top-20 space-y-4 overflow-y-auto max-h-[calc(100vh-6rem)]">
           <Suspense fallback={null}>
-            <SmartScoreLoaderWrapper identifierPromise={identifierPromise} />
+            <RHSWidgets identifier={identifier} />
           </Suspense>
         </div>
       </aside>
     </div>
   );
-}
-
-async function SmartScoreLoaderWrapper({ identifierPromise }: { identifierPromise: Promise<string> }) {
-  const identifier = await identifierPromise;
-  return <SmartScoreLoader identifier={identifier} />;
 }
