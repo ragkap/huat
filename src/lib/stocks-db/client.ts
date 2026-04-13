@@ -96,6 +96,86 @@ export async function searchStocks(query: string, limit = 20): Promise<SGStock[]
   }
 }
 
+export async function getStockNamesByTickers(tickers: string[]): Promise<Record<string, string>> {
+  if (!tickers.length) return {};
+  const client = await getPool().connect();
+  try {
+    const placeholders = tickers.map((_, i) => `$${i + 1}`).join(", ");
+    const result = await client.query<{ bloomberg_ticker: string; name: string }>(
+      `SELECT e.bloomberg_ticker, e.pretty_name AS name
+       FROM entities e
+       WHERE e.bloomberg_ticker = ANY(ARRAY[${placeholders}]::text[])`,
+      tickers
+    );
+    const map: Record<string, string> = {};
+    for (const row of result.rows) {
+      if (row.bloomberg_ticker) map[row.bloomberg_ticker] = row.name;
+    }
+    return map;
+  } finally {
+    client.release();
+  }
+}
+
+export interface StockIdentity {
+  slug: string;
+  bloomberg_ticker: string;
+  name: string;
+  yahoo_ticker: string | null;
+}
+
+export async function getStocksBySlugs(slugs: string[]): Promise<StockIdentity[]> {
+  if (!slugs.length) return [];
+  const client = await getPool().connect();
+  try {
+    const placeholders = slugs.map((_, i) => `$${i + 1}`).join(", ");
+    const result = await client.query<StockIdentity>(
+      `SELECT e.slug, e.bloomberg_ticker, e.pretty_name AS name, e.yahoo_ticker
+       FROM entities e
+       WHERE e.slug = ANY(ARRAY[${placeholders}]::text[])`,
+      slugs
+    );
+    return result.rows;
+  } finally {
+    client.release();
+  }
+}
+
+export interface ResearchItem {
+  tagline: string;
+  executive_summary: string;
+  url: string;
+  author: string;
+  published_at: string;
+}
+
+export async function getResearchForTicker(bloombergTicker: string, limit = 20): Promise<ResearchItem[]> {
+  const client = await getPool().connect();
+  try {
+    const result = await client.query<ResearchItem>(
+      `SELECT
+         i.tagline,
+         i.executive_summary,
+         'https://www.smartkarma.com/insights/' || i.slug AS url,
+         a.name AS author,
+         i.published_at
+       FROM insights i
+       INNER JOIN entities e ON i.primary_entity_id = e.id
+       INNER JOIN accounts a ON a.id = i.account_id
+       WHERE e.exchange_code = 'SP'
+         AND (e.market_status IN ('listed', 'pending-listing') OR e.market_status IS NULL)
+         AND e.bloomberg_ticker = $1
+         AND i.aasm_state = 'published'
+       ORDER BY i.created_at DESC
+       LIMIT $2`,
+      [bloombergTicker, limit]
+    );
+    return result.rows;
+  } finally {
+    client.release();
+  }
+}
+
 export async function getStockBySlugOrTicker(identifier: string): Promise<SGStock | null> {
   const client = await getPool().connect();
   try {

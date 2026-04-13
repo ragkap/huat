@@ -37,8 +37,8 @@ export default async function StockTickerLayout({ children, params }: Props) {
         {children}
       </div>
       {/* Desktop RHS sidebar */}
-      <aside className="w-80 flex-shrink-0 p-5 hidden xl:block border-l border-[#282828]">
-        <div className="sticky top-20 space-y-4 overflow-y-auto max-h-[calc(100vh-6rem)]">
+      <aside className="w-80 flex-shrink-0 px-5 pb-5 hidden xl:block border-l border-[#282828]">
+        <div className="sticky top-16 pt-3 space-y-4 overflow-y-auto max-h-[calc(100vh-4rem)]">
           <Suspense fallback={null}>
             <RHSWidgets identifier={identifier} />
           </Suspense>

@@ -88,7 +88,6 @@ export default async function StockPage({ params }: StockPageProps) {
             {profile && (
               <FollowButton
                 ticker={rawTicker}
-                displayTicker={ticker}
                 initialFollowing={isFollowing}
                 initialFollowerCount={followerCount}
               />

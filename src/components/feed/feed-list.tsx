@@ -64,6 +64,23 @@ export function FeedList({ tab, profile, stockTicker, postType }: FeedListProps)
   }, [hasMore, loading, fetchPosts]);
 
   async function handleReact(postId: string, type: string) {
+    const post = posts.find(p => p.id === postId);
+    if (!post) return;
+    const wasReacted = !!post.user_reaction;
+    // Optimistic update
+    setPosts(prev => prev.map(p => {
+      if (p.id !== postId) return p;
+      const counts = { ...(p.reactions_count ?? { like: 0, fire: 0, rocket: 0, bear: 0, total: 0 }) };
+      if (wasReacted) {
+        counts[p.user_reaction as keyof typeof counts] = Math.max(0, (counts[p.user_reaction as keyof typeof counts] as number) - 1);
+        counts.total = Math.max(0, counts.total - 1);
+        return { ...p, user_reaction: null, reactions_count: counts };
+      } else {
+        counts[type as keyof typeof counts] = (counts[type as keyof typeof counts] as number) + 1;
+        counts.total = counts.total + 1;
+        return { ...p, user_reaction: type as Post["user_reaction"], reactions_count: counts };
+      }
+    }));
     await fetch(`/api/posts/${postId}/react`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

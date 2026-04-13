@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { getStockNamesByTickers } from "@/lib/stocks-db/client";
 
 const PAGE_SIZE = 20;
 
@@ -55,7 +56,10 @@ export async function GET(request: Request) {
   // Enrich with reaction counts and saved status
   const postIds = (posts ?? []).map(p => p.id as string);
 
-  const [reactionsResult, savedResult, pollVotesResult] = await Promise.all([
+  // Collect all unique tickers across posts for a single batch name lookup
+  const allTickers = [...new Set((posts ?? []).flatMap(p => p.tagged_stocks as string[] ?? []))];
+
+  const [reactionsResult, savedResult, pollVotesResult, stockNames] = await Promise.all([
     postIds.length
       ? supabase.from("reactions").select("post_id, type, user_id").in("post_id", postIds)
       : Promise.resolve({ data: [] }),
@@ -65,6 +69,7 @@ export async function GET(request: Request) {
     postIds.length
       ? supabase.from("poll_votes").select("poll_id, option_id, user_id").in("poll_id", (posts ?? []).filter(p => p.post_type === "poll").map(p => p.poll?.id).filter(Boolean) as string[])
       : Promise.resolve({ data: [] }),
+    getStockNamesByTickers(allTickers).catch(() => ({} as Record<string, string>)),
   ]);
 
   const allReactions = reactionsResult.data ?? [];
@@ -92,12 +97,19 @@ export async function GET(request: Request) {
       enrichedPoll = { ...post.poll, vote_counts: voteCounts, user_vote: userVote, total_votes: pVotes.length };
     }
 
+    const postTickers = (post.tagged_stocks as string[]) ?? [];
+    const tagged_stock_names: Record<string, string> = {};
+    for (const t of postTickers) {
+      if (stockNames[t]) tagged_stock_names[t] = stockNames[t];
+    }
+
     return {
       ...post,
       reactions_count: counts,
       user_reaction: userReaction,
       is_saved: savedSet.has(post.id as string),
       poll: enrichedPoll,
+      tagged_stock_names,
     };
   });
 

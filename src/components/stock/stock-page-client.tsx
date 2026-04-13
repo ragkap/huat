@@ -185,6 +185,224 @@ function NewsShareComposer({
   );
 }
 
+interface ResearchItem {
+  tagline: string;
+  executive_summary: string;
+  url: string;
+  author: string;
+  published_at: string;
+}
+
+function ResearchShareComposer({
+  item,
+  ticker,
+  displayTicker,
+  profile,
+  onClose,
+  onPost,
+}: {
+  item: ResearchItem;
+  ticker: string;
+  displayTicker: string;
+  profile: Profile;
+  onClose: () => void;
+  onPost: () => void;
+}) {
+  const [content, setContent] = useState("");
+  const [sentiment, setSentiment] = useState<Sentiment | null>(null);
+  const [posting, setPosting] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => { textareaRef.current?.focus(); }, []);
+
+  const canPost = content.trim().length > 0 && sentiment !== null;
+
+  async function handlePost() {
+    if (!canPost) return;
+    setPosting(true);
+    try {
+      await fetch("/api/posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: `${content}\n\n📰 ${item.tagline} — Smartkarma\n${item.url}`,
+          sentiment,
+          post_type: "post",
+          tagged_stocks: [displayTicker],
+        }),
+      });
+      onPost();
+      onClose();
+    } finally {
+      setPosting(false);
+    }
+  }
+
+  return (
+    <div className="px-5 py-4 border-b border-[#282828] bg-[#0D0D0D]">
+      <div className="flex gap-3">
+        <Avatar src={profile.avatar_url} alt={profile.display_name} size="md" />
+        <div className="flex-1 min-w-0">
+          <textarea
+            ref={textareaRef}
+            value={content}
+            onChange={e => setContent(e.target.value.slice(0, 1000))}
+            placeholder="Add your take…"
+            rows={3}
+            className="w-full bg-transparent text-[#F0F0F0] placeholder:text-[#71717A] text-sm resize-none focus:outline-none"
+          />
+          <a
+            href={item.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block border border-[#282828] rounded p-2.5 mb-3 bg-[#141414] hover:border-[#444444] transition-colors"
+          >
+            <p className="text-xs font-semibold text-[#F0F0F0] leading-snug line-clamp-2">{item.tagline}</p>
+            <p className="text-xs text-[#71717A] mt-1">{item.author}</p>
+          </a>
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-xs text-[#71717A] uppercase tracking-wider">Sentiment:</span>
+            {([
+              { value: "bullish" as Sentiment, color: "#22C55E" },
+              { value: "bearish" as Sentiment, color: "#EF4444" },
+              { value: "neutral" as Sentiment, color: "#9CA3AF" },
+            ]).map(({ value: s, color }) => (
+              <button
+                key={s}
+                onClick={() => setSentiment(prev => prev === s ? null : s)}
+                className="text-xs px-2 py-1 rounded border transition-colors capitalize"
+                style={sentiment === s
+                  ? { borderColor: color, color, backgroundColor: `${color}18` }
+                  : { borderColor: "#333333", color, opacity: 0.5 }
+                }
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-xs bg-[#E8311A]/10 text-[#E8311A] border border-[#E8311A]/20 rounded px-2 py-0.5 font-mono">
+              ${displayTicker}
+            </span>
+            <div className="flex items-center gap-2">
+              <button onClick={onClose} className="text-xs text-[#71717A] hover:text-[#9CA3AF] px-3 py-1.5">Cancel</button>
+              <div className="relative group">
+                <button
+                  onClick={handlePost}
+                  disabled={!canPost || posting}
+                  className={cn(
+                    "text-xs font-bold px-3 py-1.5 rounded transition-colors",
+                    canPost && !posting ? "bg-[#E8311A] text-white hover:bg-[#d12d17]" : "bg-[#282828] text-[#71717A] cursor-not-allowed"
+                  )}
+                >
+                  {posting ? "Posting…" : "Huat!"}
+                </button>
+                {!canPost && !posting && (
+                  <div className="absolute bottom-full right-0 mb-2 w-40 bg-[#1C1C1C] border border-[#333333] rounded px-2.5 py-2 text-xs text-[#9CA3AF] shadow-lg pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+                    {[!content.trim() && "Add your take", sentiment === null && "Pick a sentiment"].filter(Boolean).map((msg, i) => (
+                      <p key={i} className="leading-snug">· {msg}</p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ResearchTab({ ticker, displayTicker, profile }: { ticker: string; displayTicker: string; profile: Profile }) {
+  const [items, setItems] = useState<ResearchItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [sharingIdx, setSharingIdx] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetch(`/api/stocks/${encodeURIComponent(ticker)}/research`)
+      .then(r => r.json())
+      .then(d => setItems(d.research ?? []))
+      .catch(() => setItems([]))
+      .finally(() => setLoading(false));
+  }, [ticker]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12">
+        <div className="w-5 h-5 border-2 border-[#333333] border-t-[#E8311A] rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!items.length) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center px-8">
+        <div className="flex items-end gap-0.5 mb-5">
+          {[0.5, 1, 0.7].map((h, i) => (
+            <span key={i} className="w-1 rounded-full bg-[#E8311A] opacity-40" style={{ height: `${h * 24}px` }} />
+          ))}
+        </div>
+        <p className="text-[#9CA3AF] text-sm">No research found</p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {items.map((item, i) => (
+        <div key={i}>
+          <div className="flex items-start gap-3 px-5 py-4 border-b border-[#141414]">
+            <div className="flex-1 min-w-0">
+              <a
+                href={item.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm font-semibold text-[#F0F0F0] leading-snug hover:text-white line-clamp-2 block mb-2"
+              >
+                {item.tagline}
+              </a>
+              {item.executive_summary && (
+                <div className="mb-2">
+                  <p className="text-[10px] font-bold text-[#555555] uppercase tracking-wider mb-1.5">Executive Summary</p>
+                  <div
+                    className="research-html text-xs text-[#9CA3AF] leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: item.executive_summary }}
+                  />
+                </div>
+              )}
+              <span className="text-xs text-[#555555]">
+                {item.author} · {new Date(item.published_at).toLocaleDateString("en-SG", { day: "numeric", month: "short", year: "numeric" })}
+              </span>
+            </div>
+            <button
+              onClick={() => setSharingIdx(sharingIdx === i ? null : i)}
+              className={cn(
+                "flex-shrink-0 flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded border transition-colors mt-0.5",
+                sharingIdx === i
+                  ? "border-[#E8311A] text-[#E8311A] bg-[#E8311A]/10"
+                  : "border-[#282828] text-[#71717A] hover:border-[#E8311A] hover:text-[#E8311A]"
+              )}
+            >
+              {sharingIdx === i ? <X className="w-3 h-3" /> : <PenLine className="w-3 h-3" />}
+              Post
+            </button>
+          </div>
+          {sharingIdx === i && (
+            <ResearchShareComposer
+              item={item}
+              ticker={ticker}
+              displayTicker={displayTicker}
+              profile={profile}
+              onClose={() => setSharingIdx(null)}
+              onPost={() => setSharingIdx(null)}
+            />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 interface AnnouncementItem {
   title: string;
   attachments: string[];
@@ -546,10 +764,10 @@ export function StockPageClient({
         </div>
       )}
 
-      {/* Tabs */}
-      <div className="sticky top-14 z-10 bg-[#0A0A0A]/95 backdrop-blur-md overflow-anchor-none" style={{ overflowAnchor: "none" }}>
-        <div className="px-5 pt-3 pb-0">
-          <p className="text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">Community</p>
+      {/* Community header + tabs */}
+      <div className="sticky top-14 z-10 bg-[#0A0A0A]/95 backdrop-blur-md" style={{ overflowAnchor: "none" }}>
+        <div className="px-5 py-3 border-b border-[#282828]">
+          <p className="text-xs font-bold text-[#555555] uppercase tracking-widest">Community</p>
         </div>
         <div className="flex border-b border-[#282828]">
           {TOP_TABS.map(({ id, label }) => (
@@ -557,8 +775,8 @@ export function StockPageClient({
               key={id}
               onClick={() => switchTab(id)}
               className={cn(
-                "flex-1 py-3 text-xs font-medium transition-colors relative",
-                topTab === id ? "text-[#F0F0F0]" : "text-[#9CA3AF] hover:text-[#F0F0F0]"
+                "flex-1 py-3 text-sm font-semibold transition-colors relative",
+                topTab === id ? "text-[#F0F0F0]" : "text-[#555555] hover:text-[#9CA3AF]"
               )}
             >
               {label}
@@ -574,12 +792,14 @@ export function StockPageClient({
         <NewsTab ticker={ticker} displayTicker={displayTicker} profile={profile} />
       ) : topTab === "announcement" ? (
         <AnnouncementsTab ticker={ticker} displayTicker={displayTicker} profile={profile} />
+      ) : topTab === "research" ? (
+        <ResearchTab ticker={ticker} displayTicker={displayTicker} profile={profile} />
       ) : (
         <FeedList
           tab="foryou"
           profile={profile}
           stockTicker={displayTicker ?? ticker}
-          postType={topTab === "posts" ? undefined : topTab}
+          postType={undefined}
         />
       )}
     </>

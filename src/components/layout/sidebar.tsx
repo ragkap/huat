@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, TrendingUp, LayoutDashboard, X } from "lucide-react";
+import { Home, TrendingUp, LayoutDashboard, X, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState, useRef } from "react";
 import { stripHtml } from "@/lib/smartkarma/primer";
@@ -12,6 +12,7 @@ import type { SmartScore } from "@/lib/smartkarma/client";
 
 const navItems = [
   { href: "/feed", label: "Feed", icon: Home },
+  { href: "/watchlist", label: "Watchlist", icon: Star },
   { href: "/stocks", label: "Stocks", icon: TrendingUp },
 ];
 

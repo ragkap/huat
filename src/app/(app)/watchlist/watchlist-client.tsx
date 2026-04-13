@@ -1,0 +1,212 @@
+"use client";
+import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
+import { TrendingUp, TrendingDown, X, Search, Plus } from "lucide-react";
+import { cn, formatPrice } from "@/lib/utils";
+
+interface WatchlistItem {
+  slug: string;
+  ticker: string;
+  name: string;
+  quote: {
+    price: number | null;
+    change: number | null;
+    change_pct: number | null;
+    currency: string | null;
+  } | null;
+}
+
+type SortKey = "name" | "change_pct";
+
+function StockSearchRow({ onAdd }: { onAdd: (ticker: string) => void }) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<{ bloomberg_ticker: string; name: string }[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!query.trim()) { setResults([]); return; }
+    setLoading(true);
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/stocks?q=${encodeURIComponent(query)}`);
+        const data = await res.json();
+        setResults((data.stocks ?? []).slice(0, 8));
+      } finally {
+        setLoading(false);
+      }
+    }, 250);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  return (
+    <div className="relative">
+      <div className="flex items-center gap-2 px-3 py-2 bg-[#141414] border border-[#282828] rounded-lg focus-within:border-[#444444] transition-colors">
+        <Search className="w-3.5 h-3.5 text-[#555555] flex-shrink-0" />
+        <input
+          value={query}
+          onChange={e => { setQuery(e.target.value); setOpen(true); }}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setTimeout(() => setOpen(false), 150)}
+          placeholder="Add stock..."
+          className="flex-1 bg-transparent text-sm text-[#F0F0F0] placeholder:text-[#555555] focus:outline-none"
+        />
+        {loading && <div className="w-3 h-3 border border-[#333333] border-t-[#9CA3AF] rounded-full animate-spin" />}
+      </div>
+
+      {open && results.length > 0 && (
+        <div className="absolute top-full left-0 right-0 mt-1 z-20 bg-[#141414] border border-[#282828] rounded-lg shadow-xl overflow-hidden">
+          {results.map(s => (
+            <button
+              key={s.bloomberg_ticker}
+              onMouseDown={() => {
+                onAdd(s.bloomberg_ticker);
+                setQuery("");
+                setResults([]);
+                setOpen(false);
+              }}
+              className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-[#1C1C1C] transition-colors"
+            >
+              <div className="text-left">
+                <p className="text-sm text-[#F0F0F0] font-medium">{s.name}</p>
+                <p className="text-xs text-[#71717A] font-mono">{s.bloomberg_ticker.replace(/ SP$/, "")}</p>
+              </div>
+              <Plus className="w-3.5 h-3.5 text-[#555555]" />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function WatchlistClient({ initialTickers }: { initialTickers: string[] }) {
+  const [items, setItems] = useState<WatchlistItem[]>(
+    initialTickers.map(t => ({ slug: t, ticker: t, name: t, quote: null }))
+  );
+  const [sort, setSort] = useState<SortKey>("name");
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/watchlist");
+      const data = await res.json();
+      setItems(data.items ?? []);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  async function handleAdd(ticker: string) {
+    // ticker here is always bloomberg_ticker from search results
+    if (items.some(i => i.ticker === ticker)) return;
+    const res = await fetch(`/api/stocks/${encodeURIComponent(ticker)}/watch`, { method: "POST" });
+    if (!res.ok) return;
+    await fetchData();
+  }
+
+  async function handleRemove(ticker: string) {
+    await fetch(`/api/stocks/${encodeURIComponent(ticker)}/watch`, { method: "DELETE" });
+    setItems(prev => prev.filter(i => i.ticker !== ticker));
+  }
+
+  const sorted = [...items].sort((a, b) => {
+    if (sort === "name") return (a.name ?? a.ticker).localeCompare(b.name ?? b.ticker);
+    const ap = a.quote?.change_pct ?? -Infinity;
+    const bp = b.quote?.change_pct ?? -Infinity;
+    return bp - ap;
+  });
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-6">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-lg font-bold text-[#F0F0F0]">Watchlist</h1>
+        <span className="text-xs text-[#555555]">{items.length} stock{items.length !== 1 ? "s" : ""}</span>
+      </div>
+
+      <div className="mb-5">
+        <StockSearchRow onAdd={handleAdd} />
+      </div>
+
+      {items.length > 1 && (
+        <div className="flex items-center gap-1 mb-4">
+          <span className="text-xs text-[#555555] mr-1">Sort:</span>
+          {([["name", "Name"], ["change_pct", "Day change"]] as [SortKey, string][]).map(([key, label]) => (
+            <button
+              key={key}
+              onClick={() => setSort(key)}
+              className={cn(
+                "px-2.5 py-1 text-xs rounded transition-colors",
+                sort === key ? "bg-[#282828] text-[#F0F0F0]" : "text-[#555555] hover:text-[#9CA3AF]"
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="space-y-px">
+          {Array.from({ length: initialTickers.length || 3 }).map((_, i) => (
+            <div key={i} className="flex items-center justify-between py-3.5 border-b border-[#141414]">
+              <div className="space-y-1.5">
+                <div className="h-3.5 w-28 bg-[#1C1C1C] rounded animate-pulse" />
+                <div className="h-2.5 w-16 bg-[#141414] rounded animate-pulse" />
+              </div>
+              <div className="h-4 w-20 bg-[#141414] rounded animate-pulse" />
+            </div>
+          ))}
+        </div>
+      ) : sorted.length === 0 ? (
+        <div className="py-20 text-center">
+          <p className="text-[#F0F0F0] font-medium mb-1">No stocks yet</p>
+          <p className="text-sm text-[#555555]">Search above to add stocks to your watchlist</p>
+        </div>
+      ) : (
+        <div>
+          {sorted.map(item => {
+            const pct = item.quote?.change_pct;
+            const positive = (pct ?? 0) >= 0;
+            const displayTicker = item.ticker.replace(/ SP$/, "");
+
+            return (
+              <div key={item.slug} className="flex items-center gap-3 py-3 border-b border-[#141414] group">
+                <Link href={`/stocks/${encodeURIComponent(item.slug)}`} className="flex-1 min-w-0 hover:opacity-80 transition-opacity">
+                  <p className="text-sm font-medium text-[#F0F0F0] truncate">{item.name}</p>
+                  <p className="text-xs text-[#555555] font-mono mt-0.5">{displayTicker}</p>
+                </Link>
+
+                <div className="flex-shrink-0 text-right min-w-[72px]">
+                  <p className="text-sm font-medium text-[#F0F0F0]">
+                    {item.quote?.price != null ? formatPrice(item.quote.price) : "—"}
+                  </p>
+                  {pct != null ? (
+                    <p className={cn("text-xs flex items-center justify-end gap-0.5 mt-0.5", positive ? "text-[#22C55E]" : "text-[#EF4444]")}>
+                      {positive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                      {positive ? "+" : ""}{pct.toFixed(2)}%
+                    </p>
+                  ) : (
+                    <p className="text-xs text-[#555555] mt-0.5">—</p>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => handleRemove(item.ticker)}
+                  className="opacity-0 group-hover:opacity-100 flex-shrink-0 w-6 h-6 flex items-center justify-center rounded text-[#555555] hover:text-[#EF4444] hover:bg-[#1C1C1C] transition-all"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}

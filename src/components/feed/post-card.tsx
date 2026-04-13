@@ -29,12 +29,6 @@ interface PostCardProps {
   onDelete?: (postId: string) => void;
 }
 
-const REACTIONS = [
-  { type: "like", emoji: "❤️", label: "Like" },
-  { type: "fire", emoji: "🔥", label: "Fire" },
-  { type: "rocket", emoji: "🚀", label: "Rocket" },
-  { type: "bear", emoji: "🐻", label: "Bear" },
-];
 
 function SentimentIcon({ sentiment }: { sentiment: Sentiment | null }) {
   if (!sentiment) return null;
@@ -275,13 +269,11 @@ function MoreMenu({
 }
 
 export function PostCard({ post, currentUserId, onReact, onSave, onRepost, onEdit, onDelete }: PostCardProps) {
-  const [showReactions, setShowReactions] = useState(false);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [localContent, setLocalContent] = useState(post.content);
 
   const reactions = post.reactions_count ?? { like: 0, fire: 0, rocket: 0, bear: 0, total: 0 };
-  const sentimentVariant = post.sentiment === "bullish" ? "bullish" : post.sentiment === "bearish" ? "bearish" : "neutral";
   const isOwn = !!currentUserId && post.author_id === currentUserId;
 
   async function handleSaveEdit(newContent: string) {
@@ -354,13 +346,40 @@ export function PostCard({ post, currentUserId, onReact, onSave, onRepost, onEdi
 
             {/* Post text — parse news embeds, render URLs as links */}
             {(() => {
+              const sentimentColor = post.sentiment === "bullish" ? "#22C55E" : post.sentiment === "bearish" ? "#EF4444" : "#E8311A";
+              const tickerPrefix = post.tagged_stocks?.length > 0
+                ? post.tagged_stocks.map(ticker => {
+                    const displayTicker = ticker.replace(/ SP$/, "");
+                    return (
+                      <Link
+                        key={ticker}
+                        href={`/stocks/${ticker}`}
+                        onClick={e => e.stopPropagation()}
+                        className="text-xs font-medium mr-1.5 align-middle border rounded px-1 py-0.5"
+                        style={{ color: sentimentColor, borderColor: sentimentColor + "40" }}
+                      >
+                        {post.sentiment && (
+                          <span className="inline-block align-middle mr-0.5 -mt-0.5">
+                            <SentimentIcon sentiment={post.sentiment} />
+                          </span>
+                        )}
+                        ${displayTicker}
+                      </Link>
+                    );
+                  })
+                : null;
+
               // News posts have format: "{user text}\n\n📰 {title} — {source}\n{url}"
               const newsMatch = localContent.match(/^([\s\S]*?)\n\n📰 ([\s\S]+?) — (.+?)\n(https?:\/\/\S+)\s*$/);
               if (newsMatch) {
                 const [, userText, title, source, url] = newsMatch;
                 return (
                   <>
-                    {userText.trim() && <p className="text-sm text-[#F0F0F0] leading-relaxed whitespace-pre-wrap mb-2">{renderTextWithLinks(userText.trim())}</p>}
+                    {(tickerPrefix || userText.trim()) && (
+                      <p className="text-sm text-[#F0F0F0] leading-relaxed mb-2">
+                        {tickerPrefix}{renderTextWithLinks(userText.trim())}
+                      </p>
+                    )}
                     <a href={url} target="_blank" rel="noopener noreferrer"
                       className="block border border-[#282828] rounded p-3 bg-[#141414] hover:border-[#444444] transition-colors"
                       onClick={e => e.stopPropagation()}
@@ -371,7 +390,11 @@ export function PostCard({ post, currentUserId, onReact, onSave, onRepost, onEdi
                   </>
                 );
               }
-              return <p className="text-sm text-[#F0F0F0] leading-relaxed whitespace-pre-wrap">{renderTextWithLinks(localContent)}</p>;
+              return (
+                <p className="text-sm text-[#F0F0F0] leading-relaxed">
+                  {tickerPrefix}{renderTextWithLinks(localContent)}
+                </p>
+              );
             })()}
 
             {/* Link preview attachment */}
@@ -404,26 +427,6 @@ export function PostCard({ post, currentUserId, onReact, onSave, onRepost, onEdi
             {/* Forecast */}
             {post.post_type === "forecast" && post.forecast && <ForecastDisplay forecast={post.forecast} />}
 
-            {/* Sentiment + Stock tags */}
-            {(post.sentiment || post.tagged_stocks?.length > 0) && (
-              <div className="flex flex-wrap items-center gap-1.5 mt-3">
-                {post.sentiment && (
-                  <Badge variant={sentimentVariant}>
-                    <SentimentIcon sentiment={post.sentiment} />
-                    <span className="ml-1 capitalize">{post.sentiment}</span>
-                  </Badge>
-                )}
-                {post.tagged_stocks?.map(ticker => (
-                  <Link
-                    key={ticker}
-                    href={`/stocks/${ticker}`}
-                    className="text-xs text-[#E8311A] hover:underline font-mono font-medium bg-[#E8311A]/5 px-2 py-0.5 rounded border border-[#E8311A]/20"
-                  >
-                    ${ticker}
-                  </Link>
-                ))}
-              </div>
-            )}
 
             {/* Actions */}
             <div className="flex items-center gap-5 mt-3">
@@ -445,36 +448,14 @@ export function PostCard({ post, currentUserId, onReact, onSave, onRepost, onEdi
                 <span className="text-xs">{post.reposts_count ?? 0}</span>
               </button>
 
-              {/* Reactions */}
-              <div className="relative">
-                <button
-                  onMouseEnter={() => setShowReactions(true)}
-                  onMouseLeave={() => setShowReactions(false)}
-                  onClick={() => onReact?.(post.id, "like")}
-                  className="flex items-center gap-1.5 text-[#71717A] hover:text-[#E8311A] transition-colors"
-                >
-                  <Heart className={cn("w-4 h-4", post.user_reaction && "fill-[#E8311A] text-[#E8311A]")} />
-                  <span className="text-xs">{reactions.total}</span>
-                </button>
-                {showReactions && (
-                  <div
-                    className="absolute bottom-full left-0 mb-1 flex items-center gap-1 bg-[#282828] border border-[#333333] rounded-full px-2 py-1"
-                    onMouseEnter={() => setShowReactions(true)}
-                    onMouseLeave={() => setShowReactions(false)}
-                  >
-                    {REACTIONS.map(r => (
-                      <button
-                        key={r.type}
-                        onClick={() => onReact?.(post.id, r.type)}
-                        className="text-base hover:scale-125 transition-transform"
-                        title={r.label}
-                      >
-                        {r.emoji}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              {/* Like */}
+              <button
+                onClick={() => onReact?.(post.id, "like")}
+                className="flex items-center gap-1.5 text-[#71717A] hover:text-[#E8311A] transition-colors"
+              >
+                <Heart className={cn("w-4 h-4", post.user_reaction && "fill-[#E8311A] text-[#E8311A]")} />
+                <span className="text-xs">{reactions.total}</span>
+              </button>
 
               {/* Save */}
               <button

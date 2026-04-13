@@ -40,11 +40,6 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
   return (
     <div>
-      {/* Header */}
-      <div className="sticky top-14 z-10 bg-[#0A0A0A]/90 backdrop-blur-md border-b border-[#282828] px-5 py-4">
-        <h1 className="hidden sm:block text-xl font-black text-[#F0F0F0]">Profile</h1>
-      </div>
-
       {/* Profile info */}
       <div className="px-5 py-6 border-b border-[#282828]">
         <div className="flex items-start justify-between gap-4">

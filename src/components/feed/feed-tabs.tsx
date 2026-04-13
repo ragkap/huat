@@ -19,7 +19,7 @@ export function FeedTabs() {
       {TABS.map(tab => (
         <button
           key={tab.id}
-          onClick={() => router.push(`/feed?tab=${tab.id}`)}
+          onClick={() => router.replace(`/feed?tab=${tab.id}`, { scroll: false })}
           className={cn(
             "flex-1 py-3.5 text-sm font-medium transition-colors relative",
             active === tab.id

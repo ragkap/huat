@@ -49,6 +49,7 @@ export interface Post {
   sentiment: Sentiment | null;
   attachments: Attachment[];
   tagged_stocks: string[];
+  tagged_stock_names?: Record<string, string>;
   is_pinned: boolean;
   parent_id: string | null;
   created_at: string;
