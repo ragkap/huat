@@ -54,7 +54,7 @@ export async function GET(request: Request) {
   let query = supabase
     .from("posts")
     .select(`
-      id, author_id, content, post_type, sentiment, attachments, tagged_stocks, is_pinned, parent_id, created_at, updated_at, reposts_count,
+      id, author_id, content, post_type, sentiment, attachments, tagged_stocks, is_pinned, parent_id, created_at, updated_at,
       author:profiles!posts_author_id_fkey(id, username, display_name, avatar_url, is_verified, country),
       poll:polls(*),
       forecast:forecasts(*)
