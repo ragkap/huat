@@ -36,8 +36,7 @@ export async function GET(request: Request) {
       *,
       author:profiles!posts_author_id_fkey(id, username, display_name, avatar_url, is_verified, country),
       poll:polls(*),
-      forecast:forecasts(*),
-      replies:posts!posts_parent_id_fkey(count)
+      forecast:forecasts(*)
     `)
     .is("parent_id", null)
     .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
@@ -60,7 +59,7 @@ export async function GET(request: Request) {
   // Collect all unique tickers across posts for a single batch name lookup
   const allTickers = [...new Set((posts ?? []).flatMap(p => p.tagged_stocks as string[] ?? []))];
 
-  const [reactionsResult, savedResult, pollVotesResult, stockNames] = await Promise.all([
+  const [reactionsResult, savedResult, pollVotesResult, repliesResult, stockNames] = await Promise.all([
     postIds.length
       ? supabase.from("reactions").select("post_id, type, user_id").in("post_id", postIds)
       : Promise.resolve({ data: [] }),
@@ -70,12 +69,20 @@ export async function GET(request: Request) {
     postIds.length
       ? supabase.from("poll_votes").select("poll_id, option_id, user_id").in("poll_id", (posts ?? []).filter(p => p.post_type === "poll").map(p => p.poll?.id).filter(Boolean) as string[])
       : Promise.resolve({ data: [] }),
+    postIds.length
+      ? supabase.from("posts").select("parent_id").in("parent_id", postIds)
+      : Promise.resolve({ data: [] }),
     getStockNamesByTickers(allTickers).catch(() => ({} as Record<string, string>)),
   ]);
 
   const allReactions = reactionsResult.data ?? [];
   const savedSet = new Set((savedResult.data ?? []).map(s => s.post_id as string));
   const pollVotes = pollVotesResult.data ?? [];
+  const repliesCountMap: Record<string, number> = {};
+  for (const r of repliesResult.data ?? []) {
+    const pid = r.parent_id as string;
+    repliesCountMap[pid] = (repliesCountMap[pid] ?? 0) + 1;
+  }
 
   const enriched = (posts ?? []).map(post => {
     const postReactions = allReactions.filter(r => r.post_id === post.id);
@@ -111,7 +118,7 @@ export async function GET(request: Request) {
       is_saved: savedSet.has(post.id as string),
       poll: enrichedPoll,
       tagged_stock_names,
-      replies_count: (post.replies as { count: number }[])?.[0]?.count ?? 0,
+      replies_count: repliesCountMap[post.id as string] ?? 0,
     };
   });
 

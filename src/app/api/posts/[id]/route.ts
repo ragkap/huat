@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getStockNamesByTickers } from "@/lib/stocks-db/client";
 
-const SELECT = `*, author:profiles!posts_author_id_fkey(id, username, display_name, avatar_url, is_verified, country), poll:polls(*), forecast:forecasts(*), replies:posts!posts_parent_id_fkey(count)`;
+const SELECT = `*, author:profiles!posts_author_id_fkey(id, username, display_name, avatar_url, is_verified, country), poll:polls(*), forecast:forecasts(*)`;
 
 async function enrichPosts(posts: Record<string, unknown>[], userId: string, supabase: Awaited<ReturnType<typeof createClient>>) {
   const postIds = posts.map(p => p.id as string);
@@ -29,7 +29,7 @@ async function enrichPosts(posts: Record<string, unknown>[], userId: string, sup
     for (const t of (post.tagged_stocks as string[]) ?? []) {
       if (stockNames[t]) tagged_stock_names[t] = stockNames[t];
     }
-    return { ...post, reactions_count: counts, user_reaction: userReaction, is_saved: savedSet.has(post.id as string), tagged_stock_names, replies_count: (post.replies as { count: number }[])?.[0]?.count ?? 0 };
+    return { ...post, reactions_count: counts, user_reaction: userReaction, is_saved: savedSet.has(post.id as string), tagged_stock_names };
   });
 }
 
