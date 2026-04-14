@@ -139,6 +139,19 @@ export function FeedList({ tab, profile, stockTicker, postType }: FeedListProps)
     setPosts(prev => prev.filter(p => p.id !== postId));
   }
 
+  function handleReply(postId: string, newReply: Post) {
+    setPosts(prev => prev.map(p => p.id !== postId ? p : {
+      ...p,
+      replies_count: (p.replies_count ?? 0) + 1,
+      latest_reply: {
+        id: newReply.id,
+        content: newReply.content,
+        created_at: newReply.created_at,
+        author: profile,
+      },
+    }));
+  }
+
   const showComposer = tab === "foryou" || tab === "followed" || !!stockTicker;
   const initialLoading = loading && posts.length === 0;
 
@@ -184,6 +197,7 @@ export function FeedList({ tab, profile, stockTicker, postType }: FeedListProps)
               onSave={handleSave}
               onEdit={handleEdit}
               onDelete={handleDelete}
+              onReply={handleReply}
             />
           ))}
         </div>
