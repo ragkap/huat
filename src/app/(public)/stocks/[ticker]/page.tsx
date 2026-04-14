@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { getStockBySlugOrTicker } from "@/lib/stocks-db/client";
 import { getQuote, getCurrentStats } from "@/lib/smartkarma/client";
 import { getPrimer } from "@/lib/smartkarma/primer";
@@ -14,9 +15,37 @@ interface StockPageProps {
   params: Promise<{ ticker: string }>;
 }
 
-export async function generateMetadata({ params }: StockPageProps) {
+export async function generateMetadata({ params }: StockPageProps): Promise<Metadata> {
   const { ticker } = await params;
-  return { title: `${decodeURIComponent(ticker)} — Huat.co` };
+  const identifier = decodeURIComponent(ticker);
+  const stock = await getStockBySlugOrTicker(identifier).catch(() => null);
+  if (!stock) return { title: "Stock — Huat.co" };
+
+  const displayTicker = (stock.bloomberg_ticker ?? identifier).replace(/ SP$/, "");
+  const title = `${stock.name} (${displayTicker}) — Huat.co`;
+  const description = stock.description
+    ? stock.description.slice(0, 160)
+    : `Follow ${stock.name} on Huat.co — Singapore's social network for retail investors. See investor posts, news, and analysis.`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `https://www.huat.co/stocks/${encodeURIComponent(ticker)}`,
+      siteName: "Huat.co",
+      type: "website",
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description,
+    },
+    alternates: {
+      canonical: `https://www.huat.co/stocks/${encodeURIComponent(ticker)}`,
+    },
+  };
 }
 
 async function StockPageContent({
@@ -94,30 +123,28 @@ async function StockPageContent({
         </div>
       </div>
 
-      {profile && (
-        <StockPageClient
-          ticker={rawTicker}
-          displayTicker={ticker}
-          stockName={stock.name}
-          profile={profile}
-          isPositive={isPositive}
-          description={stock.description ?? null}
-          stats={stats ?? null}
-          primer={primer?.primer ? {
-            executive_summary: primer.primer.executive_summary,
-            three_bullish_points: primer.primer.three_bullish_points,
-            three_bearish_points: primer.primer.three_bearish_points,
-            key_risks: primer.primer.key_risks,
-          } : null}
-          quote={quote ? {
-            currency: quote.currency,
-            year_high: quote.year_high,
-            year_low: quote.year_low,
-            pct_change_1m: quote.pct_change_1m,
-            pct_change_ytd: quote.pct_change_ytd,
-          } : null}
-        />
-      )}
+      <StockPageClient
+        ticker={rawTicker}
+        displayTicker={ticker}
+        stockName={stock.name}
+        profile={profile}
+        isPositive={isPositive}
+        description={stock.description ?? null}
+        stats={stats ?? null}
+        primer={primer?.primer ? {
+          executive_summary: primer.primer.executive_summary,
+          three_bullish_points: primer.primer.three_bullish_points,
+          three_bearish_points: primer.primer.three_bearish_points,
+          key_risks: primer.primer.key_risks,
+        } : null}
+        quote={quote ? {
+          currency: quote.currency,
+          year_high: quote.year_high,
+          year_low: quote.year_low,
+          pct_change_1m: quote.pct_change_1m,
+          pct_change_ytd: quote.pct_change_ytd,
+        } : null}
+      />
     </>
   );
 }

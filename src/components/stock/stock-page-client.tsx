@@ -10,6 +10,36 @@ import { formatPrice, formatMarketCap } from "@/lib/utils";
 import { stripHtml } from "@/lib/smartkarma/primer";
 import type { Profile, Sentiment } from "@/types/database";
 
+function SignupGate({ stockName }: { stockName: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 px-8 text-center">
+      <div className="w-12 h-12 rounded-full bg-[#1C1C1C] flex items-center justify-center mb-5">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E8311A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+      </div>
+      <p className="text-[#F0F0F0] font-bold text-base mb-2">Join to see posts & analysis</p>
+      <p className="text-[#71717A] text-sm mb-6 max-w-xs">
+        Sign up free to see investor posts, news, announcements and research on {stockName}.
+      </p>
+      <div className="flex flex-col sm:flex-row gap-3">
+        <a
+          href="/login"
+          className="px-6 py-2.5 rounded bg-[#E8311A] text-white text-sm font-bold hover:bg-[#D02A15] transition-colors"
+        >
+          Sign up free
+        </a>
+        <a
+          href="/login"
+          className="px-6 py-2.5 rounded border border-[#282828] text-[#9CA3AF] text-sm font-medium hover:text-[#F0F0F0] hover:border-[#444444] transition-colors"
+        >
+          Log in
+        </a>
+      </div>
+    </div>
+  );
+}
+
 function ListSkeleton() {
   return (
     <div className="animate-pulse">
@@ -57,7 +87,7 @@ interface StockPageClientProps {
   ticker: string;
   displayTicker: string;
   stockName: string;
-  profile: Profile;
+  profile: Profile | null;
   isPositive: boolean;
   description: string | null;
   stats: StatsData | null;
@@ -789,7 +819,9 @@ export function StockPageClient({
         </div>
       </div>
 
-      {topTab === "news" ? (
+      {!profile ? (
+        <SignupGate stockName={stockName} />
+      ) : topTab === "news" ? (
         <NewsTab ticker={ticker} displayTicker={displayTicker} profile={profile} />
       ) : topTab === "announcement" ? (
         <AnnouncementsTab ticker={ticker} displayTicker={displayTicker} profile={profile} />
