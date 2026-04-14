@@ -11,30 +11,52 @@ import { stripHtml } from "@/lib/smartkarma/primer";
 import type { Profile, Sentiment } from "@/types/database";
 
 function SignupGate({ stockName }: { stockName: string }) {
+  // Fake post rows shown blurred behind the CTA
+  const fakePosts = [
+    { initials: "RK", name: "Raghav K", time: "2h", lines: ["Strong Q3 results. Revenue up 18% YoY, margins expanding. Adding to position.", "Risk: customer concentration still high."] },
+    { initials: "JL", name: "James L", time: "5h", lines: ["Bearish near-term — order book softening per channel checks. Wait for better entry."] },
+    { initials: "ST", name: "Serene T", time: "1d", lines: ["Dividend raised again. Solid balance sheet. Long-term hold for me."] },
+  ];
+
   return (
-    <div className="flex flex-col items-center justify-center py-20 px-8 text-center">
-      <div className="w-12 h-12 rounded-full bg-[#1C1C1C] flex items-center justify-center mb-5">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E8311A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
-        </svg>
+    <div className="relative overflow-hidden">
+      {/* Blurred fake posts */}
+      <div style={{ filter: "blur(4px)", opacity: 0.45, pointerEvents: "none", userSelect: "none" }}>
+        {fakePosts.map((p, i) => (
+          <div key={i} className="px-5 py-4 border-b border-[#141414]">
+            <div className="flex items-start gap-2.5">
+              <div className="w-8 h-8 rounded-full bg-[#282828] flex items-center justify-center text-[10px] font-bold text-[#9CA3AF] flex-shrink-0">{p.initials}</div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="text-sm font-semibold text-[#F0F0F0]">{p.name}</span>
+                  <span className="text-xs text-[#555555]">{p.time} ago</span>
+                </div>
+                {p.lines.map((l, j) => (
+                  <p key={j} className="text-sm text-[#C0C0C0] leading-relaxed">{l}</p>
+                ))}
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
-      <p className="text-[#F0F0F0] font-bold text-base mb-2">Join to see posts & analysis</p>
-      <p className="text-[#71717A] text-sm mb-6 max-w-xs">
-        Sign up free to see investor posts, news, announcements and research on {stockName}.
-      </p>
-      <div className="flex flex-col sm:flex-row gap-3">
-        <a
-          href="/login"
-          className="px-6 py-2.5 rounded bg-[#E8311A] text-white text-sm font-bold hover:bg-[#D02A15] transition-colors"
-        >
-          Sign up free
-        </a>
-        <a
-          href="/login"
-          className="px-6 py-2.5 rounded border border-[#282828] text-[#9CA3AF] text-sm font-medium hover:text-[#F0F0F0] hover:border-[#444444] transition-colors"
-        >
-          Log in
-        </a>
+
+      {/* Frosted overlay + CTA */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center px-8 text-center"
+        style={{ background: "linear-gradient(to bottom, rgba(10,10,10,0.1) 0%, rgba(10,10,10,0.92) 35%)" }}>
+        <p className="text-[#F0F0F0] font-black text-lg mb-1">
+          What are investors saying about {stockName}?
+        </p>
+        <p className="text-[#71717A] text-sm mb-6 max-w-sm">
+          Join Huat.co free — see investor posts, news, announcements and research.
+        </p>
+        <div className="flex gap-3">
+          <a href="/login" className="px-6 py-2.5 rounded bg-[#E8311A] text-white text-sm font-bold hover:bg-[#D02A15] transition-colors">
+            Sign up free
+          </a>
+          <a href="/login" className="px-6 py-2.5 rounded border border-[#333333] text-[#9CA3AF] text-sm font-medium hover:text-[#F0F0F0] hover:border-[#444444] transition-colors">
+            Log in
+          </a>
+        </div>
       </div>
     </div>
   );
