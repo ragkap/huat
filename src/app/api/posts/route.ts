@@ -121,6 +121,7 @@ const CreatePostSchema = z.object({
   sentiment: z.enum(["bullish", "bearish", "neutral"]).nullable().optional(),
   post_type: z.enum(["post", "poll", "forecast"]).default("post"),
   tagged_stocks: z.array(z.string()).max(5).optional(),
+  parent_id: z.string().uuid().nullish(),
   attachments: z.array(z.object({
     url: z.string(),
     type: z.string(),
@@ -149,7 +150,7 @@ export async function POST(request: Request) {
   const parsed = CreatePostSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const { content, sentiment, post_type, tagged_stocks, attachments, poll, forecast } = parsed.data;
+  const { content, sentiment, post_type, tagged_stocks, parent_id, attachments, poll, forecast } = parsed.data;
 
   const { data: post, error } = await supabase
     .from("posts")
@@ -160,6 +161,7 @@ export async function POST(request: Request) {
       post_type,
       tagged_stocks: tagged_stocks ?? [],
       attachments: attachments ?? [],
+      parent_id: parent_id ?? null,
     })
     .select()
     .single();
