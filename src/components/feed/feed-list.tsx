@@ -74,11 +74,11 @@ export function FeedList({ tab, profile, stockTicker, postType, initialPosts }: 
   }, [tab, stockTicker, postType]);
 
   // On mount: skip fetch if server already provided initial posts, else fetch
-  const didMountRef = useRef(false);
+  const mountedRef = useRef(false);
   useEffect(() => {
-    if (!didMountRef.current) {
-      didMountRef.current = true;
-      if (initialPosts?.length) return; // server-provided — no fetch needed
+    if (!mountedRef.current) {
+      mountedRef.current = true;
+      if (initialPosts?.length) return; // server-provided posts — skip initial fetch
     }
     resettingRef.current = true;
     setPage(0);
