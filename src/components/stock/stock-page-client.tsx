@@ -43,6 +43,11 @@ function SignupGate({ stockName, followerCount, postCount }: { stockName: string
       {/* Frosted overlay + CTA */}
       <div className="absolute inset-0 flex flex-col items-center justify-center px-8 text-center"
         style={{ background: "linear-gradient(to bottom, rgba(10,10,10,0.1) 0%, rgba(10,10,10,0.92) 35%)" }}>
+        {/* Logo + slogan */}
+        <div className="mb-5">
+          <p className="text-2xl font-black text-[#E8311A] tracking-tight leading-none mb-1">Huat 发</p>
+          <p className="text-[10px] text-[#555555] uppercase tracking-widest">Invest Together. Prosper Together.</p>
+        </div>
         <p className="text-[#F0F0F0] font-black text-lg mb-1">
           What are investors saying about {stockName}?
         </p>
@@ -58,11 +63,11 @@ function SignupGate({ stockName, followerCount, postCount }: { stockName: string
           </a>
         </div>
         <p className="mt-4 text-xs text-[#555555]">
-          {followerCount > 0 && postCount > 0
+          {followerCount >= 500 && postCount >= 500
             ? <>{followerCount.toLocaleString()} investors watching · {postCount.toLocaleString()} posts</>
-            : followerCount > 0
+            : followerCount >= 500
             ? <>{followerCount.toLocaleString()} investors already watching {stockName}</>
-            : postCount > 0
+            : postCount >= 500
             ? <>{postCount.toLocaleString()} posts about {stockName}</>
             : <>Join Singapore's investing community. It's free.</>}
         </p>
