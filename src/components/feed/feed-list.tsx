@@ -4,6 +4,33 @@ import { PostComposer } from "@/components/feed/post-composer";
 import { PostCard } from "@/components/feed/post-card";
 import type { Post, Profile } from "@/types/database";
 
+function PostSkeleton() {
+  return (
+    <div className="px-5 py-4 border-b border-[#141414] animate-pulse">
+      {/* Author row */}
+      <div className="flex items-center gap-2.5 mb-3">
+        <div className="w-8 h-8 rounded-full bg-[#1C1C1C] flex-shrink-0" />
+        <div className="flex flex-col gap-1.5">
+          <div className="h-3 w-24 rounded bg-[#1C1C1C]" />
+          <div className="h-2.5 w-16 rounded bg-[#141414]" />
+        </div>
+      </div>
+      {/* Content lines */}
+      <div className="space-y-2 mb-3">
+        <div className="h-3 w-full rounded bg-[#1C1C1C]" />
+        <div className="h-3 w-5/6 rounded bg-[#1C1C1C]" />
+        <div className="h-3 w-3/4 rounded bg-[#141414]" />
+      </div>
+      {/* Reaction row */}
+      <div className="flex items-center gap-4 mt-3">
+        <div className="h-3 w-8 rounded bg-[#141414]" />
+        <div className="h-3 w-8 rounded bg-[#141414]" />
+        <div className="h-3 w-8 rounded bg-[#141414]" />
+      </div>
+    </div>
+  );
+}
+
 interface FeedListProps {
   tab: string;
   profile: Profile;
@@ -42,6 +69,7 @@ export function FeedList({ tab, profile, stockTicker, postType }: FeedListProps)
   useEffect(() => {
     setPage(0);
     setHasMore(true);
+    setPosts([]);
     fetchPosts(0, true);
   }, [tab, stockTicker, postType, fetchPosts]);
 
@@ -104,6 +132,7 @@ export function FeedList({ tab, profile, stockTicker, postType }: FeedListProps)
   }
 
   const showComposer = tab === "foryou" || tab === "followed" || !!stockTicker;
+  const initialLoading = loading && posts.length === 0;
 
   return (
     <div>
@@ -111,7 +140,13 @@ export function FeedList({ tab, profile, stockTicker, postType }: FeedListProps)
         <PostComposer profile={profile} onPost={() => fetchPosts(0, true)} defaultTicker={stockTicker} />
       )}
 
-      {posts.length === 0 && !loading ? (
+      {initialLoading ? (
+        <div>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <PostSkeleton key={i} />
+          ))}
+        </div>
+      ) : posts.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center px-8">
           <div className="flex items-end gap-0.5 mb-5">
             {[0.5, 1, 0.7].map((h, i) => (
@@ -144,7 +179,7 @@ export function FeedList({ tab, profile, stockTicker, postType }: FeedListProps)
       )}
 
       <div ref={loaderRef} className="h-10 flex items-center justify-center">
-        {loading && (
+        {loading && posts.length > 0 && (
           <div className="w-5 h-5 border-2 border-[#333333] border-t-[#E8311A] rounded-full animate-spin" />
         )}
       </div>

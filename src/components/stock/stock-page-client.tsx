@@ -10,6 +10,20 @@ import { formatPrice, formatMarketCap } from "@/lib/utils";
 import { stripHtml } from "@/lib/smartkarma/primer";
 import type { Profile, Sentiment } from "@/types/database";
 
+function ListSkeleton() {
+  return (
+    <div className="animate-pulse">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="px-5 py-4 border-b border-[#141414]">
+          <div className="h-3 w-4/5 rounded bg-[#1C1C1C] mb-2" />
+          <div className="h-3 w-3/5 rounded bg-[#1C1C1C] mb-3" />
+          <div className="h-2.5 w-28 rounded bg-[#141414]" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 interface StatsData {
   market_cap: number | null;
   pe_ratio: number | null;
@@ -327,11 +341,7 @@ function ResearchTab({ ticker, displayTicker, profile }: { ticker: string; displ
   }, [ticker]);
 
   if (loading) {
-    return (
-      <div className="flex justify-center py-12">
-        <div className="w-5 h-5 border-2 border-[#333333] border-t-[#E8311A] rounded-full animate-spin" />
-      </div>
-    );
+    return <ListSkeleton />;
   }
 
   if (!items.length) {
@@ -423,11 +433,7 @@ function AnnouncementsTab({ ticker, displayTicker, profile }: { ticker: string; 
   }, [ticker]);
 
   if (loading) {
-    return (
-      <div className="flex justify-center py-12">
-        <div className="w-5 h-5 border-2 border-[#333333] border-t-[#E8311A] rounded-full animate-spin" />
-      </div>
-    );
+    return <ListSkeleton />;
   }
 
   if (!items.length) {
@@ -512,11 +518,7 @@ function NewsTab({ ticker, displayTicker, profile }: { ticker: string; displayTi
   }, [ticker]);
 
   if (loading) {
-    return (
-      <div className="flex justify-center py-12">
-        <div className="w-5 h-5 border-2 border-[#333333] border-t-[#E8311A] rounded-full animate-spin" />
-      </div>
-    );
+    return <ListSkeleton />;
   }
 
   if (!news.length) {

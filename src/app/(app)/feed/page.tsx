@@ -27,7 +27,7 @@ export default function FeedPage() {
     <div>
       <div className="flex border-b border-[#282828] sticky top-14 z-10 bg-[#0A0A0A]/95 backdrop-blur-md">
         {TABS.map(t => (
-          <div key={t.id} className="flex-1 py-3.5" />
+          <div key={t.id} className="flex-1 py-3.5 text-sm font-medium text-transparent select-none">{t.label}</div>
         ))}
       </div>
     </div>

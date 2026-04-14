@@ -224,16 +224,25 @@ export function WatchlistClient({ initialTickers }: { initialTickers: string[] }
                 </Link>
 
                 <div className="flex-shrink-0 text-right min-w-[72px]">
-                  <p className="text-sm font-medium text-[#F0F0F0]">
-                    {item.quote?.price != null ? formatPrice(item.quote.price) : "—"}
-                  </p>
-                  {pct != null ? (
-                    <p className={cn("text-xs flex items-center justify-end gap-0.5 mt-0.5", positive ? "text-[#22C55E]" : "text-[#EF4444]")}>
-                      {positive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                      {positive ? "+" : ""}{pct.toFixed(2)}%
-                    </p>
+                  {item.quote === null ? (
+                    <div className="flex flex-col items-end gap-1.5">
+                      <div className="h-3.5 w-16 bg-[#1C1C1C] rounded animate-pulse" />
+                      <div className="h-2.5 w-10 bg-[#141414] rounded animate-pulse" />
+                    </div>
                   ) : (
-                    <p className="text-xs text-[#555555] mt-0.5">—</p>
+                    <>
+                      <p className="text-sm font-medium text-[#F0F0F0]">
+                        {item.quote.price != null ? formatPrice(item.quote.price) : "—"}
+                      </p>
+                      {pct != null ? (
+                        <p className={cn("text-xs flex items-center justify-end gap-0.5 mt-0.5", positive ? "text-[#22C55E]" : "text-[#EF4444]")}>
+                          {positive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                          {positive ? "+" : ""}{pct.toFixed(2)}%
+                        </p>
+                      ) : (
+                        <p className="text-xs text-[#555555] mt-0.5">—</p>
+                      )}
+                    </>
                   )}
                 </div>
 
