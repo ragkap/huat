@@ -36,15 +36,17 @@ interface FeedListProps {
   profile: Profile;
   stockTicker?: string;
   postType?: string;
+  initialPosts?: Post[];
 }
 
-export function FeedList({ tab, profile, stockTicker, postType }: FeedListProps) {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [page, setPage] = useState(0);
+export function FeedList({ tab, profile, stockTicker, postType, initialPosts }: FeedListProps) {
+  const [posts, setPosts] = useState<Post[]>(initialPosts ?? []);
+  const [page, setPage] = useState(initialPosts?.length ? 1 : 0);
   const [loading, setLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
+  const [hasMore, setHasMore] = useState(initialPosts ? initialPosts.length === 20 : true);
   const loaderRef = useRef<HTMLDivElement>(null);
   const resettingRef = useRef(false);
+  const initialTab = useRef(tab);
 
   const fetchPosts = useCallback(async (p: number, reset = false) => {
     setLoading(true);
@@ -72,14 +74,20 @@ export function FeedList({ tab, profile, stockTicker, postType }: FeedListProps)
     }
   }, [tab, stockTicker, postType]);
 
-  // Reset on tab/ticker/postType change
+  // Reset on tab/ticker/postType change — skip initial fetch if server provided posts
+  const didMountRef = useRef(false);
   useEffect(() => {
+    if (!didMountRef.current && tab === initialTab.current && initialPosts?.length) {
+      didMountRef.current = true;
+      return;
+    }
+    didMountRef.current = true;
     resettingRef.current = true;
     setPage(0);
     setHasMore(true);
     setPosts([]);
     fetchPosts(0, true);
-  }, [tab, stockTicker, postType, fetchPosts]);
+  }, [tab, stockTicker, postType, fetchPosts]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Infinite scroll
   useEffect(() => {

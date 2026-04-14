@@ -1,9 +1,31 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getStockNamesByTickers } from "@/lib/stocks-db/client";
+import { getStockNamesByTickers as _getStockNamesByTickers } from "@/lib/stocks-db/client";
 
 const PAGE_SIZE = 20;
+
+// In-process cache for stock names — refreshes every 5 min
+const stockNamesCache = new Map<string, { value: string; exp: number }>();
+async function getStockNamesCached(tickers: string[]): Promise<Record<string, string>> {
+  if (!tickers.length) return {};
+  const now = Date.now();
+  const missing: string[] = [];
+  const result: Record<string, string> = {};
+  for (const t of tickers) {
+    const entry = stockNamesCache.get(t);
+    if (entry && entry.exp > now) result[t] = entry.value;
+    else missing.push(t);
+  }
+  if (missing.length) {
+    const fresh = await _getStockNamesByTickers(missing).catch(() => ({} as Record<string, string>));
+    const exp = now + 5 * 60 * 1000;
+    for (const t of missing) {
+      if (fresh[t]) { stockNamesCache.set(t, { value: fresh[t], exp }); result[t] = fresh[t]; }
+    }
+  }
+  return result;
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -17,8 +39,7 @@ export async function GET(request: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // For saved/followed tabs, pre-fetch the filter IDs in parallel with nothing
-  // (we need them before building the query, but fetch them fast)
+  // Pre-fetch filter IDs for saved/followed tabs
   let filterIds: string[] | null = null;
   if (tab === "saved") {
     const { data: saved } = await supabase.from("saved_posts").select("post_id").eq("user_id", user.id);
@@ -33,7 +54,7 @@ export async function GET(request: Request) {
   let query = supabase
     .from("posts")
     .select(`
-      *,
+      id, author_id, content, post_type, sentiment, attachments, tagged_stocks, is_pinned, parent_id, created_at, updated_at, reposts_count,
       author:profiles!posts_author_id_fkey(id, username, display_name, avatar_url, is_verified, country),
       poll:polls(*),
       forecast:forecasts(*)
@@ -52,51 +73,42 @@ export async function GET(request: Request) {
 
   const { data: posts, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (!posts?.length) return NextResponse.json({ posts: [] });
 
-  // Enrich with reaction counts and saved status
-  const postIds = (posts ?? []).map(p => p.id as string);
+  const postIds = posts.map(p => p.id as string);
+  const allTickers = [...new Set(posts.flatMap(p => p.tagged_stocks as string[] ?? []))];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const pollPostIds = posts.filter(p => p.post_type === "poll").map(p => (p.poll as any)?.id).filter(Boolean) as string[];
 
-  // Collect all unique tickers across posts for a single batch name lookup
-  const allTickers = [...new Set((posts ?? []).flatMap(p => p.tagged_stocks as string[] ?? []))];
-
-  const [reactionsResult, savedResult, pollVotesResult, repliesResult, latestRepliesResult, stockNames] = await Promise.all([
-    postIds.length
-      ? supabase.from("reactions").select("post_id, type, user_id").in("post_id", postIds)
+  // Single query for replies: get content+author for latest reply, derive count in JS
+  const [reactionsResult, savedResult, pollVotesResult, repliesResult, stockNames] = await Promise.all([
+    supabase.from("reactions").select("post_id, type, user_id").in("post_id", postIds),
+    supabase.from("saved_posts").select("post_id").eq("user_id", user.id).in("post_id", postIds),
+    pollPostIds.length
+      ? supabase.from("poll_votes").select("poll_id, option_id, user_id").in("poll_id", pollPostIds)
       : Promise.resolve({ data: [] }),
-    postIds.length
-      ? supabase.from("saved_posts").select("post_id").eq("user_id", user.id).in("post_id", postIds)
-      : Promise.resolve({ data: [] }),
-    postIds.length
-      ? supabase.from("poll_votes").select("poll_id, option_id, user_id").in("poll_id", (posts ?? []).filter(p => p.post_type === "poll").map(p => p.poll?.id).filter(Boolean) as string[])
-      : Promise.resolve({ data: [] }),
-    postIds.length
-      ? supabase.from("posts").select("parent_id").in("parent_id", postIds)
-      : Promise.resolve({ data: [] }),
-    postIds.length
-      ? supabase.from("posts").select("id, parent_id, content, created_at, author:profiles!posts_author_id_fkey(id, username, display_name, avatar_url)").in("parent_id", postIds).order("created_at", { ascending: false })
-      : Promise.resolve({ data: [] }),
-    getStockNamesByTickers(allTickers).catch(() => ({} as Record<string, string>)),
+    supabase
+      .from("posts")
+      .select("id, parent_id, content, created_at, author:profiles!posts_author_id_fkey(id, username, display_name, avatar_url)")
+      .in("parent_id", postIds)
+      .order("created_at", { ascending: false }),
+    getStockNamesCached(allTickers),
   ]);
 
   const allReactions = reactionsResult.data ?? [];
   const savedSet = new Set((savedResult.data ?? []).map(s => s.post_id as string));
   const pollVotes = pollVotesResult.data ?? [];
+
+  // Derive both replies_count and latest_reply from the single replies query
   const repliesCountMap: Record<string, number> = {};
-  for (const r of repliesResult.data ?? []) {
-    const pid = r.parent_id as string;
-    repliesCountMap[pid] = (repliesCountMap[pid] ?? 0) + 1;
-  }
-  // Build latest reply per parent (replies are ordered DESC so first seen = latest)
-  if ((latestRepliesResult as { error?: unknown }).error) {
-    console.error("latestReplies query error:", (latestRepliesResult as { error?: unknown }).error);
-  }
   const latestReplyMap: Record<string, Record<string, unknown>> = {};
-  for (const r of (latestRepliesResult.data ?? [])) {
+  for (const r of repliesResult.data ?? []) {
     const pid = (r as Record<string, unknown>).parent_id as string;
+    repliesCountMap[pid] = (repliesCountMap[pid] ?? 0) + 1;
     if (!latestReplyMap[pid]) latestReplyMap[pid] = r as Record<string, unknown>;
   }
 
-  const enriched = (posts ?? []).map(post => {
+  const enriched = posts.map(post => {
     const postReactions = allReactions.filter(r => r.post_id === post.id);
     const counts = { like: 0, fire: 0, rocket: 0, bear: 0, total: 0 };
     let userReaction: string | null = null;
@@ -106,20 +118,19 @@ export async function GET(request: Request) {
       if (r.user_id === user.id) userReaction = r.type as string;
     }
 
-    let enrichedPoll = post.poll;
-    if (post.post_type === "poll" && post.poll) {
-      const pVotes = pollVotes.filter(v => v.poll_id === post.poll?.id);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const poll = post.poll as any;
+    let enrichedPoll = poll;
+    if (post.post_type === "poll" && poll) {
+      const pVotes = pollVotes.filter(v => v.poll_id === poll.id);
       const voteCounts: Record<string, number> = {};
-      for (const v of pVotes) {
-        voteCounts[v.option_id as string] = (voteCounts[v.option_id as string] ?? 0) + 1;
-      }
+      for (const v of pVotes) voteCounts[v.option_id as string] = (voteCounts[v.option_id as string] ?? 0) + 1;
       const userVote = pVotes.find(v => v.user_id === user.id)?.option_id ?? null;
-      enrichedPoll = { ...post.poll, vote_counts: voteCounts, user_vote: userVote, total_votes: pVotes.length };
+      enrichedPoll = { ...poll, vote_counts: voteCounts, user_vote: userVote, total_votes: pVotes.length };
     }
 
-    const postTickers = (post.tagged_stocks as string[]) ?? [];
     const tagged_stock_names: Record<string, string> = {};
-    for (const t of postTickers) {
+    for (const t of (post.tagged_stocks as string[]) ?? []) {
       if (stockNames[t]) tagged_stock_names[t] = stockNames[t];
     }
 
@@ -135,7 +146,13 @@ export async function GET(request: Request) {
     };
   });
 
-  return NextResponse.json({ posts: enriched });
+  const response = NextResponse.json({ posts: enriched });
+  // Cache page 0 in browser for 10s — stale-while-revalidate for 30s
+  // Subsequent pages are less time-sensitive
+  if (page === 0 && !ticker && !authorId && !postType) {
+    response.headers.set("Cache-Control", "private, max-age=10, stale-while-revalidate=30");
+  }
+  return response;
 }
 
 const CreatePostSchema = z.object({
