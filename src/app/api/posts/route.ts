@@ -59,7 +59,7 @@ export async function GET(request: Request) {
   // Collect all unique tickers across posts for a single batch name lookup
   const allTickers = [...new Set((posts ?? []).flatMap(p => p.tagged_stocks as string[] ?? []))];
 
-  const [reactionsResult, savedResult, pollVotesResult, repliesResult, stockNames] = await Promise.all([
+  const [reactionsResult, savedResult, pollVotesResult, repliesResult, latestRepliesResult, stockNames] = await Promise.all([
     postIds.length
       ? supabase.from("reactions").select("post_id, type, user_id").in("post_id", postIds)
       : Promise.resolve({ data: [] }),
@@ -72,6 +72,9 @@ export async function GET(request: Request) {
     postIds.length
       ? supabase.from("posts").select("parent_id").in("parent_id", postIds)
       : Promise.resolve({ data: [] }),
+    postIds.length
+      ? supabase.from("posts").select("id, parent_id, content, created_at, author:profiles!posts_author_id_fkey(id, username, display_name, avatar_url)").in("parent_id", postIds).order("created_at", { ascending: false })
+      : Promise.resolve({ data: [] }),
     getStockNamesByTickers(allTickers).catch(() => ({} as Record<string, string>)),
   ]);
 
@@ -82,6 +85,15 @@ export async function GET(request: Request) {
   for (const r of repliesResult.data ?? []) {
     const pid = r.parent_id as string;
     repliesCountMap[pid] = (repliesCountMap[pid] ?? 0) + 1;
+  }
+  // Build latest reply per parent (replies are ordered DESC so first seen = latest)
+  if ((latestRepliesResult as { error?: unknown }).error) {
+    console.error("latestReplies query error:", (latestRepliesResult as { error?: unknown }).error);
+  }
+  const latestReplyMap: Record<string, Record<string, unknown>> = {};
+  for (const r of (latestRepliesResult.data ?? [])) {
+    const pid = (r as Record<string, unknown>).parent_id as string;
+    if (!latestReplyMap[pid]) latestReplyMap[pid] = r as Record<string, unknown>;
   }
 
   const enriched = (posts ?? []).map(post => {
@@ -119,6 +131,7 @@ export async function GET(request: Request) {
       poll: enrichedPoll,
       tagged_stock_names,
       replies_count: repliesCountMap[post.id as string] ?? 0,
+      latest_reply: latestReplyMap[post.id as string] ?? null,
     };
   });
 

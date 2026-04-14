@@ -1,17 +1,17 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Send } from "lucide-react";
 import { PostCard } from "@/components/feed/post-card";
 import { Avatar } from "@/components/ui/avatar";
 import type { Post, Profile } from "@/types/database";
 
-function ReplyComposer({ parentId, profile, onReply }: { parentId: string; profile: Profile; onReply: (post: Post) => void }) {
+function ReplyComposer({ parentId, profile, onReply, autoFocus }: { parentId: string; profile: Profile; onReply: (post: Post) => void; autoFocus?: boolean }) {
   const [content, setContent] = useState("");
   const [posting, setPosting] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => { textareaRef.current?.focus(); }, []);
+  useEffect(() => { if (autoFocus) textareaRef.current?.focus(); }, [autoFocus]);
 
   async function handlePost() {
     if (!content.trim() || posting) return;
@@ -61,6 +61,8 @@ function ReplyComposer({ parentId, profile, onReply }: { parentId: string; profi
 export default function PostThreadPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const autoReply = searchParams.get("reply") === "1";
   const [post, setPost] = useState<Post | null>(null);
   const [replies, setReplies] = useState<Post[]>([]);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -165,7 +167,7 @@ export default function PostThreadPage() {
 
       {/* Reply composer */}
       {profile && (
-        <ReplyComposer parentId={post.id} profile={profile} onReply={handleReply} />
+        <ReplyComposer parentId={post.id} profile={profile} onReply={handleReply} autoFocus={autoReply} />
       )}
 
       {/* Replies */}

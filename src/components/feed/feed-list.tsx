@@ -44,6 +44,7 @@ export function FeedList({ tab, profile, stockTicker, postType }: FeedListProps)
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const loaderRef = useRef<HTMLDivElement>(null);
+  const resettingRef = useRef(false);
 
   const fetchPosts = useCallback(async (p: number, reset = false) => {
     setLoading(true);
@@ -56,8 +57,14 @@ export function FeedList({ tab, profile, stockTicker, postType }: FeedListProps)
       const newPosts: Post[] = data.posts ?? [];
       if (reset) {
         setPosts(newPosts);
+        resettingRef.current = false;
       } else {
-        setPosts(prev => [...prev, ...newPosts]);
+        // Deduplicate to guard against double-fetch from concurrent observer + reset
+        setPosts(prev => {
+          const existingIds = new Set(prev.map(p => p.id));
+          const fresh = newPosts.filter(p => !existingIds.has(p.id));
+          return fresh.length ? [...prev, ...fresh] : prev;
+        });
       }
       setHasMore(newPosts.length === 20);
     } finally {
@@ -67,6 +74,7 @@ export function FeedList({ tab, profile, stockTicker, postType }: FeedListProps)
 
   // Reset on tab/ticker/postType change
   useEffect(() => {
+    resettingRef.current = true;
     setPage(0);
     setHasMore(true);
     setPosts([]);
@@ -77,7 +85,7 @@ export function FeedList({ tab, profile, stockTicker, postType }: FeedListProps)
   useEffect(() => {
     const observer = new IntersectionObserver(
       entries => {
-        if (entries[0].isIntersecting && hasMore && !loading) {
+        if (entries[0].isIntersecting && hasMore && !loading && !resettingRef.current) {
           setPage(p => {
             const next = p + 1;
             fetchPosts(next);
@@ -165,19 +173,20 @@ export function FeedList({ tab, profile, stockTicker, postType }: FeedListProps)
           </p>
         </div>
       ) : (
-        posts.map(post => (
-          <PostCard
-            key={post.id}
-            post={post}
-            currentUserId={profile.id}
-            currentUserProfile={profile}
-            onReact={handleReact}
-            onSave={handleSave}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onReply={(_, newReply) => setPosts(prev => prev.map(p => p.id === newReply.parent_id ? { ...p, replies_count: (p.replies_count ?? 0) + 1 } : p))}
-          />
-        ))
+        <div className="divide-y divide-[#1A1A1A]">
+          {posts.map(post => (
+            <PostCard
+              key={post.id}
+              post={post}
+              currentUserId={profile.id}
+              currentUserProfile={profile}
+              onReact={handleReact}
+              onSave={handleSave}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+          ))}
+        </div>
       )}
 
       <div ref={loaderRef} className="h-10 flex items-center justify-center">

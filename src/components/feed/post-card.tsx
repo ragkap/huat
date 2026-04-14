@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 function decodeHtml(str: string | null | undefined): string {
   if (!str) return "";
@@ -295,6 +296,7 @@ function MoreMenu({
 interface OgData { og_title?: string | null; og_description?: string | null; og_image?: string | null; og_site_name?: string | null; }
 
 export function PostCard({ post, currentUserId, currentUserProfile, onReact, onSave, onRepost, onEdit, onDelete, onReply }: PostCardProps) {
+  const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [localContent, setLocalContent] = useState(post.content);
@@ -360,7 +362,7 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
         />
       )}
 
-      <article className="border-b border-[#282828] px-5 py-4 hover:bg-[#0D0D0D] transition-colors group">
+      <article className="px-5 pt-5 pb-4 hover:bg-[#0D0D0D] transition-colors group">
         <div className="flex gap-3">
           {/* Avatar */}
           <Link href={`/profile/${post.author?.username}`} className="flex-shrink-0">
@@ -370,7 +372,7 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
           {/* Content */}
           <div className="flex-1 min-w-0">
             {/* Header */}
-            <div className="flex items-start justify-between gap-2 mb-1">
+            <div className="flex items-start justify-between gap-2 mb-2">
               <div className="flex items-center gap-2 flex-wrap">
                 <Link href={`/profile/${post.author?.username}`} className="font-bold text-[#9CA3AF] hover:underline text-sm">
                   {post.author?.display_name}
@@ -489,20 +491,31 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
 
 
             {/* Actions */}
-            <div className="flex items-center gap-5 mt-3">
-              {/* Reply */}
-              <button
-                onClick={e => { e.stopPropagation(); setReplyOpen(o => !o); setTimeout(() => replyRef.current?.focus(), 50); }}
-                className={cn("flex items-center gap-1.5 transition-colors", replyOpen ? "text-[#E8311A]" : "text-[#9CA3AF] hover:text-[#C0C0C0]")}
-              >
-                <MessageCircle className="w-4 h-4" />
-                <span className="text-xs">{localRepliesCount}</span>
-              </button>
+            <div className="flex items-center mt-4 -ml-2 gap-2">
+              {/* Reply — icon toggles composer, count navigates to thread */}
+              <div className="flex items-center">
+                <button
+                  onClick={e => { e.stopPropagation(); setReplyOpen(o => !o); setTimeout(() => replyRef.current?.focus(), 50); }}
+                  className={cn("flex items-center justify-center w-9 h-9 rounded-full transition-colors", replyOpen ? "text-[#E8311A]" : "text-[#9CA3AF] hover:text-[#C0C0C0] hover:bg-[#1A1A1A]")}
+                >
+                  <MessageCircle className="w-4 h-4" />
+                </button>
+                {localRepliesCount > 0 ? (
+                  <button
+                    onClick={e => { e.stopPropagation(); router.push(`/post/${post.id}`); }}
+                    className="text-xs text-[#9CA3AF] hover:text-[#C0C0C0] hover:underline transition-colors -ml-1 pr-1"
+                  >
+                    {localRepliesCount}
+                  </button>
+                ) : (
+                  <span className="text-xs text-[#9CA3AF] -ml-1 pr-1">{localRepliesCount}</span>
+                )}
+              </div>
 
               {/* Repost */}
               <button
                 onClick={() => onRepost?.(post.id)}
-                className="flex items-center gap-1.5 text-[#9CA3AF] hover:text-[#22C55E] transition-colors"
+                className="flex items-center gap-1.5 h-9 px-2 rounded-full text-[#9CA3AF] hover:text-[#22C55E] hover:bg-[#1A1A1A] transition-colors"
               >
                 <Repeat2 className="w-4 h-4" />
                 <span className="text-xs">{post.reposts_count ?? 0}</span>
@@ -511,7 +524,7 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
               {/* Like */}
               <button
                 onClick={() => onReact?.(post.id, "like")}
-                className="flex items-center gap-1.5 text-[#9CA3AF] hover:text-[#E8311A] transition-colors"
+                className="flex items-center gap-1.5 h-9 px-2 rounded-full text-[#9CA3AF] hover:text-[#E8311A] hover:bg-[#1A1A1A] transition-colors"
               >
                 <Heart className={cn("w-4 h-4", post.user_reaction && "fill-[#E8311A] text-[#E8311A]")} />
                 <span className="text-xs">{reactions.total}</span>
@@ -521,90 +534,110 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
               <button
                 onClick={() => onSave?.(post.id)}
                 className={cn(
-                  "text-[#9CA3AF] hover:text-[#F0F0F0] transition-colors",
-                  post.is_saved && "text-[#F0F0F0]"
+                  "flex items-center justify-center w-9 h-9 rounded-full transition-colors hover:bg-[#1A1A1A]",
+                  post.is_saved ? "text-[#F0F0F0]" : "text-[#9CA3AF] hover:text-[#F0F0F0]"
                 )}
               >
                 <Bookmark className={cn("w-4 h-4", post.is_saved && "fill-current")} />
               </button>
 
               {/* Share */}
-              <button className="text-[#9CA3AF] hover:text-[#C0C0C0] transition-colors ml-auto">
+              <button className="flex items-center justify-center w-9 h-9 rounded-full text-[#9CA3AF] hover:text-[#C0C0C0] hover:bg-[#1A1A1A] transition-colors ml-auto">
                 <Share2 className="w-4 h-4" />
               </button>
             </div>
           </div>
         </div>
+
+        {/* Latest reply preview — inside the article so it's clearly part of this post */}
+        {post.latest_reply && !replyOpen && (
+          <Link
+            href={`/post/${post.id}`}
+            className="flex items-center gap-2.5 mt-3 ml-11 mr-0 pl-3 py-2 rounded-lg bg-[#111111] border border-[#222222] hover:border-[#333333] hover:bg-[#151515] transition-colors"
+            onClick={e => e.stopPropagation()}
+          >
+            <Avatar src={post.latest_reply.author?.avatar_url ?? null} alt={post.latest_reply.author?.display_name ?? "User"} size="xs" />
+            <span className="text-xs font-semibold text-[#71717A] whitespace-nowrap">{post.latest_reply.author?.display_name}</span>
+            <span className="text-xs text-[#444444] line-clamp-1 flex-1 min-w-0 pr-3">{post.latest_reply.content}</span>
+          </Link>
+        )}
       </article>
 
       {/* Inline reply composer */}
       {replyOpen && currentUserProfile && (
-        <div className="flex gap-2.5 px-5 py-3 border-b border-[#1C1C1C] bg-[#080808]" onClick={e => e.stopPropagation()}>
-          <Avatar src={currentUserProfile.avatar_url} alt={currentUserProfile.display_name} size="sm" />
-          <div className="flex-1 min-w-0">
-            <textarea
-              ref={replyRef}
-              value={replyContent}
-              onChange={e => setReplyContent(e.target.value)}
-              onKeyDown={async e => {
-                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                  e.preventDefault();
-                  if (!replyContent.trim() || replyPosting) return;
-                  setReplyPosting(true);
-                  const res = await fetch("/api/posts", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ content: replyContent.trim(), parent_id: post.id, post_type: "post" }),
-                  });
-                  if (res.ok) {
-                    const { post: newReply } = await res.json();
-                    setLocalRepliesCount(c => c + 1);
-                    setReplyContent("");
-                    setReplyOpen(false);
-                    onReply?.(post.id, newReply);
+        <div className="flex gap-0 border-b border-[#1C1C1C] bg-[#080808]" onClick={e => e.stopPropagation()}>
+          {/* Thread line indent */}
+          <div className="w-[52px] flex-shrink-0 flex justify-center pt-3">
+            <div className="w-px bg-[#333333] h-full" />
+          </div>
+          <div className="flex gap-2.5 flex-1 py-3 pr-5">
+            <Avatar src={currentUserProfile.avatar_url} alt={currentUserProfile.display_name} size="sm" />
+            <div className="flex-1 min-w-0">
+              <textarea
+                ref={replyRef}
+                value={replyContent}
+                onChange={e => setReplyContent(e.target.value)}
+                onKeyDown={async e => {
+                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                    e.preventDefault();
+                    if (!replyContent.trim() || replyPosting) return;
+                    setReplyPosting(true);
+                    const res = await fetch("/api/posts", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ content: replyContent.trim(), parent_id: post.id, post_type: "post" }),
+                    });
+                    if (res.ok) {
+                      const { post: newReply } = await res.json();
+                      setLocalRepliesCount(c => c + 1);
+                      setReplyContent("");
+                      setReplyOpen(false);
+                      onReply?.(post.id, newReply);
+                    }
+                    setReplyPosting(false);
                   }
-                  setReplyPosting(false);
-                }
-              }}
-              placeholder={`Reply to ${post.author?.display_name ?? "this post"}…`}
-              rows={2}
-              className="w-full bg-transparent text-sm text-[#F0F0F0] placeholder:text-[#555555] resize-none focus:outline-none leading-relaxed"
-            />
-            <div className="flex items-center justify-end gap-2 mt-1.5">
-              <button
-                onClick={() => { setReplyOpen(false); setReplyContent(""); }}
-                className="text-xs text-[#555555] hover:text-[#9CA3AF] transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={async () => {
-                  if (!replyContent.trim() || replyPosting) return;
-                  setReplyPosting(true);
-                  const res = await fetch("/api/posts", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ content: replyContent.trim(), parent_id: post.id, post_type: "post" }),
-                  });
-                  if (res.ok) {
-                    const { post: newReply } = await res.json();
-                    setLocalRepliesCount(c => c + 1);
-                    setReplyContent("");
-                    setReplyOpen(false);
-                    onReply?.(post.id, newReply);
-                  }
-                  setReplyPosting(false);
                 }}
-                disabled={!replyContent.trim() || replyPosting}
-                className="flex items-center gap-1 px-3 py-1 rounded bg-[#E8311A] text-white text-xs font-bold disabled:opacity-40 hover:bg-[#D02A15] transition-colors"
-              >
-                <Send className="w-3 h-3" />
-                {replyPosting ? "Posting…" : "Reply"}
-              </button>
+                placeholder={`Reply to ${post.author?.display_name ?? "this post"}…`}
+                rows={2}
+                className="w-full bg-transparent text-sm text-[#F0F0F0] placeholder:text-[#555555] resize-none focus:outline-none leading-relaxed"
+              />
+              <div className="flex items-center justify-end gap-2 mt-1.5">
+                <button
+                  onClick={() => { setReplyOpen(false); setReplyContent(""); }}
+                  className="text-xs text-[#555555] hover:text-[#9CA3AF] transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!replyContent.trim() || replyPosting) return;
+                    setReplyPosting(true);
+                    const res = await fetch("/api/posts", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ content: replyContent.trim(), parent_id: post.id, post_type: "post" }),
+                    });
+                    if (res.ok) {
+                      const { post: newReply } = await res.json();
+                      setLocalRepliesCount(c => c + 1);
+                      setReplyContent("");
+                      setReplyOpen(false);
+                      onReply?.(post.id, newReply);
+                    }
+                    setReplyPosting(false);
+                  }}
+                  disabled={!replyContent.trim() || replyPosting}
+                  className="flex items-center gap-1 px-3 py-1 rounded bg-[#E8311A] text-white text-xs font-bold disabled:opacity-40 hover:bg-[#D02A15] transition-colors"
+                >
+                  <Send className="w-3 h-3" />
+                  {replyPosting ? "Posting…" : "Reply"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
+
     </>
   );
 }

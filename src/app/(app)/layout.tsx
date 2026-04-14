@@ -28,7 +28,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <TopNav unreadNotifs={unreadNotifs} unreadMessages={unreadMessages} profile={profile as Profile} />
       <div className="flex max-w-[1290px] mx-auto pt-14">
         <Sidebar />
-        <main className="flex-1 min-h-screen lg:border-l lg:border-[#282828] pb-16 lg:pb-0 min-w-0" style={{ overflowX: "clip" }}>
+        <main className="flex-1 min-h-screen pb-16 lg:pb-0 min-w-0" style={{ overflowX: "clip" }}>
           {children}
         </main>
         <RightAside>

@@ -63,6 +63,14 @@ export interface Post {
   is_saved?: boolean;
   poll?: Poll;
   forecast?: Forecast;
+  latest_reply?: LatestReply | null;
+}
+
+export interface LatestReply {
+  id: string;
+  content: string;
+  author?: Pick<Profile, "id" | "username" | "display_name" | "avatar_url">;
+  created_at: string;
 }
 
 export interface ReactionCounts {
