@@ -61,10 +61,11 @@ async function StockPageContent({
 }) {
   if (!stock) return null;
   const ticker = stock.bloomberg_ticker ?? identifier;
+  const isPublic = !profile;
 
   const supabase = await createClient();
   const [quote, stats, primer, watchlistRes, followerRes, postCountRes] = await Promise.all([
-    getQuote(ticker).catch(() => null),
+    isPublic ? Promise.resolve(null) : getQuote(ticker).catch(() => null),
     stock.isin ? getCurrentStats(stock.isin).catch(() => null) : null,
     stock.bloomberg_ticker ? getPrimer(stock.bloomberg_ticker).catch(() => null) : null,
     profile
@@ -91,7 +92,19 @@ async function StockPageContent({
               {stock!.sector && ` · ${stock!.sector}`}
             </p>
             <div className="flex flex-wrap items-baseline gap-2 mt-2">
-              {quote?.price != null ? (
+              {isPublic ? (
+                <a href="/login" className="group flex items-baseline gap-2">
+                  <span className="text-2xl sm:text-3xl font-black font-mono text-[#F0F0F0] select-none" style={{ filter: "blur(6px)" }}>
+                    S$1.234
+                  </span>
+                  <span className="text-sm font-bold text-[#22C55E] select-none" style={{ filter: "blur(4px)" }}>
+                    +0.012 (+0.98%)
+                  </span>
+                  <span className="text-xs text-[#555555] group-hover:text-[#9CA3AF] transition-colors ml-1">
+                    Sign up to see live price →
+                  </span>
+                </a>
+              ) : quote?.price != null ? (
                 <>
                   <span className="text-2xl sm:text-3xl font-black text-[#F0F0F0] font-mono">
                     {formatPrice(quote.price, quote.currency ?? "SGD")}
@@ -127,6 +140,7 @@ async function StockPageContent({
         ticker={rawTicker}
         displayTicker={ticker}
         stockName={stock.name}
+        isPublic={isPublic}
         profile={profile}
         isPositive={isPositive}
         description={stock.description ?? null}

@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 interface ChartData {
@@ -151,7 +152,70 @@ function SVGChart({
   );
 }
 
-export function PriceChart({ ticker, initialPositive }: { ticker: string; initialPositive: boolean }) {
+// Deterministic pseudo-random seeded from string
+function seededRand(seed: string) {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (Math.imul(31, h) + seed.charCodeAt(i)) | 0;
+  return () => {
+    h ^= h << 13; h ^= h >> 17; h ^= h << 5;
+    return ((h >>> 0) / 0xffffffff);
+  };
+}
+
+function FakeChart({ ticker }: { ticker: string }) {
+  const rand = seededRand(ticker);
+  const N = 80;
+  const H = CHART_H;
+
+  // Generate a plausible random walk
+  const prices: number[] = [50];
+  for (let i = 1; i < N; i++) {
+    const delta = (rand() - 0.48) * 4;
+    prices.push(Math.max(10, Math.min(90, prices[i - 1] + delta)));
+  }
+
+  const minP = Math.min(...prices) - 3;
+  const maxP = Math.max(...prices) + 3;
+  const range = maxP - minP;
+  const px = (i: number) => PAD.left + (i / (N - 1)) * (W - PAD.left - PAD.right);
+  const py = (p: number) => PAD.top + (1 - (p - minP) / range) * (H - PAD.top - PAD.bottom);
+
+  const isPos = prices[N - 1] >= prices[0];
+  const color = isPos ? "#22C55E" : "#EF4444";
+  const pathD = prices.map((p, i) => `${i === 0 ? "M" : "L"} ${px(i).toFixed(1)} ${py(p).toFixed(1)}`).join(" ");
+  const areaD = `${pathD} L ${px(N - 1).toFixed(1)} ${H} L ${px(0).toFixed(1)} ${H} Z`;
+
+  return (
+    <div className="relative" style={{ height: H + 20 }}>
+      {/* Blurred chart */}
+      <div style={{ filter: "blur(3px)", opacity: 0.5 }}>
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full block" preserveAspectRatio="none" style={{ height: H }}>
+          <defs>
+            <linearGradient id="fake-grad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity="0.25" />
+              <stop offset="100%" stopColor={color} stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <path d={areaD} fill="url(#fake-grad)" />
+          <path d={pathD} fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round" />
+        </svg>
+      </div>
+
+      {/* Signup overlay */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+        <p className="text-xs text-[#71717A]">Sign up to see live price chart</p>
+        <Link
+          href="/login"
+          className="px-4 py-2 rounded bg-[#E8311A] text-white text-xs font-bold hover:bg-[#D02A15] transition-colors"
+        >
+          Sign up free
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+export function PriceChart({ ticker, initialPositive, isPublic = false }: { ticker: string; initialPositive: boolean; isPublic?: boolean }) {
   const [interval, setInterval] = useState<string>("y1");
   const [data, setData] = useState<ChartData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -173,6 +237,14 @@ export function PriceChart({ ticker, initialPositive }: { ticker: string; initia
   const isPositive = data?.prices?.length
     ? data.prices[data.prices.length - 1] >= data.prices[0]
     : initialPositive;
+
+  if (isPublic) {
+    return (
+      <div className="px-5 pt-4 pb-3 border-b border-[#282828]">
+        <FakeChart ticker={ticker} />
+      </div>
+    );
+  }
 
   return (
     <div className="px-5 pt-4 pb-3 border-b border-[#282828]">

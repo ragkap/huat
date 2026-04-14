@@ -89,6 +89,7 @@ interface StockPageClientProps {
   stockName: string;
   profile: Profile | null;
   isPositive: boolean;
+  isPublic?: boolean;
   description: string | null;
   stats: StatsData | null;
   quote: QuoteData | null;
@@ -621,6 +622,7 @@ export function StockPageClient({
   stockName,
   profile,
   isPositive,
+  isPublic = false,
   description,
   stats,
   quote,
@@ -652,7 +654,7 @@ export function StockPageClient({
   return (
     <>
       {/* Chart */}
-      <PriceChart ticker={ticker} initialPositive={isPositive} />
+      <PriceChart ticker={ticker} initialPositive={isPositive} isPublic={isPublic} />
 
       {/* Stats grid */}
       {(stats || quote) && (
