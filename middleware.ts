@@ -25,7 +25,10 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const publicPaths = ["/", "/login", "/auth/callback"];
-  const isPublic = publicPaths.some(p => pathname === p || pathname.startsWith("/auth/"));
+  const isPublic =
+    publicPaths.some(p => pathname === p || pathname.startsWith("/auth/")) ||
+    pathname === "/opengraph-image" ||
+    pathname.endsWith("/opengraph-image");
 
   if (!user && !isPublic) {
     return NextResponse.redirect(new URL("/login", request.url));
