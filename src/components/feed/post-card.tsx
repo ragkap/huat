@@ -397,7 +397,7 @@ export function PostCard({ post, currentUserId, onReact, onSave, onRepost, onEdi
                         href={`/stocks/${ticker}`}
                         onClick={e => e.stopPropagation()}
                         className="inline-flex items-center gap-0.5 text-xs font-mono tracking-wider mr-1.5 border border-[#333333] rounded px-1.5 py-0.5 text-[#F0F0F0] bg-[#1C1C1C] hover:bg-[#282828] transition-colors"
-                        style={{ verticalAlign: "-3px" }}
+                        style={{ verticalAlign: "middle" }}
                       >
                         {post.sentiment && (
                           <span style={{ color: sentimentColor }}>
