@@ -43,6 +43,7 @@ export function FeedTabs({ profile, initialPosts }: FeedTabsProps) {
         ))}
       </div>
       <FeedList
+        key={tab}
         tab={tab}
         profile={profile}
         initialPosts={tab === "foryou" ? initialPosts : undefined}

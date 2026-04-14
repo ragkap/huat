@@ -42,11 +42,10 @@ interface FeedListProps {
 export function FeedList({ tab, profile, stockTicker, postType, initialPosts }: FeedListProps) {
   const [posts, setPosts] = useState<Post[]>(initialPosts ?? []);
   const [page, setPage] = useState(initialPosts?.length ? 1 : 0);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(!initialPosts);
   const [hasMore, setHasMore] = useState(initialPosts ? initialPosts.length === 20 : true);
   const loaderRef = useRef<HTMLDivElement>(null);
   const resettingRef = useRef(false);
-  const initialTab = useRef(tab);
 
   const fetchPosts = useCallback(async (p: number, reset = false) => {
     setLoading(true);
@@ -74,14 +73,13 @@ export function FeedList({ tab, profile, stockTicker, postType, initialPosts }: 
     }
   }, [tab, stockTicker, postType]);
 
-  // Reset on tab/ticker/postType change — skip initial fetch if server provided posts
+  // On mount: skip fetch if server already provided initial posts, else fetch
   const didMountRef = useRef(false);
   useEffect(() => {
-    if (!didMountRef.current && tab === initialTab.current && initialPosts?.length) {
+    if (!didMountRef.current) {
       didMountRef.current = true;
-      return;
+      if (initialPosts?.length) return; // server-provided — no fetch needed
     }
-    didMountRef.current = true;
     resettingRef.current = true;
     setPage(0);
     setHasMore(true);
