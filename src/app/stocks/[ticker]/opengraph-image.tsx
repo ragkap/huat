@@ -12,7 +12,7 @@ export default async function OgImage({ params }: { params: Promise<{ ticker: st
   const name = stock?.name ?? identifier;
   const displayTicker = (stock?.bloomberg_ticker ?? identifier).replace(/ SP$/, "");
   const sector = stock?.sector ?? null;
-  const description = stock?.description ? stock.description.slice(0, 120) + (stock.description.length > 120 ? "…" : "") : null;
+  const description = stock?.description ?? null;
 
   return new ImageResponse(
     (
@@ -24,9 +24,10 @@ export default async function OgImage({ params }: { params: Promise<{ ticker: st
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          padding: "60px 72px",
+          padding: "56px 72px",
           fontFamily: "sans-serif",
           position: "relative",
+          overflow: "hidden",
         }}
       >
         {/* Grid background */}
@@ -35,69 +36,95 @@ export default async function OgImage({ params }: { params: Promise<{ ticker: st
             position: "absolute",
             inset: 0,
             backgroundImage:
-              "linear-gradient(rgba(232,49,26,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(232,49,26,0.04) 1px, transparent 1px)",
+              "linear-gradient(rgba(232,49,26,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(232,49,26,0.05) 1px, transparent 1px)",
             backgroundSize: "60px 60px",
           }}
         />
 
-        {/* Glow */}
+        {/* Bottom-right glow — large warm burst */}
         <div
           style={{
             position: "absolute",
-            width: 500,
+            width: 700,
+            height: 700,
+            background: "radial-gradient(ellipse at center, rgba(232,49,26,0.22) 0%, rgba(232,49,26,0.08) 40%, transparent 70%)",
+            bottom: -200,
+            right: -150,
+          }}
+        />
+        {/* Secondary smaller glow for depth */}
+        <div
+          style={{
+            position: "absolute",
+            width: 300,
             height: 300,
-            background: "radial-gradient(ellipse, rgba(232,49,26,0.12) 0%, transparent 70%)",
-            bottom: 0,
-            right: 0,
+            background: "radial-gradient(ellipse at center, rgba(255,100,60,0.18) 0%, transparent 70%)",
+            bottom: -60,
+            right: 80,
           }}
         />
 
         {/* Top: wordmark */}
-        <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-          <span style={{ color: "#E8311A", fontSize: 32, fontWeight: 900, letterSpacing: "-1px" }}>Huat</span>
-          <span style={{ color: "#E8311A", fontSize: 32, fontWeight: 900 }}>发</span>
-          <span style={{ color: "#333333", fontSize: 18, marginLeft: 8 }}>huat.co</span>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 10, zIndex: 1 }}>
+          <span style={{ color: "#E8311A", fontSize: 30, fontWeight: 900, letterSpacing: "-1px" }}>Huat</span>
+          <span style={{ color: "#E8311A", fontSize: 30, fontWeight: 900 }}>发</span>
+          <span style={{ color: "#444444", fontSize: 17, marginLeft: 6 }}>huat.co</span>
         </div>
 
         {/* Middle: stock info */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 16, flex: 1, justifyContent: "center" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            {/* Ticker badge */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 14, flex: 1, justifyContent: "center", zIndex: 1 }}>
+          {/* Ticker + sector */}
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
             <div
               style={{
                 background: "#141414",
-                border: "1px solid #282828",
-                borderRadius: 8,
-                padding: "8px 16px",
+                border: "1px solid #303030",
+                borderRadius: 6,
+                padding: "6px 14px",
                 color: "#9CA3AF",
-                fontSize: 20,
+                fontSize: 18,
                 fontWeight: 700,
-                fontFamily: "monospace",
-                letterSpacing: "0.05em",
+                letterSpacing: "0.08em",
               }}
             >
               {displayTicker}
             </div>
             {sector && (
-              <span style={{ color: "#555555", fontSize: 18 }}>{sector}</span>
+              <span style={{ color: "#555555", fontSize: 17 }}>{sector}</span>
             )}
           </div>
 
-          <p style={{ color: "#F0F0F0", fontSize: 52, fontWeight: 900, lineHeight: 1.1, margin: 0, letterSpacing: "-1px" }}>
+          {/* Company name */}
+          <p style={{ color: "#F0F0F0", fontSize: 54, fontWeight: 900, lineHeight: 1.05, margin: 0, letterSpacing: "-1.5px", maxWidth: 900 }}>
             {name}
           </p>
 
+          {/* Description — full, clamped by available space */}
           {description && (
-            <p style={{ color: "#71717A", fontSize: 22, lineHeight: 1.5, margin: 0, maxWidth: 800 }}>
+            <p style={{ color: "#6B7280", fontSize: 19, lineHeight: 1.55, margin: 0, maxWidth: 780, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
               {description}
             </p>
           )}
         </div>
 
-        {/* Bottom: SGX + slogan */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <span style={{ color: "#333333", fontSize: 16 }}>SGX Listed</span>
-          <span style={{ color: "#333333", fontSize: 16 }}>Invest Together. Prosper Together.</span>
+        {/* Bottom bar */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", zIndex: 1 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {/* Pill */}
+            <div style={{
+              background: "rgba(232,49,26,0.12)",
+              border: "1px solid rgba(232,49,26,0.3)",
+              borderRadius: 100,
+              padding: "6px 16px",
+              color: "#E8311A",
+              fontSize: 14,
+              fontWeight: 700,
+              letterSpacing: "0.04em",
+            }}>
+              Join Singapore's investing community. It's free.
+            </div>
+          </div>
+          <span style={{ color: "#3A3A3A", fontSize: 15 }}>Invest Together. Prosper Together.</span>
         </div>
       </div>
     ),
