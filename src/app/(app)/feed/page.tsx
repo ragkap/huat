@@ -25,6 +25,28 @@ export default function FeedPage() {
 
   if (!profile) return (
     <div>
+      {/* Composer skeleton */}
+      <div className="px-5 py-4 border-b border-[#282828] animate-pulse">
+        <div className="flex gap-3">
+          {/* Avatar */}
+          <div className="w-8 h-8 rounded-full bg-[#1C1C1C] flex-shrink-0 mt-0.5" />
+          <div className="flex-1 space-y-3">
+            {/* Textarea area */}
+            <div className="h-16 rounded-lg bg-[#141414]" />
+            {/* Bottom row: icons + button */}
+            <div className="flex items-center justify-between">
+              <div className="flex gap-3">
+                <div className="w-5 h-5 rounded bg-[#1C1C1C]" />
+                <div className="w-5 h-5 rounded bg-[#1C1C1C]" />
+                <div className="w-5 h-5 rounded bg-[#1C1C1C]" />
+              </div>
+              <div className="w-20 h-8 rounded-lg bg-[#1C1C1C]" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs skeleton */}
       <div className="flex border-b border-[#282828] sticky top-14 z-10 bg-[#0A0A0A]/95 backdrop-blur-md">
         {TABS.map(t => (
           <div key={t.id} className="flex-1 py-3.5 text-sm font-medium text-transparent select-none">{t.label}</div>
