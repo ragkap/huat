@@ -29,7 +29,8 @@ export async function middleware(request: NextRequest) {
     publicPaths.some(p => pathname === p || pathname.startsWith("/auth/")) ||
     pathname === "/opengraph-image" ||
     pathname.endsWith("/opengraph-image") ||
-    /^\/stocks\/[^/]+(\/opengraph-image)?$/.test(pathname);
+    /^\/stocks\/[^/]+(\/opengraph-image)?$/.test(pathname) ||
+    pathname.startsWith("/api/stocks/");
 
   if (!user && !isPublic) {
     return NextResponse.redirect(new URL("/login", request.url));
