@@ -121,7 +121,14 @@ const CreatePostSchema = z.object({
   sentiment: z.enum(["bullish", "bearish", "neutral"]).nullable().optional(),
   post_type: z.enum(["post", "poll", "forecast"]).default("post"),
   tagged_stocks: z.array(z.string()).max(5).optional(),
-  attachments: z.array(z.object({ url: z.string(), type: z.string() })).max(4).optional(),
+  attachments: z.array(z.object({
+    url: z.string(),
+    type: z.string(),
+    og_title: z.string().nullish(),
+    og_description: z.string().nullish(),
+    og_image: z.string().nullish(),
+    og_site_name: z.string().nullish(),
+  })).max(4).optional(),
   poll: z.object({
     options: z.array(z.object({ id: z.string(), text: z.string() })).min(2).max(4),
     ends_at: z.string().optional(),

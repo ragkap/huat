@@ -32,10 +32,18 @@ export async function GET(req: Request) {
 
     const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
 
-    const og_title = getMeta("og:title") || titleMatch?.[1]?.trim() || null;
-    const og_description = getMeta("og:description") || getMeta("description") || null;
+    function decodeEntities(str: string | null): string | null {
+      if (!str) return null;
+      return str
+        .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+        .replace(/&quot;/g, '"').replace(/&#x27;/g, "'").replace(/&#39;/g, "'")
+        .replace(/&apos;/g, "'").replace(/&#x2F;/g, "/").replace(/&nbsp;/g, " ");
+    }
+
+    const og_title = decodeEntities(getMeta("og:title") || titleMatch?.[1]?.trim() || null);
+    const og_description = decodeEntities(getMeta("og:description") || getMeta("description") || null);
     const og_image = getMeta("og:image") || null;
-    const og_site_name = getMeta("og:site_name") || new URL(url).hostname.replace("www.", "") || null;
+    const og_site_name = decodeEntities(getMeta("og:site_name") || new URL(url).hostname.replace("www.", "") || null);
 
     return NextResponse.json(
       { og_title, og_description, og_image, og_site_name },

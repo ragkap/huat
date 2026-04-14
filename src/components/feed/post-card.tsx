@@ -2,14 +2,36 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
+function decodeHtml(str: string | null | undefined): string {
+  if (!str) return "";
+  return str
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'")
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&#x2F;/g, "/")
+    .replace(/&nbsp;/g, " ");
+}
+
+function shortenUrl(url: string): string {
+  try {
+    const { hostname, pathname } = new URL(url);
+    const host = hostname.replace(/^www\./, "");
+    return pathname.length > 1 ? `${host}/…` : host;
+  } catch { return url; }
+}
+
 function renderTextWithLinks(text: string) {
   const parts = text.split(/(https?:\/\/[^\s]+)/g);
   return parts.map((part, i) =>
     /^https?:\/\//.test(part) ? (
       <a key={i} href={part} target="_blank" rel="noopener noreferrer"
-        className="text-[#E8311A] underline underline-offset-2 break-all hover:text-[#c9280f] transition-colors"
+        className="text-[#E8311A]/50 hover:text-[#E8311A]/80 transition-colors"
         onClick={e => e.stopPropagation()}
-      >{part}</a>
+      >{shortenUrl(part)}</a>
     ) : part
   );
 }
@@ -278,10 +300,11 @@ export function PostCard({ post, currentUserId, onReact, onSave, onRepost, onEdi
 
   useEffect(() => {
     if (post.post_type !== "post") return;
-    const hasLinkAttachment = post.attachments?.some(a => a.type === "link");
-    if (hasLinkAttachment) return;
     const isNewsEmbed = /\n\n📰 /.test(post.content ?? "");
     if (isNewsEmbed) return;
+    // Skip if we already have stored OG data
+    const hasOgData = post.attachments?.some(a => a.type === "link" && (a.og_title || a.og_image));
+    if (hasOgData) return;
     const match = post.content?.match(/https?:\/\/[^\s]+/);
     if (!match) return;
     const url = match[0];
@@ -418,9 +441,10 @@ export function PostCard({ post, currentUserId, onReact, onSave, onRepost, onEdi
             {/* Link preview — stored attachment or inline OG fetch (plain posts only) */}
             {(() => {
               const linkAttachment = ["post", "poll", "forecast"].includes(post.post_type) ? post.attachments?.find(a => a.type === "link") : undefined;
-              const og = linkAttachment
+              const storedOg = linkAttachment?.og_title || linkAttachment?.og_image
                 ? { url: linkAttachment.url, og_title: linkAttachment.og_title, og_description: linkAttachment.og_description, og_image: linkAttachment.og_image, og_site_name: linkAttachment.og_site_name }
-                : inlineOg;
+                : null;
+              const og = storedOg ?? inlineOg;
               if (!og || (!og.og_title && !og.og_image)) return null;
               return (
                 <a href={og.url} target="_blank" rel="noopener noreferrer"
@@ -439,9 +463,9 @@ export function PostCard({ post, currentUserId, onReact, onSave, onRepost, onEdi
                     )}
                   </div>
                   <div className="flex-1 min-w-0 px-3 py-2.5 flex flex-col justify-start gap-1">
-                    {og.og_site_name && <p className="text-[10px] text-[#555555] uppercase tracking-wide">{og.og_site_name}</p>}
-                    {og.og_title && <p className="text-sm text-[#9CA3AF] leading-snug line-clamp-3">{og.og_title}</p>}
-                    {og.og_description && <p className="text-xs text-[#555555] leading-snug line-clamp-4">{og.og_description}</p>}
+                    {og.og_site_name && <p className="text-[10px] text-[#555555] uppercase tracking-wide">{decodeHtml(og.og_site_name)}</p>}
+                    {og.og_title && <p className="text-sm text-[#9CA3AF] leading-snug line-clamp-3">{decodeHtml(og.og_title)}</p>}
+                    {og.og_description && <p className="text-xs text-[#555555] leading-snug line-clamp-4">{decodeHtml(og.og_description)}</p>}
                   </div>
                 </a>
               );
