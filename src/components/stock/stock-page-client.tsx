@@ -57,15 +57,15 @@ function SignupGate({ stockName, followerCount, postCount }: { stockName: string
             Log in
           </a>
         </div>
-        {(followerCount > 0 || postCount > 0) && (
-          <p className="mt-4 text-xs text-[#555555]">
-            {followerCount > 0 && postCount > 0
-              ? <>{followerCount.toLocaleString()} investors watching · {postCount.toLocaleString()} posts</>
-              : followerCount > 0
-              ? <>{followerCount.toLocaleString()} investors already watching {stockName}</>
-              : <>{postCount.toLocaleString()} posts about {stockName}</>}
-          </p>
-        )}
+        <p className="mt-4 text-xs text-[#555555]">
+          {followerCount > 0 && postCount > 0
+            ? <>{followerCount.toLocaleString()} investors watching · {postCount.toLocaleString()} posts</>
+            : followerCount > 0
+            ? <>{followerCount.toLocaleString()} investors already watching {stockName}</>
+            : postCount > 0
+            ? <>{postCount.toLocaleString()} posts about {stockName}</>
+            : <>Join Singapore's investing community. It's free.</>}
+        </p>
       </div>
     </div>
   );
