@@ -13,7 +13,7 @@ import type { SmartScore } from "@/lib/smartkarma/client";
 const navItems = [
   { href: "/feed", label: "Feed", icon: Home },
   { href: "/watchlist", label: "Watchlist", icon: Star },
-  { href: "/stocks", label: "Stocks", icon: TrendingUp },
+  { href: "/stocks", label: "Discover", icon: TrendingUp },
 ];
 
 interface PrimerOverview {

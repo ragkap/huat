@@ -32,6 +32,7 @@ export interface SGStock {
   market_status: string | null;
   description: string | null;
   market_cap: number | null;
+  smart_score: number | null;
 }
 
 const BASE_SELECT = `
@@ -46,8 +47,10 @@ const BASE_SELECT = `
     e.yahoo_ticker,
     e.market_status,
     e.description,
-    e.market_cap
+    e.market_cap,
+    ess.country_score AS smart_score
   FROM entities e
+  LEFT OUTER JOIN entity_smart_scores ess ON ess.entity_id = e.id
   WHERE e.exchange_code = 'SP'
     AND (e.market_status IN ('listed', 'pending-listing') OR e.market_status IS NULL)
     AND e.bloomberg_ticker NOT LIKE 'SK %'
@@ -70,7 +73,7 @@ async function _getSingaporeStocks(): Promise<SGStock[]> {
 
 export const getSingaporeStocks = unstable_cache(
   _getSingaporeStocks,
-  ["sg-stocks-v3"],
+  ["sg-stocks-v4"],
   { revalidate: 300 }
 );
 

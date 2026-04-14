@@ -2,9 +2,12 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import { ChevronUp, ChevronDown } from "lucide-react";
 import type { SGStock } from "@/lib/stocks-db/client";
 
 type CapBucket = "small" | "mid" | "large";
+type SortKey = "market_cap" | "smart_score" | "name";
+type SortDir = "asc" | "desc";
 
 const CAP_BUCKETS: { id: CapBucket; label: string; desc: string }[] = [
   { id: "small", label: "Small", desc: "<$500M" },
@@ -26,9 +29,24 @@ function formatMarketCap(n: number | null): string {
   return `US$${n.toFixed(0)}M`;
 }
 
+function SmartScoreBadge({ score }: { score: number | null }) {
+  if (score === null) return <span className="text-xs text-[#555555] font-mono w-6 text-center">—</span>;
+  const color = score >= 4 ? "#22C55E" : score >= 3 ? "#F59E0B" : "#EF4444";
+  return (
+    <span
+      className="text-xs font-bold font-mono w-6 text-center"
+      style={{ color }}
+    >
+      {score}
+    </span>
+  );
+}
+
 export function StocksFilterClient({ stocks }: { stocks: SGStock[] }) {
   const [sector, setSector] = useState<string | null>(null);
   const [cap, setCap] = useState<CapBucket | null>(null);
+  const [sortKey, setSortKey] = useState<SortKey>("market_cap");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
 
   const sectors = useMemo(() => {
     const seen = new Set<string>();
@@ -39,19 +57,45 @@ export function StocksFilterClient({ stocks }: { stocks: SGStock[] }) {
   }, [stocks]);
 
   const filtered = useMemo(() => {
-    return stocks.filter(s => {
+    const f = stocks.filter(s => {
       if (sector && s.sector !== sector) return false;
       if (cap && marketCapBucket(s.market_cap) !== cap) return false;
       return true;
     });
-  }, [stocks, sector, cap]);
 
-  function toggleSector(s: string) {
-    setSector(prev => prev === s ? null : s);
+    return [...f].sort((a, b) => {
+      let av: number | string | null;
+      let bv: number | string | null;
+      if (sortKey === "name") {
+        av = a.name ?? "";
+        bv = b.name ?? "";
+        return sortDir === "asc"
+          ? (av as string).localeCompare(bv as string)
+          : (bv as string).localeCompare(av as string);
+      }
+      av = sortKey === "smart_score" ? a.smart_score : a.market_cap;
+      bv = sortKey === "smart_score" ? b.smart_score : b.market_cap;
+      if (av === null && bv === null) return 0;
+      if (av === null) return 1;
+      if (bv === null) return -1;
+      return sortDir === "asc" ? (av as number) - (bv as number) : (bv as number) - (av as number);
+    });
+  }, [stocks, sector, cap, sortKey, sortDir]);
+
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortKey(key);
+      setSortDir("desc");
+    }
   }
 
-  function toggleCap(c: CapBucket) {
-    setCap(prev => prev === c ? null : c);
+  function SortIcon({ k }: { k: SortKey }) {
+    if (sortKey !== k) return <ChevronDown className="w-3 h-3 text-[#555555]" />;
+    return sortDir === "desc"
+      ? <ChevronDown className="w-3 h-3 text-[#E8311A]" />
+      : <ChevronUp className="w-3 h-3 text-[#E8311A]" />;
   }
 
   const hasFilters = sector !== null || cap !== null;
@@ -67,7 +111,7 @@ export function StocksFilterClient({ stocks }: { stocks: SGStock[] }) {
             {CAP_BUCKETS.map(b => (
               <button
                 key={b.id}
-                onClick={() => toggleCap(b.id)}
+                onClick={() => setCap(prev => prev === b.id ? null : b.id)}
                 className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
                   cap === b.id
                     ? "bg-[#E8311A] text-white"
@@ -87,7 +131,7 @@ export function StocksFilterClient({ stocks }: { stocks: SGStock[] }) {
             {sectors.map(s => (
               <button
                 key={s}
-                onClick={() => toggleSector(s)}
+                onClick={() => setSector(prev => prev === s ? null : s)}
                 className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
                   sector === s
                     ? "bg-[#E8311A] text-white"
@@ -116,45 +160,53 @@ export function StocksFilterClient({ stocks }: { stocks: SGStock[] }) {
         </div>
       </div>
 
+      {/* Column headers */}
+      <div className="px-5 py-2 border-b border-[#1C1C1C] flex items-center text-[10px] font-bold text-[#555555] uppercase tracking-wider">
+        <div className="flex-1 min-w-0">Company</div>
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <button onClick={() => toggleSort("smart_score")} className="flex items-center gap-0.5 hover:text-[#9CA3AF] transition-colors justify-end">
+            SmartScore <SortIcon k="smart_score" />
+          </button>
+          <button onClick={() => toggleSort("market_cap")} className="flex items-center gap-0.5 hover:text-[#9CA3AF] transition-colors w-16 justify-end">
+            Mkt Cap <SortIcon k="market_cap" />
+          </button>
+        </div>
+      </div>
+
       {/* Stock list */}
-      <div className="px-5 py-4">
+      <div>
         {filtered.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-[#F0F0F0] font-bold mb-2">No results</p>
             <p className="text-[#71717A] text-sm">Try adjusting the filters</p>
           </div>
         ) : (
-          <div>
-            {filtered.map(stock => (
-              <Link
-                key={stock.id}
-                href={`/stocks/${encodeURIComponent(stock.slug ?? stock.bloomberg_ticker ?? String(stock.id))}`}
-                className="flex items-center justify-between py-3 border-b border-[#141414] hover:bg-[#0D0D0D] -mx-5 px-5 transition-colors group"
-              >
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <div className="w-10 h-10 rounded bg-[#282828] border border-[#333333] flex items-center justify-center text-xs font-bold text-[#9CA3AF] font-mono flex-shrink-0">
-                    {(stock.bloomberg_ticker ?? "??").split(" ")[0].slice(0, 4)}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-bold text-sm text-[#F0F0F0] group-hover:text-white truncate">{stock.name}</p>
-                    <p className="text-xs text-[#71717A] font-mono truncate">{stock.bloomberg_ticker}</p>
-                  </div>
+          filtered.map(stock => (
+            <Link
+              key={stock.id}
+              href={`/stocks/${encodeURIComponent(stock.slug ?? stock.bloomberg_ticker ?? String(stock.id))}`}
+              className="flex items-center px-5 py-2.5 border-b border-[#141414] hover:bg-[#0D0D0D] transition-colors group"
+            >
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="w-8 h-8 rounded bg-[#282828] border border-[#333333] flex items-center justify-center text-[10px] font-bold text-[#9CA3AF] font-mono flex-shrink-0 hidden sm:flex">
+                  {(stock.bloomberg_ticker ?? "??").split(" ")[0].slice(0, 4)}
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0 ml-3">
-                  {stock.market_cap !== null && (
-                    <span className="text-xs text-[#9CA3AF] font-mono hidden sm:block">
-                      {formatMarketCap(stock.market_cap)}
-                    </span>
-                  )}
-                  {stock.sector && (
-                    <span className="text-xs text-[#71717A] bg-[#282828] px-2 py-0.5 rounded hidden sm:block">
-                      {stock.sector}
-                    </span>
-                  )}
+                <div className="min-w-0">
+                  <p className="font-medium text-sm text-[#F0F0F0] group-hover:text-white truncate">{stock.name}</p>
+                  <p className="text-[10px] text-[#555555] font-mono">
+                    {stock.bloomberg_ticker?.replace(/ SP$/, "")}
+                    {stock.sector && <span className="text-[#444444] hidden sm:inline"> · {stock.sector}</span>}
+                  </p>
                 </div>
-              </Link>
-            ))}
-          </div>
+              </div>
+              <div className="flex items-center gap-3 flex-shrink-0">
+                <SmartScoreBadge score={stock.smart_score} />
+                <span className="text-xs text-[#9CA3AF] font-mono w-16 text-right">
+                  {formatMarketCap(stock.market_cap)}
+                </span>
+              </div>
+            </Link>
+          ))
         )}
       </div>
     </div>
