@@ -101,7 +101,7 @@ async function StockPageContent({
                     +0.012 (+0.98%)
                   </span>
                   <span className="text-xs text-[#555555] group-hover:text-[#9CA3AF] transition-colors ml-1">
-                    Sign up to see live price →
+                    (yours if you join) →
                   </span>
                 </a>
               ) : quote?.price != null ? (

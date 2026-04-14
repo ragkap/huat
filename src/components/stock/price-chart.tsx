@@ -203,7 +203,7 @@ function FakeChart({ ticker }: { ticker: string }) {
 
       {/* Signup overlay */}
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-        <p className="text-xs text-[#71717A]">Sign up to see live price chart</p>
+        <p className="text-xs text-[#71717A]">The chart is real. The blur is not.</p>
         <Link
           href="/login"
           className="px-4 py-2 rounded bg-[#E8311A] text-white text-xs font-bold hover:bg-[#D02A15] transition-colors"
