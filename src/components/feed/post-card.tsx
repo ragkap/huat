@@ -110,7 +110,7 @@ function PollDisplay({ poll }: { poll: NonNullable<Post["poll"]> }) {
           </button>
         );
       })}
-      <p className="text-xs text-[#71717A]">
+      <p className="text-xs text-[#9CA3AF]">
         {total} vote{total !== 1 ? "s" : ""}
         {poll.ends_at && !expired && ` · ${timeAgo(poll.ends_at)} left`}
         {expired && " · Ended"}
@@ -130,9 +130,9 @@ function ForecastDisplay({ forecast }: { forecast: NonNullable<Post["forecast"]>
     <div className="mt-3 border border-[#333333] rounded p-3 bg-[#0F0F0F]">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs text-[#9CA3AF] uppercase tracking-wider mb-1">Price Forecast</p>
+          <p className="text-xs text-[#C0C0C0] uppercase tracking-wider mb-1">Price Forecast</p>
           <p className="text-lg font-bold text-[#F0F0F0] font-mono">{formatPrice(forecast.target_price)}</p>
-          <p className="text-xs text-[#9CA3AF]">by {new Date(forecast.target_date).toLocaleDateString("en-SG", { day: "numeric", month: "short", year: "numeric" })}</p>
+          <p className="text-xs text-[#C0C0C0]">by {new Date(forecast.target_date).toLocaleDateString("en-SG", { day: "numeric", month: "short", year: "numeric" })}</p>
         </div>
         <div className={cn("text-right", outcomeColors[forecast.outcome])}>
           <span className="text-sm font-bold uppercase">{forecast.outcome}</span>
@@ -326,11 +326,11 @@ export function PostCard({ post, currentUserId, onReact, onSave, onRepost, onEdi
                 <Link href={`/profile/${post.author?.username}`} className="font-bold text-[#F0F0F0] hover:underline text-sm">
                   {post.author?.display_name}
                 </Link>
-                <span className="text-[#71717A] text-sm">@{post.author?.username}</span>
-                <span className="text-[#71717A] text-xs">·</span>
-                <span className="text-[#71717A] text-xs">{timeAgo(post.created_at)}</span>
+                <span className="text-[#9CA3AF] text-sm">@{post.author?.username}</span>
+                <span className="text-[#9CA3AF] text-xs">·</span>
+                <span className="text-[#9CA3AF] text-xs">{timeAgo(post.created_at)}</span>
                 {post.updated_at !== post.created_at && (
-                  <span className="text-[#71717A] text-xs">· edited</span>
+                  <span className="text-[#9CA3AF] text-xs">· edited</span>
                 )}
               </div>
               <MoreMenu isOwn={isOwn} onEdit={() => setEditing(true)} onDelete={handleDelete} />
@@ -384,7 +384,7 @@ export function PostCard({ post, currentUserId, onReact, onSave, onRepost, onEdi
                       className="block border border-[#282828] rounded p-3 bg-[#141414] hover:border-[#444444] transition-colors"
                       onClick={e => e.stopPropagation()}
                     >
-                      <p className="text-xs text-[#71717A] mb-1">{source}</p>
+                      <p className="text-xs text-[#9CA3AF] mb-1">{source}</p>
                       <p className="text-sm font-semibold text-[#F0F0F0] leading-snug line-clamp-2">{title}</p>
                     </a>
                   </>
@@ -410,9 +410,9 @@ export function PostCard({ post, currentUserId, onReact, onSave, onRepost, onEdi
                     <img src={linkAttachment.og_image} alt="" className="w-full h-44 object-cover" />
                   )}
                   <div className="px-3 py-2.5">
-                    {linkAttachment.og_site_name && <p className="text-[10px] text-[#555555] uppercase tracking-wide">{linkAttachment.og_site_name}</p>}
+                    {linkAttachment.og_site_name && <p className="text-[10px] text-[#9CA3AF] uppercase tracking-wide">{linkAttachment.og_site_name}</p>}
                     {linkAttachment.og_title && <p className="text-sm font-semibold text-[#F0F0F0] leading-snug mt-0.5 line-clamp-2">{linkAttachment.og_title}</p>}
-                    {linkAttachment.og_description && <p className="text-xs text-[#71717A] mt-0.5 line-clamp-2">{linkAttachment.og_description}</p>}
+                    {linkAttachment.og_description && <p className="text-xs text-[#C0C0C0] mt-0.5 line-clamp-2">{linkAttachment.og_description}</p>}
                   </div>
                 </a>
               );
@@ -433,7 +433,7 @@ export function PostCard({ post, currentUserId, onReact, onSave, onRepost, onEdi
               {/* Reply */}
               <Link
                 href={`/post/${post.id}`}
-                className="flex items-center gap-1.5 text-[#71717A] hover:text-[#9CA3AF] transition-colors"
+                className="flex items-center gap-1.5 text-[#9CA3AF] hover:text-[#C0C0C0] transition-colors"
               >
                 <MessageCircle className="w-4 h-4" />
                 <span className="text-xs">{post.replies_count ?? 0}</span>
@@ -442,7 +442,7 @@ export function PostCard({ post, currentUserId, onReact, onSave, onRepost, onEdi
               {/* Repost */}
               <button
                 onClick={() => onRepost?.(post.id)}
-                className="flex items-center gap-1.5 text-[#71717A] hover:text-[#22C55E] transition-colors"
+                className="flex items-center gap-1.5 text-[#9CA3AF] hover:text-[#22C55E] transition-colors"
               >
                 <Repeat2 className="w-4 h-4" />
                 <span className="text-xs">{post.reposts_count ?? 0}</span>
@@ -451,7 +451,7 @@ export function PostCard({ post, currentUserId, onReact, onSave, onRepost, onEdi
               {/* Like */}
               <button
                 onClick={() => onReact?.(post.id, "like")}
-                className="flex items-center gap-1.5 text-[#71717A] hover:text-[#E8311A] transition-colors"
+                className="flex items-center gap-1.5 text-[#9CA3AF] hover:text-[#E8311A] transition-colors"
               >
                 <Heart className={cn("w-4 h-4", post.user_reaction && "fill-[#E8311A] text-[#E8311A]")} />
                 <span className="text-xs">{reactions.total}</span>
@@ -461,7 +461,7 @@ export function PostCard({ post, currentUserId, onReact, onSave, onRepost, onEdi
               <button
                 onClick={() => onSave?.(post.id)}
                 className={cn(
-                  "text-[#71717A] hover:text-[#F0F0F0] transition-colors",
+                  "text-[#9CA3AF] hover:text-[#F0F0F0] transition-colors",
                   post.is_saved && "text-[#F0F0F0]"
                 )}
               >
@@ -469,7 +469,7 @@ export function PostCard({ post, currentUserId, onReact, onSave, onRepost, onEdi
               </button>
 
               {/* Share */}
-              <button className="text-[#71717A] hover:text-[#9CA3AF] transition-colors ml-auto">
+              <button className="text-[#9CA3AF] hover:text-[#C0C0C0] transition-colors ml-auto">
                 <Share2 className="w-4 h-4" />
               </button>
             </div>

@@ -776,7 +776,7 @@ export function StockPageClient({
               key={id}
               onClick={() => switchTab(id)}
               className={cn(
-                "flex-1 py-3 text-sm font-semibold transition-colors relative",
+                "flex-1 py-3 text-sm font-semibold transition-colors relative cursor-pointer",
                 topTab === id ? "text-[#F0F0F0]" : "text-[#555555] hover:text-[#9CA3AF]"
               )}
             >

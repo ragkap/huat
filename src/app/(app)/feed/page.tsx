@@ -41,7 +41,7 @@ export default function FeedPage() {
             key={t.id}
             onClick={() => setTab(t.id)}
             className={cn(
-              "flex-1 py-3.5 text-sm font-medium transition-colors relative",
+              "flex-1 py-3.5 text-sm font-medium transition-colors relative cursor-pointer",
               tab === t.id ? "text-[#F0F0F0]" : "text-[#9CA3AF] hover:text-[#F0F0F0]"
             )}
           >

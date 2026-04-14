@@ -1,6 +1,6 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
-import { Image as ImageIcon, BarChart2, TrendingUp, X, Plus } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { Image as ImageIcon, BarChart2, TrendingUp, TrendingDown, X, Plus, Crosshair } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -28,6 +28,7 @@ export function PostComposer({ profile, onPost, defaultTicker }: PostComposerPro
   const stockDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stockInputRef = useRef<HTMLInputElement>(null);
   const stockContainerRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [pollOptions, setPollOptions] = useState<PollOption[]>([
     { id: "1", text: "" }, { id: "2", text: "" },
   ]);
@@ -84,15 +85,15 @@ export function PostComposer({ profile, onPost, defaultTicker }: PostComposerPro
   }
 
   function addStock(ticker: string) {
-    setTaggedStocks(prev => [...new Set([...prev, ticker])]);
+    setTaggedStocks([ticker]);
     setStockSearch("");
     setStockSuggestions([]);
     setStockDropdownOpen(false);
-    stockInputRef.current?.focus();
+    setTimeout(() => textareaRef.current?.focus(), 0);
   }
 
   const remaining = MAX_CHARS - content.length;
-  const canPost = content.trim().length > 0 && !posting && taggedStocks.length > 0 && sentiment !== null;
+  const canPost = content.trim().length > 0 && !posting && taggedStocks.length === 1 && sentiment !== null;
 
   async function handlePost() {
     if (!canPost) return;
@@ -154,127 +155,197 @@ export function PostComposer({ profile, onPost, defaultTicker }: PostComposerPro
       <div className="flex gap-3">
         <Avatar src={profile.avatar_url} alt={profile.display_name} size="md" />
         <div className="flex-1">
-          {/* Stock tagger */}
-          <div ref={stockContainerRef} className="relative mb-3">
-            <div className="flex flex-wrap items-center gap-1.5">
-              {taggedStocks.map(t => (
-                <span key={t} className="flex items-center gap-1 text-xs bg-[#E8311A]/10 text-[#E8311A] border border-[#E8311A]/20 rounded px-2 py-0.5 font-mono">
-                  ${t}
-                  {t !== defaultTicker && (
-                    <button onClick={() => setTaggedStocks(prev => prev.filter(x => x !== t))} className="hover:text-white">
+          {/* Steps: each row is number + field side by side */}
+          <div className="space-y-3">
+
+            {/* Step 1: Stock tagger */}
+            <div className="flex gap-2 items-start">
+              <span className="text-xs font-black text-[#E8311A] opacity-40 pt-2 leading-none flex-shrink-0 w-3 text-center">1</span>
+              <div ref={stockContainerRef} className="relative flex-1 min-w-0">
+                {taggedStocks.length === 0 ? (
+                  <div className="flex items-center gap-2 bg-[#141414] border border-[#333333] rounded-lg px-3 py-2 focus-within:border-[#444444] transition-colors">
+                    <input
+                      ref={stockInputRef}
+                      value={stockSearch}
+                      onChange={e => handleStockSearchChange(e.target.value)}
+                      onKeyDown={e => { if (e.key === "Escape") { setStockDropdownOpen(false); setStockSearch(""); } }}
+                      placeholder="Tag a stock…"
+                      className="flex-1 bg-transparent text-sm text-[#F0F0F0] placeholder:text-[#9CA3AF] focus:outline-none"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span className="flex items-center gap-1.5 text-sm bg-[#E8311A]/10 text-[#E8311A] border border-[#E8311A]/20 rounded-lg px-3 py-2 font-mono font-bold">
+                      {taggedStocks[0]}
+                      {taggedStocks[0] !== defaultTicker && (
+                        <button onClick={() => setTaggedStocks([])} className="ml-1 hover:text-white transition-colors">
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </span>
+                  </div>
+                )}
+                {stockDropdownOpen && stockSuggestions.length > 0 && (
+                  <div className="absolute left-0 top-full mt-1 w-64 bg-[#141414] border border-[#282828] rounded-lg shadow-xl overflow-hidden z-50">
+                    {stockSuggestions.map(s => (
+                      <button
+                        key={s.bloomberg_ticker}
+                        onMouseDown={e => { e.preventDefault(); addStock(s.bloomberg_ticker); }}
+                        className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-[#1C1C1C] transition-colors text-left"
+                      >
+                        <span className="text-xs font-mono text-[#E8311A] font-bold">{s.bloomberg_ticker}</span>
+                        <span className="text-xs text-[#9CA3AF] truncate">{s.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Step 2: Textarea + optional extras */}
+            <div className="flex gap-2 items-start">
+              <span className="text-xs font-black text-[#E8311A] opacity-40 pt-2.5 leading-none flex-shrink-0 w-3 text-center">2</span>
+              <div className="flex-1 min-w-0 space-y-2">
+                <textarea
+                  ref={textareaRef}
+                  value={content}
+                  onChange={e => setContent(e.target.value.slice(0, MAX_CHARS))}
+                  placeholder={
+                    postType === "poll" ? "Ask a question..." :
+                    postType === "forecast" ? "What's your thesis?" :
+                    "What are your thoughts? 发!"
+                  }
+                  className="w-full bg-[#141414] border border-[#333333] rounded-lg px-3 py-2.5 text-[#F0F0F0] placeholder:text-[#9CA3AF] text-base resize-none focus:outline-none focus:border-[#444444] min-h-[80px] transition-colors"
+                  rows={3}
+                />
+                {/* Link preview */}
+                {linkPreview && !linkPreviewDismissed && (linkPreview.og_title || linkPreview.og_image) && (
+                  <div className="relative border border-[#333333] rounded-lg overflow-hidden bg-[#0D0D0D]">
+                    <button
+                      onClick={() => setLinkPreviewDismissed(true)}
+                      className="absolute top-2 right-2 z-10 w-5 h-5 flex items-center justify-center rounded-full bg-black/60 text-[#9CA3AF] hover:text-white"
+                    >
                       <X className="w-3 h-3" />
                     </button>
-                  )}
-                </span>
-              ))}
-              {taggedStocks.length < 5 && (
-                <input
-                  ref={stockInputRef}
-                  value={stockSearch}
-                  onChange={e => handleStockSearchChange(e.target.value)}
-                  onKeyDown={e => { if (e.key === "Escape") { setStockDropdownOpen(false); setStockSearch(""); } }}
-                  placeholder="+ Tag stock"
-                  className="text-xs bg-transparent text-[#9CA3AF] placeholder:text-[#71717A] focus:outline-none w-24"
-                />
-              )}
+                    {linkPreview.og_image && (
+                      <img src={linkPreview.og_image} alt="" className="w-full h-36 object-cover" />
+                    )}
+                    <div className="px-3 py-2">
+                      {linkPreview.og_site_name && <p className="text-[10px] text-[#555555] uppercase tracking-wide">{linkPreview.og_site_name}</p>}
+                      {linkPreview.og_title && <p className="text-xs font-semibold text-[#F0F0F0] leading-snug mt-0.5 line-clamp-2">{linkPreview.og_title}</p>}
+                      {linkPreview.og_description && <p className="text-[11px] text-[#9CA3AF] mt-0.5 line-clamp-2">{linkPreview.og_description}</p>}
+                    </div>
+                  </div>
+                )}
+                {/* Poll builder */}
+                {postType === "poll" && (
+                  <div className="space-y-2">
+                    {pollOptions.map((opt, i) => (
+                      <div key={opt.id} className="flex items-center gap-2">
+                        <input
+                          value={opt.text}
+                          onChange={e => setPollOptions(prev => prev.map(o => o.id === opt.id ? { ...o, text: e.target.value } : o))}
+                          placeholder={`Option ${i + 1}`}
+                          className="flex-1 bg-[#141414] border border-[#333333] rounded px-3 py-1.5 text-sm text-[#F0F0F0] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#444444]"
+                        />
+                        {pollOptions.length > 2 && (
+                          <button onClick={() => setPollOptions(prev => prev.filter(o => o.id !== opt.id))}>
+                            <X className="w-4 h-4 text-[#9CA3AF]" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    {pollOptions.length < 4 && (
+                      <button
+                        onClick={() => setPollOptions(prev => [...prev, { id: Date.now().toString(), text: "" }])}
+                        className="flex items-center gap-1 text-xs text-[#E8311A] hover:underline"
+                      >
+                        <Plus className="w-3 h-3" /> Add option
+                      </button>
+                    )}
+                  </div>
+                )}
+                {/* Forecast builder */}
+                {postType === "forecast" && (
+                  <div className="flex gap-2">
+                    <input
+                      value={forecast.ticker}
+                      onChange={e => setForecast(f => ({ ...f, ticker: e.target.value.toUpperCase() }))}
+                      placeholder="Ticker (e.g. D05)"
+                      className="flex-1 bg-[#141414] border border-[#333333] rounded px-3 py-1.5 text-sm text-[#F0F0F0] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#444444] font-mono"
+                    />
+                    <input
+                      value={forecast.targetPrice}
+                      onChange={e => setForecast(f => ({ ...f, targetPrice: e.target.value }))}
+                      placeholder="Target price"
+                      type="number"
+                      className="flex-1 bg-[#141414] border border-[#333333] rounded px-3 py-1.5 text-sm text-[#F0F0F0] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#444444]"
+                    />
+                    <input
+                      value={forecast.targetDate}
+                      onChange={e => setForecast(f => ({ ...f, targetDate: e.target.value }))}
+                      type="date"
+                      className="flex-1 bg-[#141414] border border-[#333333] rounded px-3 py-1.5 text-sm text-[#F0F0F0] focus:outline-none focus:border-[#444444]"
+                    />
+                  </div>
+                )}
+                {/* Attachment previews */}
+                {attachmentUrls.length > 0 && (
+                  <div className="flex gap-2 flex-wrap">
+                    {attachmentUrls.map((url, i) => (
+                      <div key={i} className="relative w-20 h-20 rounded overflow-hidden border border-[#333333]">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={url} alt="" className="w-full h-full object-cover" />
+                        <button
+                          onClick={() => setAttachmentUrls(prev => prev.filter((_, idx) => idx !== i))}
+                          className="absolute top-1 right-1 bg-black/70 rounded-full p-0.5"
+                        >
+                          <X className="w-3 h-3 text-white" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-            {stockDropdownOpen && stockSuggestions.length > 0 && (
-              <div className="absolute left-0 top-full mt-1 w-56 bg-[#141414] border border-[#282828] rounded-lg shadow-xl overflow-hidden z-50">
-                {stockSuggestions.map(s => (
+
+            {/* Step 3: Sentiment */}
+            <div className="flex gap-2 items-start">
+              <span className="text-xs font-black text-[#E8311A] opacity-40 pt-1.5 leading-none flex-shrink-0 w-3 text-center">3</span>
+              <div className="flex items-center gap-2">
+                {([
+                  { value: "bullish", color: "#22C55E", icon: <TrendingUp className="w-3 h-3" /> },
+                  { value: "bearish", color: "#EF4444", icon: <TrendingDown className="w-3 h-3" /> },
+                  { value: "neutral", color: "#C0C0C0", icon: null },
+                ] as { value: Sentiment; color: string; icon: React.ReactNode }[]).map(({ value: s, color, icon }) => (
                   <button
-                    key={s.bloomberg_ticker}
-                    onMouseDown={e => { e.preventDefault(); addStock(s.bloomberg_ticker); }}
-                    className="w-full flex items-center gap-2 px-3 py-2 hover:bg-[#1C1C1C] transition-colors text-left"
+                    key={s}
+                    onClick={() => setSentiment(prev => prev === s ? null : s)}
+                    disabled={!content.trim()}
+                    className="flex items-center gap-1 text-xs px-2 py-1 rounded border transition-all capitalize disabled:opacity-25 disabled:cursor-not-allowed"
+                    style={sentiment === s
+                      ? { borderColor: color, backgroundColor: color, color: "#0a0a0a" }
+                      : { borderColor: color, color, opacity: content.trim() ? 0.9 : undefined }
+                    }
                   >
-                    <span className="text-xs font-mono text-[#E8311A] font-bold">{s.bloomberg_ticker}</span>
-                    <span className="text-xs text-[#9CA3AF] truncate">{s.name}</span>
+                    {icon}
+                    {s}
                   </button>
                 ))}
               </div>
-            )}
+            </div>
+
           </div>
 
-          {/* Poll builder */}
-          {postType === "poll" && (
-            <div className="space-y-2 mb-3">
-              {pollOptions.map((opt, i) => (
-                <div key={opt.id} className="flex items-center gap-2">
-                  <input
-                    value={opt.text}
-                    onChange={e => setPollOptions(prev => prev.map(o => o.id === opt.id ? { ...o, text: e.target.value } : o))}
-                    placeholder={`Option ${i + 1}`}
-                    className="flex-1 bg-[#141414] border border-[#333333] rounded px-3 py-1.5 text-sm text-[#F0F0F0] placeholder:text-[#71717A] focus:outline-none focus:border-[#444444]"
-                  />
-                  {pollOptions.length > 2 && (
-                    <button onClick={() => setPollOptions(prev => prev.filter(o => o.id !== opt.id))}>
-                      <X className="w-4 h-4 text-[#71717A]" />
-                    </button>
-                  )}
-                </div>
-              ))}
-              {pollOptions.length < 4 && (
-                <button
-                  onClick={() => setPollOptions(prev => [...prev, { id: Date.now().toString(), text: "" }])}
-                  className="flex items-center gap-1 text-xs text-[#E8311A] hover:underline"
-                >
-                  <Plus className="w-3 h-3" /> Add option
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Forecast builder */}
-          {postType === "forecast" && (
-            <div className="flex gap-2 mb-3">
-              <input
-                value={forecast.ticker}
-                onChange={e => setForecast(f => ({ ...f, ticker: e.target.value.toUpperCase() }))}
-                placeholder="Ticker (e.g. D05)"
-                className="flex-1 bg-[#141414] border border-[#333333] rounded px-3 py-1.5 text-sm text-[#F0F0F0] placeholder:text-[#71717A] focus:outline-none focus:border-[#444444] font-mono"
-              />
-              <input
-                value={forecast.targetPrice}
-                onChange={e => setForecast(f => ({ ...f, targetPrice: e.target.value }))}
-                placeholder="Target price"
-                type="number"
-                className="flex-1 bg-[#141414] border border-[#333333] rounded px-3 py-1.5 text-sm text-[#F0F0F0] placeholder:text-[#71717A] focus:outline-none focus:border-[#444444]"
-              />
-              <input
-                value={forecast.targetDate}
-                onChange={e => setForecast(f => ({ ...f, targetDate: e.target.value }))}
-                type="date"
-                className="flex-1 bg-[#141414] border border-[#333333] rounded px-3 py-1.5 text-sm text-[#F0F0F0] focus:outline-none focus:border-[#444444]"
-              />
-            </div>
-          )}
-
-          {/* Attachment previews */}
-          {attachmentUrls.length > 0 && (
-            <div className="flex gap-2 mb-3 flex-wrap">
-              {attachmentUrls.map((url, i) => (
-                <div key={i} className="relative w-20 h-20 rounded overflow-hidden border border-[#333333]">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={url} alt="" className="w-full h-full object-cover" />
-                  <button
-                    onClick={() => setAttachmentUrls(prev => prev.filter((_, idx) => idx !== i))}
-                    className="absolute top-1 right-1 bg-black/70 rounded-full p-0.5"
-                  >
-                    <X className="w-3 h-3 text-white" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
           {/* Toolbar */}
-          <div className="flex items-center justify-between border-t border-[#282828] pt-3">
+          <div className="flex items-center justify-between border-t border-[#282828] pt-3 mt-3">
             <div className="flex items-center gap-1">
               {/* Image */}
               <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={e => handleFiles(e.target.files)} />
               <button
                 onClick={() => fileRef.current?.click()}
                 disabled={attachmentUrls.length >= 4 || postType !== "post"}
-                className="p-2 rounded text-[#71717A] hover:text-[#9CA3AF] hover:bg-[#282828] transition-colors disabled:opacity-30"
+                className="p-2 rounded text-[#9CA3AF] hover:text-[#9CA3AF] hover:bg-[#282828] transition-colors disabled:opacity-30"
                 title="Add image"
               >
                 <ImageIcon className="w-4 h-4" />
@@ -283,7 +354,7 @@ export function PostComposer({ profile, onPost, defaultTicker }: PostComposerPro
               {/* Poll toggle */}
               <button
                 onClick={() => setPostType(t => t === "poll" ? "post" : "poll")}
-                className={cn("p-2 rounded transition-colors", postType === "poll" ? "text-[#E8311A] bg-[#E8311A]/10" : "text-[#71717A] hover:text-[#9CA3AF] hover:bg-[#282828]")}
+                className={cn("p-2 rounded transition-colors", postType === "poll" ? "text-[#E8311A] bg-[#E8311A]/10" : "text-[#9CA3AF] hover:text-[#9CA3AF] hover:bg-[#282828]")}
                 title="Poll"
               >
                 <BarChart2 className="w-4 h-4" />
@@ -292,10 +363,10 @@ export function PostComposer({ profile, onPost, defaultTicker }: PostComposerPro
               {/* Forecast toggle */}
               <button
                 onClick={() => setPostType(t => t === "forecast" ? "post" : "forecast")}
-                className={cn("p-2 rounded transition-colors", postType === "forecast" ? "text-[#E8311A] bg-[#E8311A]/10" : "text-[#71717A] hover:text-[#9CA3AF] hover:bg-[#282828]")}
+                className={cn("p-2 rounded transition-colors", postType === "forecast" ? "text-[#E8311A] bg-[#E8311A]/10" : "text-[#9CA3AF] hover:text-[#9CA3AF] hover:bg-[#282828]")}
                 title="Forecast"
               >
-                <TrendingUp className="w-4 h-4" />
+                <Crosshair className="w-4 h-4" />
               </button>
             </div>
 
@@ -310,9 +381,9 @@ export function PostComposer({ profile, onPost, defaultTicker }: PostComposerPro
                   onClick={handlePost}
                   loading={posting || uploading}
                   disabled={!canPost}
-                  size="sm"
+                  size="md"
                 >
-                  Huat!
+                  Huat 发
                 </Button>
                 {!canPost && !posting && (
                   <div className="absolute bottom-full right-0 mb-2 w-48 bg-[#1C1C1C] border border-[#333333] rounded px-2.5 py-2 text-xs text-[#9CA3AF] shadow-lg pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
