@@ -156,6 +156,7 @@ export default function PostThreadPage() {
       <PostCard
         post={post}
         currentUserId={profile?.id}
+        currentUserProfile={profile ?? undefined}
         onReact={handleReact}
         onSave={handleSave}
         onEdit={handleEdit}
@@ -178,6 +179,7 @@ export default function PostThreadPage() {
               key={reply.id}
               post={reply}
               currentUserId={profile?.id}
+              currentUserProfile={profile ?? undefined}
               onReact={handleReact}
               onSave={handleSave}
               onEdit={handleEdit}

@@ -170,10 +170,12 @@ export function FeedList({ tab, profile, stockTicker, postType }: FeedListProps)
             key={post.id}
             post={post}
             currentUserId={profile.id}
+            currentUserProfile={profile}
             onReact={handleReact}
             onSave={handleSave}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            onReply={(_, newReply) => setPosts(prev => prev.map(p => p.id === newReply.parent_id ? { ...p, replies_count: (p.replies_count ?? 0) + 1 } : p))}
           />
         ))
       )}

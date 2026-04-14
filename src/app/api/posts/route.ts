@@ -36,7 +36,8 @@ export async function GET(request: Request) {
       *,
       author:profiles!posts_author_id_fkey(id, username, display_name, avatar_url, is_verified, country),
       poll:polls(*),
-      forecast:forecasts(*)
+      forecast:forecasts(*),
+      replies:posts!posts_parent_id_fkey(count)
     `)
     .is("parent_id", null)
     .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
@@ -110,6 +111,7 @@ export async function GET(request: Request) {
       is_saved: savedSet.has(post.id as string),
       poll: enrichedPoll,
       tagged_stock_names,
+      replies_count: (post.replies as { count: number }[])?.[0]?.count ?? 0,
     };
   });
 
