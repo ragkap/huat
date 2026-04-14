@@ -1,201 +1,95 @@
-"use client";
-import { useEffect, useState, useRef } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Send } from "lucide-react";
-import { PostCard } from "@/components/feed/post-card";
-import { Avatar } from "@/components/ui/avatar";
+import { createClient } from "@/lib/supabase/server";
+import { redirect, notFound } from "next/navigation";
+import { PostThreadClient } from "@/components/post/post-thread-client";
 import type { Post, Profile } from "@/types/database";
+import { getStockNamesByTickers } from "@/lib/stocks-db/client";
 
-function ReplyComposer({ parentId, profile, onReply, autoFocus }: { parentId: string; profile: Profile; onReply: (post: Post) => void; autoFocus?: boolean }) {
-  const [content, setContent] = useState("");
-  const [posting, setPosting] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+const SELECT = `id, author_id, content, post_type, sentiment, attachments, tagged_stocks, is_pinned, parent_id, created_at, updated_at,
+  author:profiles!posts_author_id_fkey(id, username, display_name, avatar_url, is_verified, country),
+  poll:polls(*),
+  forecast:forecasts(*)`;
 
-  useEffect(() => { if (autoFocus) textareaRef.current?.focus(); }, [autoFocus]);
+async function enrichPosts(
+  posts: Record<string, unknown>[],
+  userId: string,
+  supabase: Awaited<ReturnType<typeof createClient>>
+): Promise<Post[]> {
+  if (!posts.length) return [];
+  const postIds = posts.map(p => p.id as string);
+  const allTickers = [...new Set(posts.flatMap(p => (p.tagged_stocks as string[]) ?? []))];
 
-  async function handlePost() {
-    if (!content.trim() || posting) return;
-    setPosting(true);
-    const res = await fetch("/api/posts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: content.trim(), parent_id: parentId, post_type: "post" }),
-    });
-    if (res.ok) {
-      const { post } = await res.json();
-      onReply(post);
-      setContent("");
+  const [reactionsResult, savedResult, stockNames] = await Promise.all([
+    supabase.from("reactions").select("post_id, type, user_id").in("post_id", postIds),
+    supabase.from("saved_posts").select("post_id").eq("user_id", userId).in("post_id", postIds),
+    getStockNamesByTickers(allTickers).catch(() => ({} as Record<string, string>)),
+  ]);
+
+  const allReactions = reactionsResult.data ?? [];
+  const savedSet = new Set((savedResult.data ?? []).map(s => s.post_id as string));
+
+  return posts.map(post => {
+    const postReactions = allReactions.filter(r => r.post_id === post.id);
+    const counts = { like: 0, fire: 0, rocket: 0, bear: 0, total: 0 };
+    let userReaction: string | null = null;
+    for (const r of postReactions) {
+      counts[r.type as keyof typeof counts] = (counts[r.type as keyof typeof counts] as number) + 1;
+      counts.total++;
+      if (r.user_id === userId) userReaction = r.type as string;
     }
-    setPosting(false);
-  }
-
-  return (
-    <div className="flex gap-3 px-5 py-4 border-b border-[#282828] bg-[#080808]">
-      <Avatar src={profile.avatar_url} alt={profile.display_name} size="sm" />
-      <div className="flex-1 min-w-0">
-        <textarea
-          ref={textareaRef}
-          value={content}
-          onChange={e => setContent(e.target.value)}
-          onKeyDown={e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handlePost(); }}
-          placeholder="Write a reply…"
-          rows={2}
-          className="w-full bg-transparent text-sm text-[#F0F0F0] placeholder:text-[#555555] resize-none focus:outline-none leading-relaxed"
-        />
-        <div className="flex items-center justify-between mt-2">
-          <span className="text-xs text-[#555555]">{content.length > 900 ? `${1000 - content.length} left` : ""}</span>
-          <button
-            onClick={handlePost}
-            disabled={!content.trim() || posting}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#E8311A] text-white text-xs font-bold disabled:opacity-40 hover:bg-[#D02A15] transition-colors"
-          >
-            <Send className="w-3 h-3" />
-            {posting ? "Posting…" : "Reply"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+    const tagged_stock_names: Record<string, string> = {};
+    for (const t of (post.tagged_stocks as string[]) ?? []) {
+      if (stockNames[t]) tagged_stock_names[t] = stockNames[t];
+    }
+    return {
+      ...(post as unknown as Post),
+      reactions_count: counts,
+      user_reaction: userReaction as Post["user_reaction"],
+      is_saved: savedSet.has(post.id as string),
+      tagged_stock_names,
+    };
+  });
 }
 
-export default function PostThreadPage() {
-  const { id } = useParams<{ id: string }>();
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const autoReply = searchParams.get("reply") === "1";
-  const [post, setPost] = useState<Post | null>(null);
-  const [replies, setReplies] = useState<Post[]>([]);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
+export default async function PostThreadPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ reply?: string }>;
+}) {
+  const { id } = await params;
+  const { reply } = await searchParams;
+  const autoReply = reply === "1";
 
-  useEffect(() => {
-    Promise.all([
-      fetch(`/api/posts/${id}`).then(r => r.ok ? r.json() : null),
-      fetch("/api/me").then(r => r.ok ? r.json() : null),
-    ]).then(([threadData, meData]) => {
-      if (threadData?.post) setPost(threadData.post as Post);
-      if (threadData?.replies) setReplies(threadData.replies as Post[]);
-      if (meData?.profile) setProfile(meData.profile as Profile);
-      setLoading(false);
-    });
-  }, [id]);
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
 
-  function handleReact(postId: string, type: string) {
-    const update = (p: Post): Post => {
-      if (p.id !== postId) return p;
-      const wasReacted = !!p.user_reaction;
-      const counts = { ...(p.reactions_count ?? { like: 0, fire: 0, rocket: 0, bear: 0, total: 0 }) };
-      if (wasReacted) {
-        counts[p.user_reaction as keyof typeof counts] = Math.max(0, (counts[p.user_reaction as keyof typeof counts] as number) - 1);
-        counts.total = Math.max(0, counts.total - 1);
-        return { ...p, user_reaction: null, reactions_count: counts };
-      }
-      counts[type as keyof typeof counts] = (counts[type as keyof typeof counts] as number) + 1;
-      counts.total++;
-      return { ...p, user_reaction: type as Post["user_reaction"], reactions_count: counts };
-    };
-    if (post?.id === postId) setPost(p => p ? update(p) : p);
-    setReplies(rs => rs.map(update));
-    fetch(`/api/posts/${postId}/react`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type }) });
-  }
+  const [profileRes, postRes, repliesRes] = await Promise.all([
+    supabase.from("profiles").select("*").eq("id", user.id).single(),
+    supabase.from("posts").select(SELECT).eq("id", id).single(),
+    supabase.from("posts").select(SELECT).eq("parent_id", id).order("created_at", { ascending: true }),
+  ]);
 
-  function handleSave(postId: string) {
-    const update = (p: Post): Post => p.id === postId ? { ...p, is_saved: !p.is_saved } : p;
-    if (post?.id === postId) setPost(p => p ? update(p) : p);
-    setReplies(rs => rs.map(update));
-    const p = post?.id === postId ? post : replies.find(r => r.id === postId);
-    fetch(`/api/posts/${postId}/save`, { method: p?.is_saved ? "DELETE" : "POST" });
-  }
+  if (postRes.error || !postRes.data) notFound();
+  const profile = profileRes.data as Profile;
 
-  function handleDelete(postId: string) {
-    if (post?.id === postId) { router.back(); return; }
-    setReplies(rs => rs.filter(r => r.id !== postId));
-    fetch(`/api/posts/${postId}`, { method: "DELETE" });
-  }
+  const [enrichedPosts] = await Promise.all([
+    enrichPosts(
+      [postRes.data as Record<string, unknown>, ...((repliesRes.data ?? []) as Record<string, unknown>[])],
+      user.id,
+      supabase
+    ),
+  ]);
 
-  function handleEdit(postId: string, newContent: string) {
-    const update = (p: Post): Post => p.id === postId ? { ...p, content: newContent } : p;
-    if (post?.id === postId) setPost(p => p ? update(p) : p);
-    setReplies(rs => rs.map(update));
-  }
-
-  function handleReply(newPost: Post) {
-    setReplies(rs => [...rs, newPost]);
-    if (post) setPost({ ...post, replies_count: (post.replies_count ?? 0) + 1 });
-  }
-
-  if (loading) {
-    return (
-      <div>
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-[#282828]">
-          <div className="w-8 h-8 rounded-full bg-[#1C1C1C] animate-pulse" />
-          <div className="space-y-2 flex-1">
-            <div className="h-3 w-32 bg-[#1C1C1C] rounded animate-pulse" />
-            <div className="h-3 w-full bg-[#141414] rounded animate-pulse" />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!post) return (
-    <div className="flex flex-col items-center justify-center py-20">
-      <p className="text-[#71717A]">Post not found.</p>
-    </div>
-  );
+  const [post, ...replies] = enrichedPosts;
 
   return (
-    <div>
-      {/* Back header */}
-      <div className="sticky top-14 z-10 flex items-center gap-3 px-4 py-3 border-b border-[#282828] bg-[#0A0A0A]/95 backdrop-blur-md">
-        <button onClick={() => router.back()} className="w-8 h-8 flex items-center justify-center rounded-lg text-[#71717A] hover:text-[#F0F0F0] hover:bg-[#141414] transition-colors">
-          <ArrowLeft className="w-4 h-4" />
-        </button>
-        <p className="text-sm font-bold text-[#F0F0F0]">Post</p>
-      </div>
-
-      {/* Original post */}
-      <PostCard
-        post={post}
-        currentUserId={profile?.id}
-        currentUserProfile={profile ?? undefined}
-        onReact={handleReact}
-        onSave={handleSave}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
-
-      {/* Reply composer */}
-      {profile && (
-        <ReplyComposer parentId={post.id} profile={profile} onReply={handleReply} autoFocus={autoReply} />
-      )}
-
-      {/* Replies */}
-      {replies.length > 0 && (
-        <div>
-          <div className="px-5 py-2 border-b border-[#1C1C1C]">
-            <p className="text-xs font-bold text-[#555555] uppercase tracking-wider">{replies.length} {replies.length === 1 ? "Reply" : "Replies"}</p>
-          </div>
-          {replies.map(reply => (
-            <PostCard
-              key={reply.id}
-              post={reply}
-              currentUserId={profile?.id}
-              currentUserProfile={profile ?? undefined}
-              onReact={handleReact}
-              onSave={handleSave}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-            />
-          ))}
-        </div>
-      )}
-
-      {replies.length === 0 && profile && (
-        <div className="flex flex-col items-center justify-center py-16 text-center px-8">
-          <p className="text-[#555555] text-sm">No replies yet. Be the first!</p>
-        </div>
-      )}
-    </div>
+    <PostThreadClient
+      initialPost={post}
+      initialReplies={replies}
+      profile={profile}
+      autoReply={autoReply}
+    />
   );
 }
