@@ -44,12 +44,13 @@ export function LastVisitedWidget() {
     <div className="border border-[#282828] rounded-lg p-4">
       <p className="text-xs font-bold text-[#9CA3AF] uppercase tracking-wider mb-3">Last Visited</p>
       <div className="space-y-0.5">
-        {visited.map(s => (
+        {visited.map((s, i) => (
           <Link
             key={s.ticker}
             href={`/stocks/${encodeURIComponent(s.slug)}`}
-            className="flex items-center justify-between hover:bg-[#141414] -mx-2 px-2 py-1.5 rounded transition-colors group"
+            className="flex items-center gap-2.5 hover:bg-[#141414] -mx-2 px-2 py-1.5 rounded transition-colors group"
           >
+            <span className="text-[10px] font-bold text-[#555555] w-4 flex-shrink-0">{i + 1}</span>
             <div className="min-w-0">
               <p className="text-xs font-bold text-[#E0E0E0] truncate group-hover:text-white leading-tight">{s.name}</p>
               <p className="text-[10px] text-[#555555] font-mono">{s.ticker}</p>

@@ -25,7 +25,7 @@ export default function FeedPage() {
 
   if (!profile) return (
     <div>
-      <div className="flex border-b border-[#282828]">
+      <div className="flex border-b border-[#282828] sticky top-14 z-10 bg-[#0A0A0A]/95 backdrop-blur-md">
         {TABS.map(t => (
           <div key={t.id} className="flex-1 py-3.5" />
         ))}
@@ -35,20 +35,22 @@ export default function FeedPage() {
 
   return (
     <div>
-      <div className="flex border-b border-[#282828]">
+      <div className="flex border-b border-[#282828] sticky top-14 z-10 bg-[#0A0A0A]/95 backdrop-blur-md">
         {TABS.map(t => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
             className={cn(
-              "flex-1 py-3.5 text-sm font-medium transition-colors relative cursor-pointer",
+              "flex-1 py-3.5 text-sm font-medium cursor-pointer",
               tab === t.id ? "text-[#F0F0F0]" : "text-[#9CA3AF] hover:text-[#F0F0F0]"
             )}
+            style={{
+              transition: "background 0.2s ease-in-out, border-color 0.2s ease-in-out, color 0.2s ease-in-out",
+              background: tab === t.id ? "rgba(232, 49, 26, 0.1)" : "transparent",
+              borderBottom: tab === t.id ? "1px solid rgb(232, 49, 26)" : "1px solid transparent",
+            }}
           >
             {t.label}
-            {tab === t.id && (
-              <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-[#E8311A] rounded-full" />
-            )}
           </button>
         ))}
       </div>

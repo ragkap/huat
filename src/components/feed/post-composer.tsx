@@ -160,7 +160,7 @@ export function PostComposer({ profile, onPost, defaultTicker }: PostComposerPro
 
             {/* Step 1: Stock tagger */}
             <div className="flex gap-2 items-start">
-              <span className="text-xs font-black text-[#E8311A] opacity-40 pt-2 leading-none flex-shrink-0 w-3 text-center">1</span>
+              <span className="text-xs font-black text-[#555555] pt-2 leading-none flex-shrink-0 w-3 text-center">1</span>
               <div ref={stockContainerRef} className="relative flex-1 min-w-0">
                 {taggedStocks.length === 0 ? (
                   <div className="flex items-center gap-2 bg-[#141414] border border-[#333333] rounded-lg px-3 py-2 focus-within:border-[#444444] transition-colors">
@@ -204,7 +204,7 @@ export function PostComposer({ profile, onPost, defaultTicker }: PostComposerPro
 
             {/* Step 2: Textarea + optional extras */}
             <div className="flex gap-2 items-start">
-              <span className="text-xs font-black text-[#E8311A] opacity-40 pt-2.5 leading-none flex-shrink-0 w-3 text-center">2</span>
+              <span className="text-xs font-black text-[#555555] pt-2.5 leading-none flex-shrink-0 w-3 text-center">2</span>
               <div className="flex-1 min-w-0 space-y-2">
                 <textarea
                   ref={textareaRef}
@@ -215,25 +215,32 @@ export function PostComposer({ profile, onPost, defaultTicker }: PostComposerPro
                     postType === "forecast" ? "What's your thesis?" :
                     "What are your thoughts? 发!"
                   }
-                  className="w-full bg-[#141414] border border-[#333333] rounded-lg px-3 py-2.5 text-[#F0F0F0] placeholder:text-[#9CA3AF] text-base resize-none focus:outline-none focus:border-[#444444] min-h-[80px] transition-colors"
+                  className="w-full bg-[#141414] border border-[#333333] rounded-lg px-3 py-2.5 text-[#F0F0F0] placeholder:text-[#9CA3AF] text-sm resize-none focus:outline-none focus:border-[#444444] min-h-[80px] transition-colors"
                   rows={3}
                 />
                 {/* Link preview */}
                 {linkPreview && !linkPreviewDismissed && (linkPreview.og_title || linkPreview.og_image) && (
-                  <div className="relative border border-[#333333] rounded-lg overflow-hidden bg-[#0D0D0D]">
+                  <div className="relative flex items-stretch border border-[#282828] rounded-lg overflow-hidden bg-[#0D0D0D]">
                     <button
                       onClick={() => setLinkPreviewDismissed(true)}
-                      className="absolute top-2 right-2 z-10 w-5 h-5 flex items-center justify-center rounded-full bg-black/60 text-[#9CA3AF] hover:text-white"
+                      className="absolute top-1.5 right-1.5 z-10 w-5 h-5 flex items-center justify-center rounded-full bg-black/60 text-[#9CA3AF] hover:text-white"
                     >
                       <X className="w-3 h-3" />
                     </button>
-                    {linkPreview.og_image && (
-                      <img src={linkPreview.og_image} alt="" className="w-full h-36 object-cover" />
-                    )}
-                    <div className="px-3 py-2">
+                    <div className="w-1/3 min-h-[160px] flex-shrink-0 bg-[#141414] flex items-center justify-center overflow-hidden">
+                      {linkPreview.og_image ? (
+                        <img src={linkPreview.og_image} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <svg className="w-6 h-6 text-[#333333]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <rect x="3" y="3" width="18" height="18" rx="2" />
+                          <path d="M3 9h18M9 21V9" />
+                        </svg>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0 px-3 py-2.5 flex flex-col justify-start gap-1">
                       {linkPreview.og_site_name && <p className="text-[10px] text-[#555555] uppercase tracking-wide">{linkPreview.og_site_name}</p>}
-                      {linkPreview.og_title && <p className="text-xs font-semibold text-[#F0F0F0] leading-snug mt-0.5 line-clamp-2">{linkPreview.og_title}</p>}
-                      {linkPreview.og_description && <p className="text-[11px] text-[#9CA3AF] mt-0.5 line-clamp-2">{linkPreview.og_description}</p>}
+                      {linkPreview.og_title && <p className="text-sm text-[#9CA3AF] leading-snug line-clamp-3">{linkPreview.og_title}</p>}
+                      {linkPreview.og_description && <p className="text-xs text-[#555555] leading-snug line-clamp-4">{linkPreview.og_description}</p>}
                     </div>
                   </div>
                 )}
@@ -311,7 +318,7 @@ export function PostComposer({ profile, onPost, defaultTicker }: PostComposerPro
 
             {/* Step 3: Sentiment */}
             <div className="flex gap-2 items-start">
-              <span className="text-xs font-black text-[#E8311A] opacity-40 pt-1.5 leading-none flex-shrink-0 w-3 text-center">3</span>
+              <span className="text-xs font-black text-[#555555] pt-1.5 leading-none flex-shrink-0 w-3 text-center">3</span>
               <div className="flex items-center gap-2">
                 {([
                   { value: "bullish", color: "#22C55E", icon: <TrendingUp className="w-3 h-3" /> },

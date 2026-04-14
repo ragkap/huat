@@ -608,7 +608,6 @@ export function StockPageClient({
 
   function switchTab(id: string) {
     setTopTab(id);
-    window.scrollTo({ top: 0 });
   }
 
   const TOP_TABS = [
@@ -767,23 +766,22 @@ export function StockPageClient({
 
       {/* Community header + tabs */}
       <div className="sticky top-14 z-10 bg-[#0A0A0A]/95 backdrop-blur-md" style={{ overflowAnchor: "none" }}>
-        <div className="px-5 py-3 border-b border-[#282828]">
-          <p className="text-xs font-bold text-[#555555] uppercase tracking-widest">Community</p>
-        </div>
         <div className="flex border-b border-[#282828]">
           {TOP_TABS.map(({ id, label }) => (
             <button
               key={id}
               onClick={() => switchTab(id)}
               className={cn(
-                "flex-1 py-3 text-sm font-semibold transition-colors relative cursor-pointer",
+                "flex-1 py-3 text-sm font-semibold cursor-pointer",
                 topTab === id ? "text-[#F0F0F0]" : "text-[#555555] hover:text-[#9CA3AF]"
               )}
+              style={{
+                transition: "background 0.2s ease-in-out, border-color 0.2s ease-in-out, color 0.2s ease-in-out",
+                background: topTab === id ? "rgba(232, 49, 26, 0.1)" : "transparent",
+                borderBottom: topTab === id ? "1px solid rgb(232, 49, 26)" : "1px solid transparent",
+              }}
             >
               {label}
-              {topTab === id && (
-                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-[#E8311A] rounded-full" />
-              )}
             </button>
           ))}
         </div>

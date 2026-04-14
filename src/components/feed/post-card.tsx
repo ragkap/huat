@@ -268,10 +268,29 @@ function MoreMenu({
   );
 }
 
+interface OgData { og_title?: string | null; og_description?: string | null; og_image?: string | null; og_site_name?: string | null; }
+
 export function PostCard({ post, currentUserId, onReact, onSave, onRepost, onEdit, onDelete }: PostCardProps) {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [localContent, setLocalContent] = useState(post.content);
+  const [inlineOg, setInlineOg] = useState<(OgData & { url: string }) | null>(null);
+
+  useEffect(() => {
+    if (post.post_type !== "post") return;
+    const hasLinkAttachment = post.attachments?.some(a => a.type === "link");
+    if (hasLinkAttachment) return;
+    const isNewsEmbed = /\n\n📰 /.test(post.content ?? "");
+    if (isNewsEmbed) return;
+    const match = post.content?.match(/https?:\/\/[^\s]+/);
+    if (!match) return;
+    const url = match[0];
+    fetch(`/api/og?url=${encodeURIComponent(url)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.og_title || d?.og_image) setInlineOg({ url, ...d }); })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [post.id]);
 
   const reactions = post.reactions_count ?? { like: 0, fire: 0, rocket: 0, bear: 0, total: 0 };
   const isOwn = !!currentUserId && post.author_id === currentUserId;
@@ -323,10 +342,9 @@ export function PostCard({ post, currentUserId, onReact, onSave, onRepost, onEdi
             {/* Header */}
             <div className="flex items-start justify-between gap-2 mb-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <Link href={`/profile/${post.author?.username}`} className="font-bold text-[#F0F0F0] hover:underline text-sm">
+                <Link href={`/profile/${post.author?.username}`} className="font-bold text-[#9CA3AF] hover:underline text-sm">
                   {post.author?.display_name}
                 </Link>
-                <span className="text-[#9CA3AF] text-sm">@{post.author?.username}</span>
                 <span className="text-[#9CA3AF] text-xs">·</span>
                 <span className="text-[#9CA3AF] text-xs">{timeAgo(post.created_at)}</span>
                 {post.updated_at !== post.created_at && (
@@ -355,11 +373,11 @@ export function PostCard({ post, currentUserId, onReact, onSave, onRepost, onEdi
                         key={ticker}
                         href={`/stocks/${ticker}`}
                         onClick={e => e.stopPropagation()}
-                        className="text-xs font-medium mr-1.5 align-middle border rounded px-1 py-0.5"
-                        style={{ color: sentimentColor, borderColor: sentimentColor + "40" }}
+                        className="inline-flex items-center gap-0.5 text-xs font-mono tracking-wider mr-1.5 border border-[#333333] rounded px-1.5 py-0.5 text-[#F0F0F0] bg-[#1C1C1C] hover:bg-[#282828] transition-colors"
+                        style={{ verticalAlign: "-3px" }}
                       >
                         {post.sentiment && (
-                          <span className="inline-block align-middle mr-0.5 -mt-0.5">
+                          <span style={{ color: sentimentColor }}>
                             <SentimentIcon sentiment={post.sentiment} />
                           </span>
                         )}
@@ -384,8 +402,8 @@ export function PostCard({ post, currentUserId, onReact, onSave, onRepost, onEdi
                       className="block border border-[#282828] rounded p-3 bg-[#141414] hover:border-[#444444] transition-colors"
                       onClick={e => e.stopPropagation()}
                     >
-                      <p className="text-xs text-[#9CA3AF] mb-1">{source}</p>
-                      <p className="text-sm font-semibold text-[#F0F0F0] leading-snug line-clamp-2">{title}</p>
+                      <p className="text-xs text-[#555555] mb-1">{source}</p>
+                      <p className="text-sm text-[#9CA3AF] leading-snug line-clamp-2">{title}</p>
                     </a>
                   </>
                 );
@@ -397,22 +415,33 @@ export function PostCard({ post, currentUserId, onReact, onSave, onRepost, onEdi
               );
             })()}
 
-            {/* Link preview attachment */}
+            {/* Link preview — stored attachment or inline OG fetch (plain posts only) */}
             {(() => {
-              const linkAttachment = post.attachments?.find(a => a.type === "link");
-              if (!linkAttachment) return null;
+              const linkAttachment = ["post", "poll", "forecast"].includes(post.post_type) ? post.attachments?.find(a => a.type === "link") : undefined;
+              const og = linkAttachment
+                ? { url: linkAttachment.url, og_title: linkAttachment.og_title, og_description: linkAttachment.og_description, og_image: linkAttachment.og_image, og_site_name: linkAttachment.og_site_name }
+                : inlineOg;
+              if (!og || (!og.og_title && !og.og_image)) return null;
               return (
-                <a href={linkAttachment.url} target="_blank" rel="noopener noreferrer"
-                  className="block mt-2 border border-[#282828] rounded-lg overflow-hidden bg-[#0D0D0D] hover:border-[#444444] transition-colors"
+                <a href={og.url} target="_blank" rel="noopener noreferrer"
+                  className="flex items-stretch mt-2 border border-[#282828] rounded-lg overflow-hidden bg-[#0D0D0D] hover:border-[#444444] transition-colors"
                   onClick={e => e.stopPropagation()}
                 >
-                  {linkAttachment.og_image && (
-                    <img src={linkAttachment.og_image} alt="" className="w-full h-44 object-cover" />
-                  )}
-                  <div className="px-3 py-2.5">
-                    {linkAttachment.og_site_name && <p className="text-[10px] text-[#9CA3AF] uppercase tracking-wide">{linkAttachment.og_site_name}</p>}
-                    {linkAttachment.og_title && <p className="text-sm font-semibold text-[#F0F0F0] leading-snug mt-0.5 line-clamp-2">{linkAttachment.og_title}</p>}
-                    {linkAttachment.og_description && <p className="text-xs text-[#C0C0C0] mt-0.5 line-clamp-2">{linkAttachment.og_description}</p>}
+                  {/* Thumbnail — real image or placeholder */}
+                  <div className="w-1/3 min-h-[160px] flex-shrink-0 bg-[#141414] flex items-center justify-center overflow-hidden">
+                    {og.og_image ? (
+                      <img src={og.og_image} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <svg className="w-6 h-6 text-[#333333]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <path d="M3 9h18M9 21V9" />
+                      </svg>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0 px-3 py-2.5 flex flex-col justify-start gap-1">
+                    {og.og_site_name && <p className="text-[10px] text-[#555555] uppercase tracking-wide">{og.og_site_name}</p>}
+                    {og.og_title && <p className="text-sm text-[#9CA3AF] leading-snug line-clamp-3">{og.og_title}</p>}
+                    {og.og_description && <p className="text-xs text-[#555555] leading-snug line-clamp-4">{og.og_description}</p>}
                   </div>
                 </a>
               );

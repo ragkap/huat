@@ -4,6 +4,28 @@ import Link from "next/link";
 import { TrendingUp, TrendingDown, X, Search, Plus } from "lucide-react";
 import { cn, formatPrice } from "@/lib/utils";
 
+const CACHE_KEY = "watchlist_cache";
+
+function readCache(): WatchlistItem[] | null {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const { items, ts } = JSON.parse(raw);
+    void ts; // no TTL — cache is invalidated explicitly on add/remove
+    return items;
+  } catch { return null; }
+}
+
+function writeCache(items: WatchlistItem[]) {
+  // Only persist identity — never cache live prices
+  const stripped = items.map(({ slug, ticker, name }) => ({ slug, ticker, name, quote: null }));
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify({ items: stripped, ts: Date.now() })); } catch { /* ignore */ }
+}
+
+function clearCache() {
+  try { localStorage.removeItem(CACHE_KEY); } catch { /* ignore */ }
+}
+
 interface WatchlistItem {
   slug: string;
   ticker: string;
@@ -81,38 +103,57 @@ function StockSearchRow({ onAdd }: { onAdd: (ticker: string) => void }) {
 }
 
 export function WatchlistClient({ initialTickers }: { initialTickers: string[] }) {
+  const cached = typeof window !== "undefined" ? readCache() : null;
   const [items, setItems] = useState<WatchlistItem[]>(
-    initialTickers.map(t => ({ slug: t, ticker: t, name: t, quote: null }))
+    cached ?? initialTickers.map(t => ({ slug: t, ticker: t, name: t, quote: null }))
   );
   const [sort, setSort] = useState<SortKey>("name");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!cached);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async ({ invalidate = false } = {}) => {
+    if (invalidate) clearCache();
+    if (!invalidate) {
+      const hit = readCache();
+      if (hit) { setItems(hit); setLoading(false); return; }
+    }
     setLoading(true);
     try {
       const res = await fetch("/api/watchlist");
       const data = await res.json();
-      setItems(data.items ?? []);
+      const fresh = data.items ?? [];
+      setItems(fresh);
+      writeCache(fresh);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    // If we have a cache hit, still revalidate in background silently
+    const cached = readCache();
+    if (cached) {
+      fetch("/api/watchlist")
+        .then(r => r.json())
+        .then(d => { const fresh = d.items ?? []; setItems(fresh); writeCache(fresh); })
+        .catch(() => {});
+    } else {
+      fetchData();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleAdd(ticker: string) {
-    // ticker here is always bloomberg_ticker from search results
     if (items.some(i => i.ticker === ticker)) return;
     const res = await fetch(`/api/stocks/${encodeURIComponent(ticker)}/watch`, { method: "POST" });
     if (!res.ok) return;
-    await fetchData();
+    await fetchData({ invalidate: true });
   }
 
   async function handleRemove(ticker: string) {
     await fetch(`/api/stocks/${encodeURIComponent(ticker)}/watch`, { method: "DELETE" });
-    setItems(prev => prev.filter(i => i.ticker !== ticker));
+    const next = items.filter(i => i.ticker !== ticker);
+    setItems(next);
+    writeCache(next);
   }
 
   const sorted = [...items].sort((a, b) => {
