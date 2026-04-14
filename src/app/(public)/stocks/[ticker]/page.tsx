@@ -27,6 +27,8 @@ export async function generateMetadata({ params }: StockPageProps): Promise<Meta
     ? stock.description.slice(0, 160)
     : `Follow ${stock.name} on Huat.co — Singapore's social network for retail investors. See investor posts, news, and analysis.`;
 
+  const ogImage = `https://www.huat.co/stocks/${encodeURIComponent(ticker)}/opengraph-image`;
+
   return {
     title,
     description,
@@ -36,11 +38,13 @@ export async function generateMetadata({ params }: StockPageProps): Promise<Meta
       url: `https://www.huat.co/stocks/${encodeURIComponent(ticker)}`,
       siteName: "Huat.co",
       type: "website",
+      images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title,
       description,
+      images: [ogImage],
     },
     alternates: {
       canonical: `https://www.huat.co/stocks/${encodeURIComponent(ticker)}`,
