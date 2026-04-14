@@ -141,6 +141,8 @@ async function StockPageContent({
         displayTicker={ticker}
         stockName={stock.name}
         isPublic={isPublic}
+        followerCount={followerCount}
+        postCount={postCount}
         profile={profile}
         isPositive={isPositive}
         description={stock.description ?? null}

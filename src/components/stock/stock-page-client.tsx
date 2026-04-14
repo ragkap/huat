@@ -10,7 +10,7 @@ import { formatPrice, formatMarketCap } from "@/lib/utils";
 import { stripHtml } from "@/lib/smartkarma/primer";
 import type { Profile, Sentiment } from "@/types/database";
 
-function SignupGate({ stockName }: { stockName: string }) {
+function SignupGate({ stockName, followerCount, postCount }: { stockName: string; followerCount: number; postCount: number }) {
   // Fake post rows shown blurred behind the CTA
   const fakePosts = [
     { initials: "RK", name: "Raghav K", time: "2h", lines: ["Strong Q3 results. Revenue up 18% YoY, margins expanding. Adding to position.", "Risk: customer concentration still high."] },
@@ -57,6 +57,15 @@ function SignupGate({ stockName }: { stockName: string }) {
             Log in
           </a>
         </div>
+        {(followerCount > 0 || postCount > 0) && (
+          <p className="mt-4 text-xs text-[#555555]">
+            {followerCount > 0 && postCount > 0
+              ? <>{followerCount.toLocaleString()} investors watching · {postCount.toLocaleString()} posts</>
+              : followerCount > 0
+              ? <>{followerCount.toLocaleString()} investors already watching {stockName}</>
+              : <>{postCount.toLocaleString()} posts about {stockName}</>}
+          </p>
+        )}
       </div>
     </div>
   );
@@ -112,6 +121,8 @@ interface StockPageClientProps {
   profile: Profile | null;
   isPositive: boolean;
   isPublic?: boolean;
+  followerCount?: number;
+  postCount?: number;
   description: string | null;
   stats: StatsData | null;
   quote: QuoteData | null;
@@ -645,6 +656,8 @@ export function StockPageClient({
   profile,
   isPositive,
   isPublic = false,
+  followerCount = 0,
+  postCount = 0,
   description,
   stats,
   quote,
@@ -844,7 +857,7 @@ export function StockPageClient({
       </div>
 
       {!profile ? (
-        <SignupGate stockName={stockName} />
+        <SignupGate stockName={stockName} followerCount={followerCount} postCount={postCount} />
       ) : topTab === "news" ? (
         <NewsTab ticker={ticker} displayTicker={displayTicker} profile={profile} />
       ) : topTab === "announcement" ? (
