@@ -400,7 +400,7 @@ export function PostCard({ post, currentUserId, onReact, onSave, onRepost, onEdi
                         style={{ verticalAlign: "middle" }}
                       >
                         {post.sentiment && (
-                          <span style={{ color: sentimentColor }}>
+                          <span style={{ color: sentimentColor, marginRight: 3 }}>
                             <SentimentIcon sentiment={post.sentiment} />
                           </span>
                         )}
