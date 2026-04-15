@@ -268,18 +268,30 @@ function PollDisplay({ poll, postId, onVote }: { poll: NonNullable<Post["poll"]>
   );
 }
 
+function LiveCountdown({ targetDate }: { targetDate: string }) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const diff = Math.max(0, Math.floor((new Date(targetDate).getTime() - now) / 1000));
+  const d = Math.floor(diff / 86400);
+  const h = Math.floor((diff % 86400) / 3600);
+  const m = Math.floor((diff % 3600) / 60);
+  const s = diff % 60;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return (
+    <span className="font-mono tabular-nums">
+      {d > 0 && <>{d}<span className="opacity-50">d</span> </>}
+      {pad(h)}<span className="opacity-50">:</span>{pad(m)}<span className="opacity-50">:</span>{pad(s)}
+    </span>
+  );
+}
+
 function ForecastDisplay({ forecast }: { forecast: NonNullable<Post["forecast"]> }) {
   const targetDate = new Date(forecast.target_date);
-  const now = new Date();
   const isPending = forecast.outcome === "pending";
-  const isExpired = targetDate < now;
-  const countdown = isPending && !isExpired ? timeLeft(forecast.target_date) : null;
-
-  const outcomeColors = {
-    pending: "text-[#F59E0B]",
-    hit: "text-[#22C55E]",
-    missed: "text-[#EF4444]",
-  };
+  const isExpired = targetDate < new Date();
 
   return (
     <div className="mt-3 border border-[#282828] rounded-lg overflow-hidden bg-[#0A0A0A]">
@@ -291,7 +303,11 @@ function ForecastDisplay({ forecast }: { forecast: NonNullable<Post["forecast"]>
           : "bg-[#F59E0B]/10 text-[#F59E0B]"
       )}>
         <span>Prediction</span>
-        <span>{countdown ? `⏱ ${countdown}` : forecast.outcome === "hit" ? "✓ Hit" : forecast.outcome === "missed" ? "✗ Missed" : "Expired"}</span>
+        {isPending && !isExpired ? (
+          <LiveCountdown targetDate={forecast.target_date} />
+        ) : (
+          <span>{forecast.outcome === "hit" ? "✓ Hit" : forecast.outcome === "missed" ? "✗ Missed" : "Expired"}</span>
+        )}
       </div>
       {/* Body */}
       <div className="flex items-center justify-between px-3 py-2.5">
@@ -299,7 +315,7 @@ function ForecastDisplay({ forecast }: { forecast: NonNullable<Post["forecast"]>
           <p className="text-lg font-bold text-[#F0F0F0] font-mono">{formatPrice(forecast.target_price)}</p>
           <p className="text-[11px] text-[#555555]">by {targetDate.toLocaleDateString("en-SG", { day: "numeric", month: "short", year: "numeric" })}</p>
         </div>
-        <div className={cn("text-right", outcomeColors[forecast.outcome])}>
+        <div className="text-right">
           {forecast.current_price != null && (
             <p className="text-xs text-[#9CA3AF]">Now: <span className="font-mono font-bold text-[#F0F0F0]">{formatPrice(forecast.current_price)}</span></p>
           )}
