@@ -43,6 +43,8 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
   ]);
   const [pollDays, setPollDays] = useState(3);
   const [forecast, setForecast] = useState<ForecastData>({ ticker: "", targetPrice: "", targetDate: "" });
+  const [currentPrice, setCurrentPrice] = useState<number | null>(null);
+  const [fetchingPrice, setFetchingPrice] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [posting, setPosting] = useState(false);
   const [attachments, setAttachments] = useState<{ url: string; type: "image" | "video" | "pdf" }[]>([]);
@@ -70,6 +72,21 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
       setTimeout(() => textareaRef.current?.focus(), 100);
     }
   }, [quotedPost]);
+
+  // Fetch current price when forecast mode + stock tagged
+  useEffect(() => {
+    if (postType !== "forecast" || !taggedStocks.length) { setCurrentPrice(null); return; }
+    setFetchingPrice(true);
+    setForecast(f => ({ ...f, ticker: taggedStocks[0] }));
+    fetch(`/api/stocks/${encodeURIComponent(taggedStocks[0])}/quote`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        const price = data?.quote?.last ?? data?.quote?.close ?? null;
+        setCurrentPrice(typeof price === "number" ? price : null);
+      })
+      .catch(() => setCurrentPrice(null))
+      .finally(() => setFetchingPrice(false));
+  }, [postType, taggedStocks]);
 
   // Detect URLs in content and fetch OG preview
   useEffect(() => {
@@ -114,7 +131,11 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
 
   const remaining = MAX_CHARS - content.length;
   const pollValid = postType !== "poll" || pollOptions.filter(o => o.text.trim()).length >= 2;
-  const canPost = content.trim().length > 0 && !posting && taggedStocks.length === 1 && (postType === "poll" || sentiment !== null) && pollValid;
+  const forecastValid = postType !== "forecast" || (!!forecast.targetPrice && !!forecast.targetDate);
+  const forecastSentiment: Sentiment | null = postType === "forecast" && currentPrice && forecast.targetPrice
+    ? (parseFloat(forecast.targetPrice) >= currentPrice ? "bullish" : "bearish")
+    : null;
+  const canPost = content.trim().length > 0 && !posting && taggedStocks.length === 1 && (postType === "poll" || postType === "forecast" || sentiment !== null) && pollValid && forecastValid;
 
   async function handlePost() {
     if (!canPost) return;
@@ -125,7 +146,7 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           content,
-          sentiment: postType === "poll" ? "neutral" : sentiment,
+          sentiment: postType === "poll" ? "neutral" : postType === "forecast" ? forecastSentiment : sentiment,
           post_type: postType,
           tagged_stocks: taggedStocks,
           ...(quotedPost ? { quote_of: quotedPost.id } : {}),
@@ -141,7 +162,7 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
             }] : []),
           ],
           ...(postType === "poll" && { poll: { options: pollOptions.filter(o => o.text.trim()), ends_at: new Date(Date.now() + pollDays * 86400000).toISOString() } }),
-          ...(postType === "forecast" && { forecast }),
+          ...(postType === "forecast" && { forecast: { ...forecast, ticker: taggedStocks[0] } }),
         }),
       });
       const newPost = res.ok ? (await res.json()).post : undefined;
@@ -334,26 +355,42 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
                 )}
                 {/* Forecast builder */}
                 {postType === "forecast" && (
-                  <div className="flex gap-2">
-                    <input
-                      value={forecast.ticker}
-                      onChange={e => setForecast(f => ({ ...f, ticker: e.target.value.toUpperCase() }))}
-                      placeholder="Ticker (e.g. D05)"
-                      className="flex-1 bg-[#141414] border border-[#333333] rounded px-3 py-1.5 text-sm text-[#F0F0F0] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#444444] font-mono"
-                    />
-                    <input
-                      value={forecast.targetPrice}
-                      onChange={e => setForecast(f => ({ ...f, targetPrice: e.target.value }))}
-                      placeholder="Target price"
-                      type="number"
-                      className="flex-1 bg-[#141414] border border-[#333333] rounded px-3 py-1.5 text-sm text-[#F0F0F0] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#444444]"
-                    />
-                    <input
-                      value={forecast.targetDate}
-                      onChange={e => setForecast(f => ({ ...f, targetDate: e.target.value }))}
-                      type="date"
-                      className="flex-1 bg-[#141414] border border-[#333333] rounded px-3 py-1.5 text-sm text-[#F0F0F0] focus:outline-none focus:border-[#444444]"
-                    />
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 bg-[#141414] border border-[#282828] rounded px-3 py-2">
+                        <p className="text-[10px] text-[#555555] uppercase tracking-wider mb-0.5">Current Price</p>
+                        <p className="text-sm font-mono text-[#F0F0F0]">
+                          {fetchingPrice ? "…" : currentPrice != null ? `$${currentPrice.toFixed(2)}` : taggedStocks.length ? "N/A" : "Tag a stock first"}
+                        </p>
+                      </div>
+                      <div className="text-[#555555] text-lg">→</div>
+                      <div className="flex-1">
+                        <input
+                          value={forecast.targetPrice}
+                          onChange={e => setForecast(f => ({ ...f, targetPrice: e.target.value }))}
+                          placeholder="Target price"
+                          type="number"
+                          step="0.01"
+                          className="w-full bg-[#141414] border border-[#333333] rounded px-3 py-2 text-sm text-[#F0F0F0] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#444444] font-mono"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1">
+                        <input
+                          value={forecast.targetDate}
+                          onChange={e => setForecast(f => ({ ...f, targetDate: e.target.value }))}
+                          type="date"
+                          min={new Date(Date.now() + 86400000).toISOString().split("T")[0]}
+                          className="w-full bg-[#141414] border border-[#333333] rounded px-3 py-2 text-sm text-[#F0F0F0] focus:outline-none focus:border-[#444444]"
+                        />
+                      </div>
+                      {forecastSentiment && (
+                        <span className={cn("text-xs font-bold px-2 py-1 rounded", forecastSentiment === "bullish" ? "text-[#22C55E] bg-[#22C55E]/10" : "text-[#EF4444] bg-[#EF4444]/10")}>
+                          {forecastSentiment === "bullish" ? "▲ Bullish" : "▼ Bearish"}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 )}
                 {/* Attachment previews */}
@@ -388,8 +425,8 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
               </div>
             </div>
 
-            {/* Step 3: Sentiment (hidden for polls — defaults to neutral) */}
-            {postType !== "poll" && <div className="flex gap-2 items-start">
+            {/* Step 3: Sentiment (hidden for polls and forecasts) */}
+            {postType === "post" && <div className="flex gap-2 items-start">
               <span className="text-xs font-black text-[#555555] pt-1.5 leading-none flex-shrink-0 w-3 text-center">3</span>
               <div className="flex items-center gap-2">
                 {([
