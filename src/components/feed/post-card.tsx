@@ -522,7 +522,7 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
                 }}
               >
                 <span className="text-[9px] font-black uppercase tracking-widest leading-none">Poll</span>
-                <span className="text-[7px] font-medium leading-none mt-1.5 opacity-80">
+                <span className="text-[9px] font-semibold leading-none mt-1.5 opacity-90">
                   {post.poll.ends_at ? (new Date(post.poll.ends_at) > new Date() ? timeLeft(post.poll.ends_at) : "Ended") : "Open"}
                 </span>
               </div>
