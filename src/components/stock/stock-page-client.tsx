@@ -230,7 +230,7 @@ function NewsShareComposer({
           {/* Tagged stock + actions */}
           <div className="flex items-center justify-between">
             <span className="text-xs bg-[#E8311A]/10 text-[#E8311A] border border-[#E8311A]/20 rounded px-2 py-0.5 font-mono">
-              ${displayTicker}
+              {displayTicker}
             </span>
             <div className="flex items-center gap-2">
               <button onClick={onClose} className="text-xs text-[#71717A] hover:text-[#9CA3AF] px-3 py-1.5">
@@ -241,13 +241,13 @@ function NewsShareComposer({
                   onClick={handlePost}
                   disabled={!canPost || posting}
                   className={cn(
-                    "text-xs font-bold px-3 py-1.5 rounded transition-colors",
+                    "text-sm font-semibold px-4 py-2 rounded transition-all duration-150",
                     canPost && !posting
-                      ? "bg-[#E8311A] text-white hover:bg-[#d12d17]"
+                      ? "bg-[#E8311A] text-white hover:bg-[#c9280f] active:scale-[0.98]"
                       : "bg-[#282828] text-[#71717A] cursor-not-allowed"
                   )}
                 >
-                  {posting ? "Posting…" : "Huat!"}
+                  {posting ? "Posting…" : "Huat 发"}
                 </button>
                 {!canPost && !posting && (
                   <div className="absolute bottom-full right-0 mb-2 w-40 bg-[#1C1C1C] border border-[#333333] rounded px-2.5 py-2 text-xs text-[#9CA3AF] shadow-lg pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
@@ -365,7 +365,7 @@ function ResearchShareComposer({
           </div>
           <div className="flex items-center justify-between">
             <span className="text-xs bg-[#E8311A]/10 text-[#E8311A] border border-[#E8311A]/20 rounded px-2 py-0.5 font-mono">
-              ${displayTicker}
+              {displayTicker}
             </span>
             <div className="flex items-center gap-2">
               <button onClick={onClose} className="text-xs text-[#71717A] hover:text-[#9CA3AF] px-3 py-1.5">Cancel</button>
