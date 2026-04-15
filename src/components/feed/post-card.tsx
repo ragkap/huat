@@ -237,18 +237,18 @@ function PollDisplay({ poll, postId, onVote }: { poll: NonNullable<Post["poll"]>
             key={opt.id}
             onClick={e => { e.stopPropagation(); if (!showResults) onVote?.(postId, opt.id); }}
             className={cn(
-              "w-full relative text-left px-3 py-2 rounded text-sm overflow-hidden transition-colors",
+              "w-full relative text-left px-3 py-2 rounded border text-sm overflow-hidden transition-colors",
               isVoted
-                ? "border border-[#282828] border-t-[#E8311A]/60 text-[#F0F0F0]"
+                ? "border-[#E8311A] text-[#F0F0F0]"
                 : showResults
-                  ? "border border-[#282828] text-[#9CA3AF] cursor-default"
-                  : "border border-[#333333] text-[#9CA3AF] hover:border-[#555555] hover:text-[#F0F0F0]"
+                  ? "border-[#282828] text-[#9CA3AF] cursor-default"
+                  : "border-[#333333] text-[#9CA3AF] hover:border-[#555555] hover:text-[#F0F0F0]"
             )}
             disabled={showResults}
           >
             {showResults && (
               <div
-                className={cn("absolute inset-y-0 left-0 transition-all duration-500", isVoted ? "bg-[#E8311A]/10" : "bg-[#9CA3AF]/5")}
+                className={cn("absolute inset-y-0 left-0 transition-all duration-500", isVoted ? "bg-[#E8311A]/15" : "bg-[#9CA3AF]/10")}
                 style={{ width: `${pct}%` }}
               />
             )}
