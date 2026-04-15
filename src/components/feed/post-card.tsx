@@ -36,7 +36,7 @@ function renderTextWithLinks(text: string) {
     ) : part
   );
 }
-import { Heart, MessageCircle, Repeat2, Share2, Bookmark, MoreHorizontal, TrendingUp, TrendingDown, Flag, Pencil, Trash2, Send, PenLine } from "lucide-react";
+import { Heart, MessageCircle, Repeat2, Share2, Bookmark, MoreHorizontal, TrendingUp, TrendingDown, Flag, Pencil, Trash2, Send, PenLine, X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn, timeAgo, formatPrice } from "@/lib/utils";
@@ -64,10 +64,84 @@ function SentimentIcon({ sentiment }: { sentiment: Sentiment | null }) {
   return null;
 }
 
+function ImageLightbox({ images, startIndex, onClose }: { images: string[]; startIndex: number; onClose: () => void }) {
+  const [idx, setIdx] = useState(startIndex);
+  const touchStartX = useRef(0);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft") setIdx(i => Math.max(0, i - 1));
+      if (e.key === "ArrowRight") setIdx(i => Math.min(images.length - 1, i + 1));
+    }
+    document.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => { document.removeEventListener("keydown", onKey); document.body.style.overflow = ""; };
+  }, [images.length, onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center"
+      onClick={onClose}
+    >
+      {/* Close */}
+      <button onClick={onClose} className="absolute top-4 right-4 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-[#282828]/80 text-white hover:bg-[#333333] transition-colors">
+        <X className="w-5 h-5" />
+      </button>
+
+      {/* Counter */}
+      {images.length > 1 && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 text-sm text-[#9CA3AF] font-mono">
+          {idx + 1} / {images.length}
+        </div>
+      )}
+
+      {/* Prev */}
+      {idx > 0 && (
+        <button
+          onClick={e => { e.stopPropagation(); setIdx(i => i - 1); }}
+          className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-[#282828]/80 text-white hover:bg-[#333333] transition-colors"
+        >
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" /></svg>
+        </button>
+      )}
+
+      {/* Next */}
+      {idx < images.length - 1 && (
+        <button
+          onClick={e => { e.stopPropagation(); setIdx(i => i + 1); }}
+          className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-[#282828]/80 text-white hover:bg-[#333333] transition-colors"
+        >
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
+        </button>
+      )}
+
+      {/* Image */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={images[idx]}
+        alt=""
+        className="max-w-[90vw] max-h-[90vh] object-contain select-none"
+        onClick={e => e.stopPropagation()}
+        onTouchStart={e => { touchStartX.current = e.touches[0].clientX; }}
+        onTouchEnd={e => {
+          const dx = e.changedTouches[0].clientX - touchStartX.current;
+          if (dx > 50 && idx > 0) setIdx(i => i - 1);
+          if (dx < -50 && idx < images.length - 1) setIdx(i => i + 1);
+        }}
+        draggable={false}
+      />
+    </div>
+  );
+}
+
 function AttachmentGrid({ attachments }: { attachments: Post["attachments"] }) {
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+
   if (!attachments?.length) return null;
   const count = Math.min(attachments.length, 4);
   const items = attachments.slice(0, count);
+  const imageUrls = items.filter(a => a.type === "image").map(a => a.url);
 
   const gridClass = {
     1: "grid-cols-1",
@@ -76,54 +150,71 @@ function AttachmentGrid({ attachments }: { attachments: Post["attachments"] }) {
     4: "grid-cols-2",
   }[count] ?? "grid-cols-2";
 
+  // Map grid index to image-only index for lightbox
+  let imageCounter = 0;
+
   return (
-    <div className={cn("grid gap-1 rounded overflow-hidden mt-3", gridClass)}>
-      {items.map((att, i) => (
-        <div
-          key={i}
-          className={cn(
-            "bg-[#141414] overflow-hidden",
-            count === 3 && i === 0 ? "row-span-2" : "",
-            att.type === "pdf" ? "" : "aspect-video"
-          )}
-        >
-          {att.type === "video" ? (
-            <video
-              src={att.url}
-              controls
-              preload="metadata"
-              className="w-full h-full object-cover"
-              onClick={e => e.stopPropagation()}
-            />
-          ) : att.type === "pdf" ? (
-            <a
-              href={att.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-3 px-4 py-3 hover:bg-[#1C1C1C] transition-colors"
-              onClick={e => e.stopPropagation()}
+    <>
+      <div className={cn("grid gap-1 rounded overflow-hidden mt-3", gridClass)}>
+        {items.map((att, i) => {
+          const imageIdx = att.type === "image" ? imageCounter++ : -1;
+          return (
+            <div
+              key={i}
+              className={cn(
+                "bg-[#141414] overflow-hidden",
+                count === 3 && i === 0 ? "row-span-2" : "",
+                att.type === "pdf" ? "" : "aspect-video",
+                att.type === "image" ? "cursor-pointer" : ""
+              )}
+              onClick={att.type === "image" ? (e) => { e.stopPropagation(); setLightboxIdx(imageIdx); } : undefined}
             >
-              <svg className="w-8 h-8 text-[#E8311A] flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
-                <path d="M14 2v6h6" />
-              </svg>
-              <div className="min-w-0">
-                <p className="text-sm text-[#F0F0F0] font-medium truncate">{decodeURIComponent(att.url.split("/").pop() ?? "Document.pdf")}</p>
-                <p className="text-xs text-[#555555]">PDF · Tap to open</p>
-              </div>
-            </a>
-          ) : (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              src={att.url}
-              alt=""
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
-          )}
-        </div>
-      ))}
-    </div>
+              {att.type === "video" ? (
+                <video
+                  src={att.url}
+                  controls
+                  preload="metadata"
+                  className="w-full h-full object-cover"
+                  onClick={e => e.stopPropagation()}
+                />
+              ) : att.type === "pdf" ? (
+                <a
+                  href={att.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-[#1C1C1C] transition-colors"
+                  onClick={e => e.stopPropagation()}
+                >
+                  <svg className="w-8 h-8 text-[#E8311A] flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
+                    <path d="M14 2v6h6" />
+                  </svg>
+                  <div className="min-w-0">
+                    <p className="text-sm text-[#F0F0F0] font-medium truncate">{decodeURIComponent(att.url.split("/").pop() ?? "Document.pdf")}</p>
+                    <p className="text-xs text-[#555555]">PDF · Tap to open</p>
+                  </div>
+                </a>
+              ) : (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={att.url}
+                  alt=""
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {lightboxIdx !== null && (
+        <ImageLightbox
+          images={imageUrls}
+          startIndex={lightboxIdx}
+          onClose={() => setLightboxIdx(null)}
+        />
+      )}
+    </>
   );
 }
 
