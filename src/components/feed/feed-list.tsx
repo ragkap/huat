@@ -242,7 +242,7 @@ export function FeedList({ tab, profile, stockTicker, postType, authorId, initia
     setQuotingPost(null);
   }
 
-  const showComposer = !authorId && (tab === "foryou" || tab === "followed" || !!stockTicker);
+  const showComposer = !authorId;
   const initialLoading = loading && posts.length === 0;
 
   return (
