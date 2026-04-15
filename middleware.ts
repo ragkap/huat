@@ -30,7 +30,8 @@ export async function middleware(request: NextRequest) {
     pathname === "/opengraph-image" ||
     pathname.endsWith("/opengraph-image") ||
     /^\/stocks\/[^/]+(\/opengraph-image)?$/.test(pathname) ||
-    pathname.startsWith("/api/stocks/");
+    pathname.startsWith("/api/stocks/") ||
+    /^\/post\/[^/]+$/.test(pathname);
 
   if (!user && !isPublic) {
     return NextResponse.redirect(new URL("/login", request.url));

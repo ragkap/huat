@@ -88,7 +88,36 @@ export default async function PostThreadPage({
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+
+  // Unauthenticated: show minimal public view (for OG crawlers + link previews)
+  if (!user) {
+    const adminSb = (await import("@supabase/supabase-js")).createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    );
+    const { data: post } = await adminSb
+      .from("posts")
+      .select("content, tagged_stocks, sentiment, created_at, author:profiles!posts_author_id_fkey(display_name, username, avatar_url)")
+      .eq("id", id)
+      .single();
+    if (!post) notFound();
+    const author = post.author as { display_name?: string; username?: string } | null;
+    return (
+      <div className="max-w-xl mx-auto px-5 py-10">
+        <div className="mb-6">
+          <p className="text-lg font-bold text-[#F0F0F0]">{author?.display_name}</p>
+          <p className="text-sm text-[#71717A]">@{author?.username}</p>
+        </div>
+        <p className="text-[#F0F0F0] text-base leading-relaxed mb-6">{post.content as string}</p>
+        <a
+          href="/login"
+          className="inline-flex items-center gap-2 px-6 py-3 rounded bg-[#E8311A] text-white font-bold hover:bg-[#c9280f] transition-colors"
+        >
+          Join Huat.co to reply — it&apos;s free
+        </a>
+      </div>
+    );
+  }
 
   const [profileRes, postRes, repliesRes] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user.id).single(),
