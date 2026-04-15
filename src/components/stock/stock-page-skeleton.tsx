@@ -12,6 +12,10 @@ export function StockPageSkeleton() {
           animation: sk-shimmer 1.4s infinite linear;
           border-radius: 4px;
         }
+        html.light .sk {
+          background: linear-gradient(90deg, #E8E8E8 25%, #F0F0F0 50%, #E8E8E8 75%);
+          background-size: 600px 100%;
+        }
       `}</style>
 
       {/* Chart */}

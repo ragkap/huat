@@ -183,6 +183,7 @@ html.light [class*="bg-black/70"] { background-color: rgba(0,0,0,0.3) !important
 
 /* Animate pulse skeleton */
 html.light .animate-pulse [class*="bg-[#1C1C1C]"] { background-color: #E0E0E0 !important; }
+html.light .animate-pulse [class*="bg-[#141414]"] { background-color: #E8E8E8 !important; }
 
 /* Chart and special fills */
 html.light [style*="filter: blur"] { filter: blur(6px) !important; }
