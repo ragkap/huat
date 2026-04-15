@@ -54,7 +54,7 @@ export async function GET(request: Request) {
   let query = supabase
     .from("posts")
     .select(`
-      id, author_id, content, post_type, sentiment, attachments, tagged_stocks, is_pinned, parent_id, quote_of, created_at, updated_at,
+      id, author_id, content, post_type, sentiment, attachments, tagged_stocks, is_pinned, parent_id, created_at, updated_at,
       author:profiles!posts_author_id_fkey(id, username, display_name, avatar_url, is_verified, country),
       poll:polls(*),
       forecast:forecasts(*)
@@ -81,7 +81,7 @@ export async function GET(request: Request) {
   const pollPostIds = posts.filter(p => p.post_type === "poll").map(p => (p.poll as any)?.id).filter(Boolean) as string[];
 
   // Collect quote_of IDs for fetching quoted posts
-  const quoteOfIds = [...new Set(posts.map(p => p.quote_of as string | null).filter(Boolean))] as string[];
+  const quoteOfIds = [...new Set(posts.map(p => (p as Record<string, unknown>).quote_of as string | null).filter(Boolean))] as string[];
 
   // Single query for replies: get content+author for latest reply, derive count in JS
   const [reactionsResult, savedResult, pollVotesResult, repliesResult, repostsResult, userRepostsResult, quotedPostsResult, stockNames] = await Promise.all([
@@ -167,8 +167,8 @@ export async function GET(request: Request) {
       latest_reply: latestReplyMap[post.id as string] ?? null,
       reposts_count: repostsCountMap[post.id as string] ?? 0,
       user_reposted: userRepostSet.has(post.id as string),
-      quote_of: (post.quote_of as string) ?? null,
-      quoted_post: (post.quote_of && quotedPostsMap[post.quote_of as string]) ?? null,
+      quote_of: ((post as Record<string, unknown>).quote_of as string) ?? null,
+      quoted_post: ((post as Record<string, unknown>).quote_of && quotedPostsMap[(post as Record<string, unknown>).quote_of as string]) ?? null,
     };
   });
 
@@ -228,7 +228,7 @@ export async function POST(request: Request) {
       tagged_stocks: tagged_stocks ?? [],
       attachments: attachments ?? [],
       parent_id: parent_id ?? null,
-      quote_of: quote_of ?? null,
+      ...(quote_of ? { quote_of } : {}),
     })
     .select()
     .single();

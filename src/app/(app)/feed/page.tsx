@@ -11,7 +11,7 @@ async function getInitialPosts(userId: string): Promise<Post[]> {
   const { data: posts } = await supabase
     .from("posts")
     .select(`
-      id, author_id, content, post_type, sentiment, attachments, tagged_stocks, is_pinned, parent_id, quote_of, created_at, updated_at,
+      id, author_id, content, post_type, sentiment, attachments, tagged_stocks, is_pinned, parent_id, created_at, updated_at,
       author:profiles!posts_author_id_fkey(id, username, display_name, avatar_url, is_verified, country),
       poll:polls(*),
       forecast:forecasts(*)
@@ -27,7 +27,7 @@ async function getInitialPosts(userId: string): Promise<Post[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const pollPostIds = posts.filter(p => p.post_type === "poll").map(p => (p.poll as any)?.id).filter(Boolean) as string[];
 
-  const quoteOfIds = [...new Set(posts.map(p => p.quote_of as string | null).filter(Boolean))] as string[];
+  const quoteOfIds = [...new Set(posts.map(p => (p as Record<string, unknown>).quote_of as string | null).filter(Boolean))] as string[];
 
   const [reactionsResult, savedResult, pollVotesResult, repliesResult, repostsResult, userRepostsResult, quotedPostsResult, stockNames] = await Promise.all([
     supabase.from("reactions").select("post_id, type, user_id").in("post_id", postIds),
@@ -104,8 +104,8 @@ async function getInitialPosts(userId: string): Promise<Post[]> {
       latest_reply: latestReplyMap[post.id as string] ?? null,
       reposts_count: repostsCountMap[post.id as string] ?? 0,
       user_reposted: userRepostSet.has(post.id as string),
-      quote_of: (post.quote_of as string) ?? null,
-      quoted_post: (post.quote_of && quotedPostsMap[post.quote_of as string]) ?? null,
+      quote_of: ((post as Record<string, unknown>).quote_of as string) ?? null,
+      quoted_post: ((post as Record<string, unknown>).quote_of && quotedPostsMap[(post as Record<string, unknown>).quote_of as string]) ?? null,
     } as unknown as Post;
   });
 }
