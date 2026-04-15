@@ -695,7 +695,7 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
                   onClick={e => { e.stopPropagation(); setRepostMenuOpen(o => !o); }}
                   className={cn("flex items-center justify-center w-8 h-8 rounded-full transition-colors", post.user_reposted ? "text-[#22C55E]" : "text-[#555555] hover:text-[#9CA3AF]")}
                 >
-                  <Repeat2 className="w-[16px] h-[16px]" />
+                  <Repeat2 className="w-[18px] h-[18px]" />
                 </button>
                 {(post.reposts_count ?? 0) > 0 && <span className={cn("text-[11px] min-w-[12px]", post.user_reposted ? "text-[#22C55E]" : "text-[#555555]")}>{post.reposts_count}</span>}
                 {repostMenuOpen && (
