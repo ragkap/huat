@@ -54,7 +54,7 @@ export async function GET(request: Request) {
   let query = supabase
     .from("posts")
     .select(`
-      id, author_id, content, post_type, sentiment, attachments, tagged_stocks, is_pinned, parent_id, created_at, updated_at,
+      id, author_id, content, post_type, sentiment, attachments, tagged_stocks, is_pinned, parent_id, quote_of, created_at, updated_at,
       author:profiles!posts_author_id_fkey(id, username, display_name, avatar_url, is_verified, country),
       poll:polls(*),
       forecast:forecasts(*)
@@ -80,8 +80,11 @@ export async function GET(request: Request) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const pollPostIds = posts.filter(p => p.post_type === "poll").map(p => (p.poll as any)?.id).filter(Boolean) as string[];
 
+  // Collect quote_of IDs for fetching quoted posts
+  const quoteOfIds = [...new Set(posts.map(p => p.quote_of as string | null).filter(Boolean))] as string[];
+
   // Single query for replies: get content+author for latest reply, derive count in JS
-  const [reactionsResult, savedResult, pollVotesResult, repliesResult, stockNames] = await Promise.all([
+  const [reactionsResult, savedResult, pollVotesResult, repliesResult, repostsResult, userRepostsResult, quotedPostsResult, stockNames] = await Promise.all([
     supabase.from("reactions").select("post_id, type, user_id").in("post_id", postIds),
     supabase.from("saved_posts").select("post_id").eq("user_id", user.id).in("post_id", postIds),
     pollPostIds.length
@@ -92,6 +95,11 @@ export async function GET(request: Request) {
       .select("id, parent_id, content, created_at, author:profiles!posts_author_id_fkey(id, username, display_name, avatar_url)")
       .in("parent_id", postIds)
       .order("created_at", { ascending: false }),
+    supabase.from("reposts").select("post_id", { count: "exact" }).in("post_id", postIds),
+    supabase.from("reposts").select("post_id").eq("user_id", user.id).in("post_id", postIds),
+    quoteOfIds.length
+      ? supabase.from("posts").select("id, content, created_at, author:profiles!posts_author_id_fkey(id, username, display_name, avatar_url)").in("id", quoteOfIds)
+      : Promise.resolve({ data: [] }),
     getStockNamesCached(allTickers),
   ]);
 
@@ -106,6 +114,20 @@ export async function GET(request: Request) {
     const pid = (r as Record<string, unknown>).parent_id as string;
     repliesCountMap[pid] = (repliesCountMap[pid] ?? 0) + 1;
     if (!latestReplyMap[pid]) latestReplyMap[pid] = r as Record<string, unknown>;
+  }
+
+  // Repost counts per post
+  const repostsCountMap: Record<string, number> = {};
+  for (const r of repostsResult.data ?? []) {
+    const pid = r.post_id as string;
+    repostsCountMap[pid] = (repostsCountMap[pid] ?? 0) + 1;
+  }
+  const userRepostSet = new Set((userRepostsResult.data ?? []).map(r => r.post_id as string));
+
+  // Quoted posts map
+  const quotedPostsMap: Record<string, Record<string, unknown>> = {};
+  for (const qp of quotedPostsResult.data ?? []) {
+    quotedPostsMap[(qp as Record<string, unknown>).id as string] = qp as Record<string, unknown>;
   }
 
   const enriched = posts.map(post => {
@@ -143,6 +165,10 @@ export async function GET(request: Request) {
       tagged_stock_names,
       replies_count: repliesCountMap[post.id as string] ?? 0,
       latest_reply: latestReplyMap[post.id as string] ?? null,
+      reposts_count: repostsCountMap[post.id as string] ?? 0,
+      user_reposted: userRepostSet.has(post.id as string),
+      quote_of: (post.quote_of as string) ?? null,
+      quoted_post: (post.quote_of && quotedPostsMap[post.quote_of as string]) ?? null,
     };
   });
 
@@ -161,6 +187,7 @@ const CreatePostSchema = z.object({
   post_type: z.enum(["post", "poll", "forecast"]).default("post"),
   tagged_stocks: z.array(z.string()).max(5).optional(),
   parent_id: z.string().uuid().nullish(),
+  quote_of: z.string().uuid().nullish(),
   attachments: z.array(z.object({
     url: z.string(),
     type: z.string(),
@@ -189,7 +216,7 @@ export async function POST(request: Request) {
   const parsed = CreatePostSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const { content, sentiment, post_type, tagged_stocks, parent_id, attachments, poll, forecast } = parsed.data;
+  const { content, sentiment, post_type, tagged_stocks, parent_id, quote_of, attachments, poll, forecast } = parsed.data;
 
   const { data: post, error } = await supabase
     .from("posts")
@@ -201,6 +228,7 @@ export async function POST(request: Request) {
       tagged_stocks: tagged_stocks ?? [],
       attachments: attachments ?? [],
       parent_id: parent_id ?? null,
+      quote_of: quote_of ?? null,
     })
     .select()
     .single();

@@ -158,6 +158,19 @@ export function FeedList({ tab, profile, stockTicker, postType, initialPosts }: 
     }));
   }
 
+  async function handleRepost(postId: string) {
+    const post = posts.find(p => p.id === postId);
+    if (!post) return;
+    const wasReposted = post.user_reposted;
+    // Optimistic update
+    setPosts(prev => prev.map(p => p.id !== postId ? p : {
+      ...p,
+      user_reposted: !wasReposted,
+      reposts_count: (p.reposts_count ?? 0) + (wasReposted ? -1 : 1),
+    }));
+    await fetch(`/api/posts/${postId}/repost`, { method: "POST" });
+  }
+
   const showComposer = tab === "foryou" || tab === "followed" || !!stockTicker;
   const initialLoading = loading && posts.length === 0;
 
@@ -201,6 +214,7 @@ export function FeedList({ tab, profile, stockTicker, postType, initialPosts }: 
               currentUserProfile={profile}
               onReact={handleReact}
               onSave={handleSave}
+              onRepost={handleRepost}
               onEdit={handleEdit}
               onDelete={handleDelete}
               onReply={handleReply}

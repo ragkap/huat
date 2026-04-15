@@ -59,11 +59,15 @@ export interface Post {
   reactions_count?: ReactionCounts;
   replies_count?: number;
   reposts_count?: number;
+  user_reposted?: boolean;
   user_reaction?: ReactionType | null;
   is_saved?: boolean;
   poll?: Poll;
   forecast?: Forecast;
   latest_reply?: LatestReply | null;
+  // Repost / quote
+  quote_of?: string | null;
+  quoted_post?: Post | null;
 }
 
 export interface LatestReply {

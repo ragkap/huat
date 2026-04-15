@@ -279,7 +279,7 @@ export function PriceChart({ ticker, initialPositive, isPublic = false }: { tick
         ) : null}
         {loading && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-5 h-5 border-2 border-[#333333] border-t-[#E8311A] rounded-full animate-spin" />
+            <span className="text-2xl font-black text-[#E8311A] animate-pulse select-none">发</span>
           </div>
         )}
       </div>

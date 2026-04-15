@@ -114,6 +114,17 @@ export function PostThreadClient({ initialPost, initialReplies, profile, autoRep
     setReplies(rs => rs.map(update));
   }
 
+  function handleRepost(postId: string) {
+    const update = (p: Post): Post => p.id !== postId ? p : {
+      ...p,
+      user_reposted: !p.user_reposted,
+      reposts_count: (p.reposts_count ?? 0) + (p.user_reposted ? -1 : 1),
+    };
+    if (post.id === postId) setPost(p => update(p));
+    setReplies(rs => rs.map(update));
+    fetch(`/api/posts/${postId}/repost`, { method: "POST" });
+  }
+
   function handleReply(newPost: Post) {
     setReplies(rs => [...rs, newPost]);
     setPost(p => ({ ...p, replies_count: (p.replies_count ?? 0) + 1 }));
@@ -135,6 +146,7 @@ export function PostThreadClient({ initialPost, initialReplies, profile, autoRep
         currentUserProfile={profile}
         onReact={handleReact}
         onSave={handleSave}
+        onRepost={handleRepost}
         onEdit={handleEdit}
         onDelete={handleDelete}
       />
@@ -156,6 +168,7 @@ export function PostThreadClient({ initialPost, initialReplies, profile, autoRep
               currentUserProfile={profile}
               onReact={handleReact}
               onSave={handleSave}
+              onRepost={handleRepost}
               onEdit={handleEdit}
               onDelete={handleDelete}
             />

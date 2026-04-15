@@ -36,7 +36,7 @@ function renderTextWithLinks(text: string) {
     ) : part
   );
 }
-import { Heart, MessageCircle, Repeat2, Share2, Bookmark, MoreHorizontal, TrendingUp, TrendingDown, Flag, Pencil, Trash2, Send } from "lucide-react";
+import { Heart, MessageCircle, Repeat2, Share2, Bookmark, MoreHorizontal, TrendingUp, TrendingDown, Flag, Pencil, Trash2, Send, PenLine } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn, timeAgo, formatPrice } from "@/lib/utils";
@@ -305,6 +305,10 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
   const [replyContent, setReplyContent] = useState("");
   const [replyPosting, setReplyPosting] = useState(false);
   const [localRepliesCount, setLocalRepliesCount] = useState(post.replies_count ?? 0);
+  const [repostMenuOpen, setRepostMenuOpen] = useState(false);
+  const [quoteOpen, setQuoteOpen] = useState(false);
+  const [quoteContent, setQuoteContent] = useState("");
+  const [quotePosting, setQuotePosting] = useState(false);
   const replyRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -489,6 +493,23 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
             {/* Forecast */}
             {post.post_type === "forecast" && post.forecast && <ForecastDisplay forecast={post.forecast} />}
 
+            {/* Quoted post embed */}
+            {post.quoted_post && (
+              <Link
+                href={`/post/${post.quoted_post.id}`}
+                className="mt-2 block rounded-lg border border-[#282828] bg-[#0D0D0D] hover:border-[#333333] transition-colors px-3.5 py-3"
+                onClick={e => e.stopPropagation()}
+              >
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <Avatar src={post.quoted_post.author?.avatar_url ?? null} alt={post.quoted_post.author?.display_name ?? ""} size="xs" />
+                  <span className="text-xs font-semibold text-[#9CA3AF]">{post.quoted_post.author?.display_name}</span>
+                  <span className="text-[10px] text-[#555555]">@{post.quoted_post.author?.username}</span>
+                  <span className="text-[10px] text-[#555555]">· {timeAgo(post.quoted_post.created_at)}</span>
+                </div>
+                <p className="text-xs text-[#C0C0C0] line-clamp-4 leading-relaxed">{post.quoted_post.content}</p>
+              </Link>
+            )}
+
 
             {/* Actions */}
             <div className="flex items-center mt-4 -ml-2 gap-2">
@@ -512,14 +533,40 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
                 )}
               </div>
 
-              {/* Repost */}
-              <button
-                onClick={() => onRepost?.(post.id)}
-                className="flex items-center gap-1.5 h-9 px-2 rounded-full text-[#9CA3AF] hover:text-[#22C55E] hover:bg-[#1A1A1A] transition-colors"
-              >
-                <Repeat2 className="w-4 h-4" />
-                <span className="text-xs">{post.reposts_count ?? 0}</span>
-              </button>
+              {/* Repost / Quote */}
+              <div className="relative">
+                <button
+                  onClick={e => { e.stopPropagation(); setRepostMenuOpen(o => !o); }}
+                  className={cn(
+                    "flex items-center gap-1.5 h-9 px-2 rounded-full transition-colors hover:bg-[#1A1A1A]",
+                    post.user_reposted ? "text-[#22C55E]" : "text-[#9CA3AF] hover:text-[#22C55E]"
+                  )}
+                >
+                  <Repeat2 className="w-4 h-4" />
+                  {(post.reposts_count ?? 0) > 0 && <span className="text-xs">{post.reposts_count}</span>}
+                </button>
+                {repostMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={e => { e.stopPropagation(); setRepostMenuOpen(false); }} />
+                    <div className="absolute left-0 bottom-full mb-1 z-50 bg-[#1C1C1C] border border-[#333333] rounded-lg shadow-xl py-1 min-w-[140px]">
+                      <button
+                        onClick={e => { e.stopPropagation(); setRepostMenuOpen(false); onRepost?.(post.id); }}
+                        className="flex items-center gap-2.5 w-full px-3.5 py-2.5 text-sm text-[#F0F0F0] hover:bg-[#282828] transition-colors"
+                      >
+                        <Repeat2 className="w-4 h-4 text-[#22C55E]" />
+                        Repost
+                      </button>
+                      <button
+                        onClick={e => { e.stopPropagation(); setRepostMenuOpen(false); setQuoteOpen(true); }}
+                        className="flex items-center gap-2.5 w-full px-3.5 py-2.5 text-sm text-[#F0F0F0] hover:bg-[#282828] transition-colors"
+                      >
+                        <PenLine className="w-4 h-4 text-[#9CA3AF]" />
+                        Quote
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
 
               {/* Like */}
               <button
@@ -562,6 +609,83 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
           </Link>
         )}
       </article>
+
+      {/* Inline quote composer */}
+      {quoteOpen && currentUserProfile && (
+        <div className="flex gap-0 border-b border-[#1C1C1C] bg-[#080808]" onClick={e => e.stopPropagation()}>
+          <div className="w-[52px] flex-shrink-0 flex justify-center pt-3">
+            <div className="w-px bg-[#333333] h-full" />
+          </div>
+          <div className="flex gap-2.5 flex-1 py-3 pr-5">
+            <Avatar src={currentUserProfile.avatar_url} alt={currentUserProfile.display_name} size="sm" />
+            <div className="flex-1 min-w-0">
+              <textarea
+                autoFocus
+                value={quoteContent}
+                onChange={e => setQuoteContent(e.target.value)}
+                onKeyDown={async e => {
+                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                    e.preventDefault();
+                    if (!quoteContent.trim() || quotePosting) return;
+                    setQuotePosting(true);
+                    const res = await fetch("/api/posts", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ content: quoteContent.trim(), quote_of: post.id, post_type: "post", tagged_stocks: post.tagged_stocks }),
+                    });
+                    if (res.ok) {
+                      setQuoteContent("");
+                      setQuoteOpen(false);
+                    }
+                    setQuotePosting(false);
+                  }
+                }}
+                placeholder="Add your thoughts…"
+                rows={2}
+                className="w-full bg-transparent text-sm text-[#F0F0F0] placeholder:text-[#555555] resize-none focus:outline-none leading-relaxed"
+              />
+              {/* Quoted post preview */}
+              <div className="mt-2 rounded-lg border border-[#282828] bg-[#111111] px-3 py-2.5">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Avatar src={post.author?.avatar_url ?? null} alt={post.author?.display_name ?? ""} size="xs" />
+                  <span className="text-xs font-semibold text-[#9CA3AF]">{post.author?.display_name}</span>
+                  <span className="text-[10px] text-[#555555]">@{post.author?.username}</span>
+                </div>
+                <p className="text-xs text-[#71717A] line-clamp-3 leading-relaxed">{post.content}</p>
+              </div>
+              <div className="flex items-center justify-end gap-2 mt-2">
+                <button
+                  onClick={() => { setQuoteOpen(false); setQuoteContent(""); }}
+                  className="text-xs text-[#555555] hover:text-[#9CA3AF] transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!quoteContent.trim() || quotePosting) return;
+                    setQuotePosting(true);
+                    const res = await fetch("/api/posts", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ content: quoteContent.trim(), quote_of: post.id, post_type: "post", tagged_stocks: post.tagged_stocks }),
+                    });
+                    if (res.ok) {
+                      setQuoteContent("");
+                      setQuoteOpen(false);
+                    }
+                    setQuotePosting(false);
+                  }}
+                  disabled={!quoteContent.trim() || quotePosting}
+                  className="flex items-center gap-1 px-3 py-1 rounded bg-[#E8311A] text-white text-xs font-bold disabled:opacity-40 hover:bg-[#D02A15] transition-colors"
+                >
+                  <Send className="w-3 h-3" />
+                  {quotePosting ? "Posting…" : "Quote"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Inline reply composer */}
       {replyOpen && currentUserProfile && (
