@@ -13,13 +13,20 @@ export async function POST(request: Request) {
   if (!files.length) return NextResponse.json({ error: "No files" }, { status: 400 });
   if (files.length > 4) return NextResponse.json({ error: "Max 4 files" }, { status: 400 });
 
-  const urls: string[] = [];
+  const ALLOWED_TYPES = new Set([
+    "image/jpeg", "image/png", "image/gif", "image/webp", "image/heic",
+    "video/mp4", "video/quicktime", "video/webm",
+    "application/pdf",
+  ]);
+  const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+
+  const results: { url: string; type: "image" | "video" | "pdf" }[] = [];
 
   for (const file of files) {
-    if (!file.type.startsWith("image/")) continue;
-    if (file.size > 10 * 1024 * 1024) continue; // 10MB max
+    if (!ALLOWED_TYPES.has(file.type)) continue;
+    if (file.size > MAX_SIZE) continue;
 
-    const ext = file.name.split(".").pop() ?? "jpg";
+    const ext = file.name.split(".").pop() ?? "bin";
     const path = `${user.id}/${randomUUID()}.${ext}`;
 
     const { error } = await supabase.storage
@@ -28,9 +35,12 @@ export async function POST(request: Request) {
 
     if (!error) {
       const { data } = supabase.storage.from("post-attachments").getPublicUrl(path);
-      urls.push(data.publicUrl);
+      const fileType = file.type.startsWith("image/") ? "image"
+        : file.type.startsWith("video/") ? "video"
+        : "pdf";
+      results.push({ url: data.publicUrl, type: fileType });
     }
   }
 
-  return NextResponse.json({ urls });
+  return NextResponse.json({ urls: results.map(r => r.url), files: results });
 }

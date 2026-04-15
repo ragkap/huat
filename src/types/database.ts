@@ -30,7 +30,7 @@ export interface Profile {
 
 export interface Attachment {
   url: string;
-  type: "image" | "video" | "link";
+  type: "image" | "video" | "pdf" | "link";
   width?: number;
   height?: number;
   thumbnail_url?: string;

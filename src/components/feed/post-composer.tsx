@@ -44,7 +44,7 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
   const [forecast, setForecast] = useState<ForecastData>({ ticker: "", targetPrice: "", targetDate: "" });
   const [uploading, setUploading] = useState(false);
   const [posting, setPosting] = useState(false);
-  const [attachmentUrls, setAttachmentUrls] = useState<string[]>([]);
+  const [attachments, setAttachments] = useState<{ url: string; type: "image" | "video" | "pdf" }[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
   const [linkPreview, setLinkPreview] = useState<{ url: string; og_title?: string | null; og_description?: string | null; og_image?: string | null; og_site_name?: string | null } | null>(null);
   const [linkPreviewDismissed, setLinkPreviewDismissed] = useState(false);
@@ -128,7 +128,7 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
           tagged_stocks: taggedStocks,
           ...(quotedPost ? { quote_of: quotedPost.id } : {}),
           attachments: [
-            ...attachmentUrls.map(url => ({ url, type: "image" })),
+            ...attachments.map(a => ({ url: a.url, type: a.type === "pdf" ? "pdf" : a.type })),
             ...(linkPreview && !linkPreviewDismissed ? [{
               url: linkPreview.url,
               type: "link",
@@ -147,7 +147,7 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
       setSentiment(null);
       setPostType("post");
       setTaggedStocks([]);
-      setAttachmentUrls([]);
+      setAttachments([]);
       setLinkPreview(null);
       setLinkPreviewDismissed(false);
       onCancelQuote?.();
@@ -159,14 +159,15 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
 
   async function handleFiles(files: FileList | null) {
     if (!files?.length) return;
-    const toUpload = Array.from(files).slice(0, 4 - attachmentUrls.length);
+    const toUpload = Array.from(files).slice(0, 4 - attachments.length);
     setUploading(true);
     try {
       const formData = new FormData();
       toUpload.forEach(f => formData.append("files", f));
       const res = await fetch("/api/upload", { method: "POST", body: formData });
-      const { urls } = await res.json();
-      setAttachmentUrls(prev => [...prev, ...urls].slice(0, 4));
+      const data = await res.json();
+      const uploaded: { url: string; type: "image" | "video" | "pdf" }[] = data.files ?? (data.urls ?? []).map((u: string) => ({ url: u, type: "image" as const }));
+      setAttachments(prev => [...prev, ...uploaded].slice(0, 4));
     } finally {
       setUploading(false);
     }
@@ -336,14 +337,26 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
                   </div>
                 )}
                 {/* Attachment previews */}
-                {attachmentUrls.length > 0 && (
+                {attachments.length > 0 && (
                   <div className="flex gap-2 flex-wrap">
-                    {attachmentUrls.map((url, i) => (
-                      <div key={i} className="relative w-20 h-20 rounded overflow-hidden border border-[#333333]">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={url} alt="" className="w-full h-full object-cover" />
+                    {attachments.map((att, i) => (
+                      <div key={i} className="relative w-20 h-20 rounded overflow-hidden border border-[#333333] bg-[#141414] flex items-center justify-center">
+                        {att.type === "image" ? (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img src={att.url} alt="" className="w-full h-full object-cover" />
+                        ) : att.type === "video" ? (
+                          <div className="flex flex-col items-center gap-1 text-[#9CA3AF]">
+                            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polygon points="5 3 19 12 5 21" /></svg>
+                            <span className="text-[8px] uppercase tracking-wider">Video</span>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center gap-1 text-[#9CA3AF]">
+                            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" /><path d="M14 2v6h6" /></svg>
+                            <span className="text-[8px] uppercase tracking-wider">PDF</span>
+                          </div>
+                        )}
                         <button
-                          onClick={() => setAttachmentUrls(prev => prev.filter((_, idx) => idx !== i))}
+                          onClick={() => setAttachments(prev => prev.filter((_, idx) => idx !== i))}
                           className="absolute top-1 right-1 bg-black/70 rounded-full p-0.5"
                         >
                           <X className="w-3 h-3 text-white" />
@@ -386,13 +399,13 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
           {/* Toolbar */}
           <div className="flex items-center justify-between border-t border-[#282828] pt-3 mt-3">
             <div className="flex items-center gap-1">
-              {/* Image */}
-              <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={e => handleFiles(e.target.files)} />
+              {/* Attachments */}
+              <input ref={fileRef} type="file" accept="image/*,video/mp4,video/quicktime,video/webm,application/pdf" multiple className="hidden" onChange={e => handleFiles(e.target.files)} />
               <button
                 onClick={() => fileRef.current?.click()}
-                disabled={attachmentUrls.length >= 4 || postType !== "post"}
+                disabled={attachments.length >= 4 || postType !== "post"}
                 className="p-2 rounded text-[#9CA3AF] hover:text-[#9CA3AF] hover:bg-[#282828] transition-colors disabled:opacity-30"
-                title="Add image"
+                title="Add image, video, or PDF (max 10MB each)"
               >
                 <ImageIcon className="w-4 h-4" />
               </button>

@@ -82,18 +82,45 @@ function AttachmentGrid({ attachments }: { attachments: Post["attachments"] }) {
         <div
           key={i}
           className={cn(
-            "bg-[#282828] overflow-hidden",
+            "bg-[#141414] overflow-hidden",
             count === 3 && i === 0 ? "row-span-2" : "",
-            "aspect-video"
+            att.type === "pdf" ? "" : "aspect-video"
           )}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={att.url}
-            alt=""
-            className="w-full h-full object-cover"
-            loading="lazy"
-          />
+          {att.type === "video" ? (
+            <video
+              src={att.url}
+              controls
+              preload="metadata"
+              className="w-full h-full object-cover"
+              onClick={e => e.stopPropagation()}
+            />
+          ) : att.type === "pdf" ? (
+            <a
+              href={att.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 px-4 py-3 hover:bg-[#1C1C1C] transition-colors"
+              onClick={e => e.stopPropagation()}
+            >
+              <svg className="w-8 h-8 text-[#E8311A] flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
+                <path d="M14 2v6h6" />
+              </svg>
+              <div className="min-w-0">
+                <p className="text-sm text-[#F0F0F0] font-medium truncate">{decodeURIComponent(att.url.split("/").pop() ?? "Document.pdf")}</p>
+                <p className="text-xs text-[#555555]">PDF · Tap to open</p>
+              </div>
+            </a>
+          ) : (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={att.url}
+              alt=""
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+          )}
         </div>
       ))}
     </div>
