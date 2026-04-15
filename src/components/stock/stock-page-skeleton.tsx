@@ -14,21 +14,6 @@ export function StockPageSkeleton() {
         }
       `}</style>
 
-      {/* Unified header */}
-      <div className="border-b border-[#282828] px-5 py-4 bg-[#080808]">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1 space-y-2">
-            <div className="sk h-5 w-40" />
-            <div className="sk h-3 w-28" />
-            <div className="flex items-baseline gap-3 mt-2">
-              <div className="sk h-8 w-24" />
-              <div className="sk h-4 w-20" />
-            </div>
-          </div>
-          <div className="sk h-8 w-20 flex-shrink-0" />
-        </div>
-      </div>
-
       {/* Chart */}
       <div className="border-b border-[#282828] px-5 py-4 bg-[#080808]">
         <div className="flex gap-1 mb-3">

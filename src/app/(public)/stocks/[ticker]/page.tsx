@@ -185,7 +185,7 @@ export default async function StockPage({ params }: StockPageProps) {
             )}
             {profile && (
               <FollowButton
-                ticker={rawTicker}
+                ticker={ticker}
                 initialFollowing={isFollowing}
                 initialFollowerCount={followerCount}
               />
@@ -198,7 +198,7 @@ export default async function StockPage({ params }: StockPageProps) {
       <Suspense fallback={<StockPageSkeleton />}>
         <SlowStockData
           ticker={ticker}
-          rawTicker={rawTicker}
+          rawTicker={identifier}
           isin={stock.isin ?? null}
           isPublic={isPublic}
           followerCount={followerCount}
