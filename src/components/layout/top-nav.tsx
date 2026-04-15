@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { TrendingUp, User, Search, X, Bell, MessageSquare, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -300,15 +300,38 @@ function MobileSearchOverlay() {
   );
 }
 
+function LogoLink() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => { setLoading(false); }, [pathname]);
+
+  return (
+    <button
+      onClick={() => {
+        if (pathname === "/feed") {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        } else {
+          setLoading(true);
+          router.push("/feed");
+        }
+      }}
+      className="flex items-center gap-2 flex-shrink-0 lg:w-80 px-4"
+    >
+      <span className="text-[#E8311A] font-black text-2xl tracking-tighter leading-none">Huat</span>
+      <span className="text-[#E8311A] font-black text-2xl">发</span>
+      {loading && <span className="ml-1 inline-block w-4 h-4 border-2 border-[#E8311A]/30 border-t-[#E8311A] rounded-full animate-spin" />}
+    </button>
+  );
+}
+
 export function TopNav({ unreadNotifs = 0, unreadMessages = 0, profile }: { unreadNotifs?: number; unreadMessages?: number; profile?: Profile }) {
   return (
     <header className="fixed top-0 left-0 right-0 z-30 bg-[#0A0A0A]/95 backdrop-blur-md border-b border-[#282828] h-14">
       <div className="max-w-[1290px] mx-auto h-full flex items-center">
         {/* Logo — aligns with sidebar width */}
-        <Link href="/feed" className="flex items-baseline gap-2 flex-shrink-0 lg:w-80 px-4">
-          <span className="text-[#E8311A] font-black text-2xl tracking-tighter leading-none">Huat</span>
-          <span className="text-[#E8311A] font-black text-2xl">发</span>
-        </Link>
+        <LogoLink />
 
         {/* Search — hidden on mobile (collapsed to icon), visible sm+ */}
         <div className="hidden sm:flex flex-1 lg:w-[650px] lg:flex-shrink-0 px-5">
