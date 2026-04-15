@@ -41,6 +41,7 @@ html.light {
 }
 
 * { box-sizing: border-box; }
+button, [role="button"], a { cursor: pointer; }
 
 html {
   background: var(--surface);
