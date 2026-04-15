@@ -17,7 +17,7 @@ interface StockPageProps {
 
 export async function generateMetadata({ params }: StockPageProps): Promise<Metadata> {
   const { ticker } = await params;
-  const identifier = decodeURIComponent(ticker);
+  const identifier = fullyDecode(ticker);
   const stock = await getStockBySlugOrTicker(identifier).catch(() => null);
   if (!stock) return { title: "Stock — Huat.co" };
 
@@ -111,9 +111,18 @@ async function SlowStockData({
   );
 }
 
+function fullyDecode(s: string): string {
+  try {
+    const decoded = decodeURIComponent(s);
+    return decoded === s ? s : fullyDecode(decoded);
+  } catch {
+    return s;
+  }
+}
+
 export default async function StockPage({ params }: StockPageProps) {
   const { ticker: rawTicker } = await params;
-  const identifier = decodeURIComponent(rawTicker);
+  const identifier = fullyDecode(rawTicker);
 
   const supabase = await createClient();
 

@@ -3,6 +3,15 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
+function fullyDecode(s: string): string {
+  try {
+    const d = decodeURIComponent(s);
+    return d === s ? s : fullyDecode(d);
+  } catch {
+    return s;
+  }
+}
+
 export interface VisitedStock {
   ticker: string;
   name: string;
@@ -47,7 +56,7 @@ export function LastVisitedWidget() {
         {visited.map((s, i) => (
           <Link
             key={s.ticker}
-            href={`/stocks/${encodeURIComponent(s.slug)}`}
+            href={`/stocks/${encodeURIComponent(fullyDecode(s.slug))}`}
             className="flex items-center gap-2.5 hover:bg-[#141414] -mx-2 px-2 py-1.5 rounded transition-colors group"
           >
             <span className="text-[10px] font-bold text-[#555555] w-4 flex-shrink-0">{i + 1}</span>
