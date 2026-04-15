@@ -105,3 +105,73 @@ body {
 /* Pointer cursor for all interactive elements */
 button, [role="button"], a, summary { cursor: pointer !important; }
 input:focus-visible, textarea:focus-visible, select:focus-visible { outline: none; }
+
+/* ─── Light mode color overrides ─────────────────────────────────────────────
+   Remap hardcoded dark hex colors to light equivalents so the entire UI
+   flips without touching component files.
+   Uses Tailwind v4's arbitrary value rewriting via CSS custom properties. */
+
+html.light {
+  /* Main backgrounds */
+  --tw-bg-opacity: 1;
+  color-scheme: light;
+}
+
+/* Background remapping */
+html.light [class*="bg-[#0A0A0A]"] { background-color: #FFFFFF !important; }
+html.light [class*="bg-[#080808]"] { background-color: #FAFAFA !important; }
+html.light [class*="bg-[#0D0D0D]"] { background-color: #F8F8F8 !important; }
+html.light [class*="bg-[#0F0F0F]"] { background-color: #F5F5F5 !important; }
+html.light [class*="bg-[#111111]"] { background-color: #F3F3F3 !important; }
+html.light [class*="bg-[#141414]"] { background-color: #F0F0F0 !important; }
+html.light [class*="bg-[#1A1A1A]"] { background-color: #EBEBEB !important; }
+html.light [class*="bg-[#1C1C1C]"] { background-color: #E8E8E8 !important; }
+html.light [class*="bg-[#282828]"] { background-color: #E0E0E0 !important; }
+
+/* Text remapping */
+html.light [class*="text-[#F0F0F0]"] { color: #1A1A1A !important; }
+html.light [class*="text-[#E0E0E0]"] { color: #2A2A2A !important; }
+html.light [class*="text-[#C0C0C0]"] { color: #444444 !important; }
+html.light [class*="text-[#9CA3AF]"] { color: #555555 !important; }
+html.light [class*="text-[#71717A]"] { color: #777777 !important; }
+html.light [class*="text-[#555555]"] { color: #999999 !important; }
+html.light [class*="text-[#444444]"] { color: #AAAAAA !important; }
+html.light [class*="text-[#333333]"] { color: #BBBBBB !important; }
+
+/* Border remapping */
+html.light [class*="border-[#282828]"] { border-color: #E0E0E0 !important; }
+html.light [class*="border-[#333333]"] { border-color: #D0D0D0 !important; }
+html.light [class*="border-[#222222]"] { border-color: #E5E5E5 !important; }
+html.light [class*="border-[#1C1C1C]"] { border-color: #EBEBEB !important; }
+html.light [class*="border-[#1A1A1A]"] { border-color: #EEEEEE !important; }
+html.light [class*="border-[#141414]"] { border-color: #F0F0F0 !important; }
+
+/* Divide colors */
+html.light [class*="divide-[#1A1A1A]"] > * + * { border-color: #EEEEEE !important; }
+html.light [class*="divide-[#282828]"] > * + * { border-color: #E0E0E0 !important; }
+
+/* Hover backgrounds */
+html.light [class*="hover:bg-[#0D0D0D]"]:hover { background-color: #F5F5F5 !important; }
+html.light [class*="hover:bg-[#141414]"]:hover { background-color: #F0F0F0 !important; }
+html.light [class*="hover:bg-[#1A1A1A]"]:hover { background-color: #EBEBEB !important; }
+html.light [class*="hover:bg-[#1C1C1C]"]:hover { background-color: #E8E8E8 !important; }
+html.light [class*="hover:bg-[#282828]"]:hover { background-color: #E0E0E0 !important; }
+
+/* Placeholder text */
+html.light [class*="placeholder:text-[#555555]"]::placeholder { color: #AAAAAA !important; }
+html.light [class*="placeholder:text-[#71717A]"]::placeholder { color: #999999 !important; }
+html.light [class*="placeholder:text-[#9CA3AF]"]::placeholder { color: #888888 !important; }
+
+/* Backdrop/overlay */
+html.light [class*="bg-black/95"] { background-color: rgba(255,255,255,0.95) !important; }
+html.light [class*="bg-[#0A0A0A]/95"] { background-color: rgba(255,255,255,0.95) !important; }
+
+/* Animate pulse skeleton */
+html.light .animate-pulse [class*="bg-[#1C1C1C]"] { background-color: #E0E0E0 !important; }
+
+/* Chart and special fills */
+html.light [style*="filter: blur"] { filter: blur(6px) !important; }
+
+/* Shadows for light mode */
+html.light [class*="shadow-xl"] { --tw-shadow-color: rgba(0,0,0,0.08); }
+html.light [class*="shadow-lg"] { --tw-shadow-color: rgba(0,0,0,0.06); }
