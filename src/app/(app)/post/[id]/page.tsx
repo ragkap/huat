@@ -1,8 +1,33 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabase } from "@supabase/supabase-js";
 import { redirect, notFound } from "next/navigation";
 import { PostThreadClient } from "@/components/post/post-thread-client";
 import type { Post, Profile } from "@/types/database";
+import type { Metadata as NextMetadata } from "next";
 import { getStockNamesByTickers } from "@/lib/stocks-db/client";
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<NextMetadata> {
+  const { id } = await params;
+  const supabase = createSupabase(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+  const { data: post } = await supabase
+    .from("posts")
+    .select("content, author:profiles!posts_author_id_fkey(display_name)")
+    .eq("id", id)
+    .single();
+
+  const author = (post?.author as { display_name?: string } | null)?.display_name ?? "Someone";
+  const content = (post?.content as string)?.slice(0, 160) ?? "";
+  const title = `${author} on Huat.co`;
+  const description = content || `See what ${author} posted on Huat.co`;
+  const ogImage = `https://www.huat.co/post/${id}/opengraph-image`;
+
+  return {
+    title,
+    description,
+    openGraph: { title, description, url: `https://www.huat.co/post/${id}`, siteName: "Huat.co", type: "article", images: [{ url: ogImage, width: 1200, height: 630 }] },
+    twitter: { card: "summary_large_image", title, description, images: [ogImage] },
+  };
+}
 
 const SELECT = `id, author_id, content, post_type, sentiment, attachments, tagged_stocks, is_pinned, parent_id, created_at, updated_at,
   author:profiles!posts_author_id_fkey(id, username, display_name, avatar_url, is_verified, country),
