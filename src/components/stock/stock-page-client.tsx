@@ -443,10 +443,9 @@ function ResearchTab({ ticker, displayTicker, profile }: { ticker: string; displ
               {item.executive_summary && (
                 <div className="mb-2">
                   <p className="text-[10px] font-bold text-[#555555] uppercase tracking-wider mb-1.5">Executive Summary</p>
-                  <div
-                    className="research-html text-xs text-[#9CA3AF] leading-relaxed"
-                    dangerouslySetInnerHTML={{ __html: item.executive_summary }}
-                  />
+                  <p className="text-xs text-[#9CA3AF] leading-relaxed">
+                    {stripHtml(item.executive_summary).replace(/This content is AI-generated.*?before use\.?/gi, "").trim()}
+                  </p>
                 </div>
               )}
               <span className="text-xs text-[#555555]">
@@ -746,7 +745,7 @@ export function StockPageClient({
                 <a href="https://www.smartkarma.com/home/smartwealth/" target="_blank" rel="noopener noreferrer" className="text-[10px] text-[#555555] hover:text-[#9CA3AF] transition-colors">by Smartkarma</a>
               </div>
               <ul className="space-y-2">
-                {(summaryExpanded ? primer.executive_summary : primer.executive_summary.slice(0, 1)).map((point, i) => (
+                {(summaryExpanded ? primer.executive_summary : primer.executive_summary.slice(0, 1)).filter(p => !p.includes("AI-generated")).map((point, i) => (
                   <li key={i} className="flex items-start gap-2">
                     <span className="text-[#555555] flex-shrink-0 mt-0.5">·</span>
                     <span className="text-xs text-[#C0C0C0] leading-relaxed"
