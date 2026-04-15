@@ -402,11 +402,12 @@ function ShareButton({ postId, postContent, authorName }: { postId: string; post
 
   async function handleShare(e: React.MouseEvent) {
     e.stopPropagation();
-    if (typeof navigator !== "undefined" && navigator.share) {
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (isMobile && typeof navigator !== "undefined" && navigator.share) {
       try {
         await navigator.share({ title: `${authorName} on Huat.co`, text: postContent.slice(0, 200), url });
         return;
-      } catch { /* user cancelled or not supported — fall through to menu */ }
+      } catch { /* user cancelled — fall through to menu */ }
     }
     setOpen(o => !o);
   }
