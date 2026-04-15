@@ -27,7 +27,7 @@ export function FeedTabs({ profile, initialPosts }: FeedTabsProps) {
         {TABS.map(t => (
           <button
             key={t.id}
-            onClick={() => setTab(t.id)}
+            onClick={() => { setTab(t.id); window.scrollTo({ top: 0 }); }}
             className={cn(
               "flex-1 py-3.5 text-sm font-medium cursor-pointer",
               t.id === tab ? "text-[#F0F0F0]" : "text-[#9CA3AF] hover:text-[#F0F0F0]"
