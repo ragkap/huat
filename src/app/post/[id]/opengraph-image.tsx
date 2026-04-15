@@ -73,13 +73,13 @@ export default async function OgImage({ params }: { params: Promise<{ id: string
 
         {/* Top: wordmark + author */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", zIndex: 1 }}>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-            <span style={{ color: "#E8311A", fontSize: 30, fontWeight: 900, letterSpacing: "-1px" }}>Huat</span>
-            <span style={{ color: "#E8311A", fontSize: 30, fontWeight: 900 }}>发</span>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
+            <span style={{ color: "#E8311A", fontSize: 64, fontWeight: 900, letterSpacing: "-2px" }}>Huat</span>
+            <span style={{ color: "#E8311A", fontSize: 58, fontWeight: 900 }}>发</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-              <span style={{ color: "#F0F0F0", fontSize: 20, fontWeight: 700 }}>{authorName}</span>
+              <span style={{ color: "#F0F0F0", fontSize: 22, fontWeight: 700 }}>{authorName}</span>
               <span style={{ color: "#555555", fontSize: 16 }}>@{username}</span>
             </div>
           </div>

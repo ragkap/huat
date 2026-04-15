@@ -65,10 +65,10 @@ export default async function OgImage({ params }: { params: Promise<{ ticker: st
         />
 
         {/* Top: wordmark */}
-        <div style={{ display: "flex", alignItems: "baseline", gap: 10, zIndex: 1 }}>
-          <span style={{ color: "#E8311A", fontSize: 30, fontWeight: 900, letterSpacing: "-1px" }}>Huat</span>
-          <span style={{ color: "#E8311A", fontSize: 30, fontWeight: 900 }}>发</span>
-          <span style={{ color: "#444444", fontSize: 17, marginLeft: 6 }}>huat.co</span>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 14, zIndex: 1 }}>
+          <span style={{ color: "#E8311A", fontSize: 64, fontWeight: 900, letterSpacing: "-2px" }}>Huat</span>
+          <span style={{ color: "#E8311A", fontSize: 58, fontWeight: 900 }}>发</span>
+          <span style={{ color: "#444444", fontSize: 20, marginLeft: 8 }}>huat.co</span>
         </div>
 
         {/* Middle: stock info */}
