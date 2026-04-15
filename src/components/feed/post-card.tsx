@@ -383,6 +383,87 @@ function EditModal({
   );
 }
 
+function ShareButton({ postId, postContent, authorName }: { postId: string; postContent: string; authorName: string }) {
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  const url = `https://www.huat.co/post/${postId}`;
+  const text = `${postContent.slice(0, 100)}${postContent.length > 100 ? "…" : ""} — ${authorName} on Huat.co`;
+
+  async function handleShare(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({ title: `${authorName} on Huat.co`, text: postContent.slice(0, 200), url });
+        return;
+      } catch { /* user cancelled or not supported — fall through to menu */ }
+    }
+    setOpen(o => !o);
+  }
+
+  async function copyLink() {
+    await navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => { setCopied(false); setOpen(false); }, 1200);
+  }
+
+  const shareLinks = [
+    { label: "Copy link", action: copyLink, icon: copied ? "✓" : "🔗" },
+    { label: "X / Twitter", href: `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, icon: "𝕏" },
+    { label: "Telegram", href: `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, icon: "✈" },
+    { label: "WhatsApp", href: `https://wa.me/?text=${encodeURIComponent(text + " " + url)}`, icon: "💬" },
+  ];
+
+  return (
+    <div ref={menuRef} className="relative ml-auto">
+      <button
+        onClick={handleShare}
+        className="flex items-center justify-center w-8 h-8 rounded-full text-[#555555] hover:text-[#9CA3AF] transition-colors"
+      >
+        <Upload className="w-[16px] h-[16px]" />
+      </button>
+      {open && (
+        <div className="absolute right-0 bottom-full mb-1 z-50 bg-[#1C1C1C] border border-[#333333] rounded-lg shadow-xl py-1 min-w-[160px]">
+          {shareLinks.map(item => (
+            item.href ? (
+              <a
+                key={item.label}
+                href={item.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={e => { e.stopPropagation(); setOpen(false); }}
+                className="flex items-center gap-2.5 w-full px-3.5 py-2.5 text-sm text-[#F0F0F0] hover:bg-[#282828] transition-colors"
+              >
+                <span className="w-4 text-center text-xs">{item.icon}</span>
+                {item.label}
+              </a>
+            ) : (
+              <button
+                key={item.label}
+                onClick={e => { e.stopPropagation(); item.action?.(); }}
+                className="flex items-center gap-2.5 w-full px-3.5 py-2.5 text-sm text-[#F0F0F0] hover:bg-[#282828] transition-colors"
+              >
+                <span className="w-4 text-center text-xs">{item.icon}</span>
+                {copied && item.label === "Copy link" ? "Copied!" : item.label}
+              </button>
+            )
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function MoreMenu({
   isOwn,
   onEdit,
@@ -730,12 +811,7 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
               </button>
 
               {/* Share */}
-              <button
-                onClick={e => e.stopPropagation()}
-                className="flex items-center justify-center w-8 h-8 rounded-full text-[#555555] hover:text-[#9CA3AF] transition-colors ml-auto"
-              >
-                <Upload className="w-[16px] h-[16px]" />
-              </button>
+              <ShareButton postId={post.id} postContent={post.content} authorName={post.author?.display_name ?? ""} />
             </div>
           </div>
         </div>
