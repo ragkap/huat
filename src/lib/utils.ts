@@ -21,7 +21,7 @@ export function formatChange(change: number | null, pct: number | null): string 
   return `${sign}${change.toFixed(3)} (${sign}${pct.toFixed(2)}%)`;
 }
 
-// n is in USD millions (as returned by SmartKarma market_value_usd)
+// n is in USD millions (as returned by Smartkarma market_value_usd)
 export function formatMarketCap(n: number | null): string {
   if (n === null) return "--";
   if (n >= 1e6) return `US$${(n / 1e6).toFixed(2)}T`;

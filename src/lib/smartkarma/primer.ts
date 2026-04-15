@@ -1,5 +1,5 @@
 /**
- * SmartKarma Primer API client
+ * Smartkarma Primer API client
  * Endpoint: https://data.smartkarma.com/primer?api_token=TOKEN&ticker=BLOOMBERG_TICKER
  * Auth: query param (different from main SK API which uses header auth)
  */

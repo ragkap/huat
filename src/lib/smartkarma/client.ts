@@ -17,7 +17,7 @@ async function skFetch(url: string, revalidate = 60): Promise<unknown> {
   });
 
   if (!res.ok) {
-    throw new Error(`SmartKarma API error ${res.status}: ${url}`);
+    throw new Error(`Smartkarma API error ${res.status}: ${url}`);
   }
 
   return res.json();
