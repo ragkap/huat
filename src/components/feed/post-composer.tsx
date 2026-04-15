@@ -74,19 +74,23 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
   }, [quotedPost]);
 
   // Fetch current price when forecast mode + stock tagged
+  const taggedTicker = taggedStocks[0] ?? "";
   useEffect(() => {
-    if (postType !== "forecast" || !taggedStocks.length) { setCurrentPrice(null); return; }
+    if (postType !== "forecast" || !taggedTicker) { setCurrentPrice(null); return; }
+    let cancelled = false;
     setFetchingPrice(true);
-    setForecast(f => ({ ...f, ticker: taggedStocks[0] }));
-    fetch(`/api/stocks/${encodeURIComponent(taggedStocks[0])}/quote`)
+    setForecast(f => ({ ...f, ticker: taggedTicker }));
+    fetch(`/api/stocks/${encodeURIComponent(taggedTicker)}/quote`)
       .then(r => r.ok ? r.json() : null)
       .then(data => {
-        const price = data?.quote?.last ?? data?.quote?.close ?? null;
+        if (cancelled) return;
+        const price = data?.quote?.price ?? data?.quote?.last ?? data?.quote?.close ?? null;
         setCurrentPrice(typeof price === "number" ? price : null);
       })
-      .catch(() => setCurrentPrice(null))
-      .finally(() => setFetchingPrice(false));
-  }, [postType, taggedStocks]);
+      .catch(() => { if (!cancelled) setCurrentPrice(null); })
+      .finally(() => { if (!cancelled) setFetchingPrice(false); });
+    return () => { cancelled = true; };
+  }, [postType, taggedTicker]);
 
   // Detect URLs in content and fetch OG preview
   useEffect(() => {

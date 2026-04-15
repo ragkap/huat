@@ -6,10 +6,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ tick
   const { ticker } = await params;
 
   try {
-    const [stock, quote] = await Promise.all([
-      getStockBySlugOrTicker(decodeURIComponent(ticker)),
-      getQuote(ticker),
-    ]);
+    const identifier = decodeURIComponent(ticker);
+    const stock = await getStockBySlugOrTicker(identifier);
+    const bloombergTicker = stock?.bloomberg_ticker ?? identifier;
+    const quote = await getQuote(bloombergTicker);
 
     const stats = stock?.isin
       ? await getCurrentStats(stock.isin).catch(() => null)
