@@ -52,48 +52,110 @@ export async function generateMetadata({ params }: StockPageProps): Promise<Meta
   };
 }
 
-async function StockPageContent({
-  identifier,
+// Slow external calls — streamed in via Suspense
+async function SlowStockData({
+  ticker,
   rawTicker,
-  stock,
+  isin,
+  isPublic,
+  followerCount,
+  postCount,
   profile,
+  stockName,
+  description,
 }: {
-  identifier: string;
+  ticker: string;
   rawTicker: string;
-  stock: Awaited<ReturnType<typeof getStockBySlugOrTicker>>;
+  isin: string | null;
+  isPublic: boolean;
+  followerCount: number;
+  postCount: number;
   profile: Profile | null;
+  stockName: string;
+  description: string | null;
 }) {
-  if (!stock) return null;
-  const ticker = stock.bloomberg_ticker ?? identifier;
-  const isPublic = !profile;
+  const [quote, stats, primer] = await Promise.all([
+    isPublic ? Promise.resolve(null) : getQuote(ticker).catch(() => null),
+    isin ? getCurrentStats(isin).catch(() => null) : null,
+    ticker ? getPrimer(ticker).catch(() => null) : null,
+  ]);
+
+  const isPositive = (quote?.change ?? 0) >= 0;
+
+  return (
+    <StockPageClient
+      ticker={rawTicker}
+      displayTicker={ticker}
+      stockName={stockName}
+      isPublic={isPublic}
+      followerCount={followerCount}
+      postCount={postCount}
+      profile={profile}
+      isPositive={isPositive}
+      description={description}
+      stats={stats ?? null}
+      primer={primer?.primer ? {
+        executive_summary: primer.primer.executive_summary,
+        three_bullish_points: primer.primer.three_bullish_points,
+        three_bearish_points: primer.primer.three_bearish_points,
+        key_risks: primer.primer.key_risks,
+      } : null}
+      quote={quote ? {
+        currency: quote.currency,
+        year_high: quote.year_high,
+        year_low: quote.year_low,
+        pct_change_1m: quote.pct_change_1m,
+        pct_change_ytd: quote.pct_change_ytd,
+      } : null}
+    />
+  );
+}
+
+export default async function StockPage({ params }: StockPageProps) {
+  const { ticker: rawTicker } = await params;
+  const identifier = decodeURIComponent(rawTicker);
 
   const supabase = await createClient();
-  const [quote, stats, primer, watchlistRes, followerRes, postCountRes] = await Promise.all([
-    isPublic ? Promise.resolve(null) : getQuote(ticker).catch(() => null),
-    stock.isin ? getCurrentStats(stock.isin).catch(() => null) : null,
-    stock.bloomberg_ticker ? getPrimer(stock.bloomberg_ticker).catch(() => null) : null,
-    profile
-      ? supabase.from("stock_watchlist").select("ticker").eq("user_id", profile.id).eq("ticker", ticker).maybeSingle()
-      : { data: null },
+
+  // Fetch fast DB data in parallel — don't wait for external APIs
+  const [{ data: { user } }, stock] = await Promise.all([
+    supabase.auth.getUser(),
+    getStockBySlugOrTicker(identifier).catch(() => null),
+  ]);
+
+  if (!stock) notFound();
+
+  const ticker = stock.bloomberg_ticker ?? identifier;
+  const isPublic = !user;
+
+  // All remaining fast DB calls in parallel
+  const [profileRes, watchlistRes, followerRes, postCountRes] = await Promise.all([
+    user
+      ? supabase.from("profiles").select("id, username, display_name, avatar_url, bio, country, is_verified, created_at, website").eq("id", user.id).single()
+      : Promise.resolve({ data: null }),
+    user
+      ? supabase.from("stock_watchlist").select("ticker").eq("user_id", user.id).eq("ticker", ticker).maybeSingle()
+      : Promise.resolve({ data: null }),
     supabase.from("stock_watchlist").select("user_id", { count: "exact", head: true }).eq("ticker", ticker),
     supabase.from("posts").select("id", { count: "exact", head: true }).contains("tagged_stocks", [ticker]),
   ]);
 
-  const isPositive = (quote?.change ?? 0) >= 0;
+  const profile = profileRes.data as Profile | null;
   const isFollowing = !!watchlistRes.data;
   const followerCount = followerRes.count ?? 0;
   const postCount = postCountRes.count ?? 0;
+  const isPositiveHeader = true; // placeholder until slow data loads
 
   return (
-    <>
-      {/* Unified header */}
+    <div>
+      {/* Header renders immediately with fast DB data */}
       <div className="border-b border-[#282828] px-5 py-4 bg-[#080808]">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <h1 className="text-base sm:text-xl font-black text-[#F0F0F0] leading-snug">{stock!.name}</h1>
+            <h1 className="text-base sm:text-xl font-black text-[#F0F0F0] leading-snug">{stock.name}</h1>
             <p className="text-xs text-[#71717A] font-mono mt-0.5">
-              {ticker} · {stock!.exchange_code ?? "SGX"}
-              {stock!.sector && ` · ${stock!.sector}`}
+              {ticker} · {stock.exchange_code ?? "SGX"}
+              {stock.sector && ` · ${stock.sector}`}
             </p>
             <div className="flex flex-wrap items-baseline gap-2 mt-2">
               {isPublic ? (
@@ -108,17 +170,9 @@ async function StockPageContent({
                     (yours if you join) →
                   </span>
                 </a>
-              ) : quote?.price != null ? (
-                <>
-                  <span className="text-2xl sm:text-3xl font-black text-[#F0F0F0] font-mono">
-                    {formatPrice(quote.price, quote.currency ?? "SGD")}
-                  </span>
-                  <span className={`text-sm font-bold ${isPositive ? "text-[#22C55E]" : "text-[#EF4444]"}`}>
-                    {isPositive ? "+" : ""}{quote.change?.toFixed(3)} ({isPositive ? "+" : ""}{quote.change_pct?.toFixed(2)}%)
-                  </span>
-                </>
               ) : (
-                <span className="text-[#71717A] text-sm">Price unavailable</span>
+                // Price loads via Suspense below — show skeleton inline
+                <div className="h-8 w-32 rounded bg-[#1C1C1C] animate-pulse" />
               )}
             </div>
           </div>
@@ -140,59 +194,18 @@ async function StockPageContent({
         </div>
       </div>
 
-      <StockPageClient
-        ticker={rawTicker}
-        displayTicker={ticker}
-        stockName={stock.name}
-        isPublic={isPublic}
-        followerCount={followerCount}
-        postCount={postCount}
-        profile={profile}
-        isPositive={isPositive}
-        description={stock.description ?? null}
-        stats={stats ?? null}
-        primer={primer?.primer ? {
-          executive_summary: primer.primer.executive_summary,
-          three_bullish_points: primer.primer.three_bullish_points,
-          three_bearish_points: primer.primer.three_bearish_points,
-          key_risks: primer.primer.key_risks,
-        } : null}
-        quote={quote ? {
-          currency: quote.currency,
-          year_high: quote.year_high,
-          year_low: quote.year_low,
-          pct_change_1m: quote.pct_change_1m,
-          pct_change_ytd: quote.pct_change_ytd,
-        } : null}
-      />
-    </>
-  );
-}
-
-export default async function StockPage({ params }: StockPageProps) {
-  const { ticker: rawTicker } = await params;
-  const identifier = decodeURIComponent(rawTicker);
-
-  const supabase = await createClient();
-  const [{ data: { user } }, stock] = await Promise.all([
-    supabase.auth.getUser(),
-    getStockBySlugOrTicker(identifier).catch(() => null),
-  ]);
-
-  if (!stock) notFound();
-
-  const { data: profile } = user
-    ? await supabase.from("profiles").select("id, username, display_name, avatar_url, bio, country, is_verified, created_at").eq("id", user.id).single()
-    : { data: null };
-
-  return (
-    <div>
+      {/* Slow external data streamed in — tabs/posts show immediately via skeleton */}
       <Suspense fallback={<StockPageSkeleton />}>
-        <StockPageContent
-          identifier={identifier}
+        <SlowStockData
+          ticker={ticker}
           rawTicker={rawTicker}
-          stock={stock}
-          profile={profile as Profile | null}
+          isin={stock.isin ?? null}
+          isPublic={isPublic}
+          followerCount={followerCount}
+          postCount={postCount}
+          profile={profile}
+          stockName={stock.name}
+          description={stock.description ?? null}
         />
       </Suspense>
     </div>
