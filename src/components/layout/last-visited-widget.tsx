@@ -20,7 +20,7 @@ export interface VisitedStock {
 }
 
 const STORAGE_KEY = "huat_last_visited";
-const MAX_ITEMS = 6;
+const MAX_ITEMS = 10;
 
 export function recordStockVisit(stock: { ticker: string; name: string; slug: string }) {
   try {

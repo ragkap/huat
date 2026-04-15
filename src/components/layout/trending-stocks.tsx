@@ -26,7 +26,7 @@ async function getTrendingStocks() {
 
     const top = Object.entries(counts)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 8)
+      .slice(0, 10)
       .map(([ticker, count]) => ({ ticker, count }));
 
     // Resolve names
