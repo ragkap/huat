@@ -27,12 +27,12 @@ export function SmartScoreWidget({ smartScore, analysis }: { smartScore: SmartSc
   const BULLET_LIMIT = 1;
 
   return (
-    <div className="widget-hover border border-[#282828] rounded-lg p-4">
+    <div className="widget-hover border border-[#282828] rounded-lg p-4 cursor-pointer" onClick={() => setExpanded(e => !e)}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
           <p className="text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">SmartScore</p>
-          <a href="https://www.smartkarma.com/home/smartwealth/" target="_blank" rel="noopener noreferrer" className="text-[10px] text-[#555555] hover:text-[#9CA3AF] transition-colors mt-0.5">by Smartkarma</a>
+          <a href="https://www.smartkarma.com/home/smartwealth/" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-[10px] text-[#555555] hover:text-[#9CA3AF] transition-colors mt-0.5">by Smartkarma</a>
         </div>
         {smartScore.score != null && (
           <div className="flex flex-col items-end">
@@ -82,12 +82,9 @@ export function SmartScoreWidget({ smartScore, analysis }: { smartScore: SmartSc
             ))}
           </ul>
           {analysisBullets.length > BULLET_LIMIT && (
-            <button
-              onClick={() => setExpanded(e => !e)}
-              className="mt-2 text-[11px] text-[#71717A] hover:text-[#F0F0F0] transition-colors"
-            >
+            <span className="mt-2 inline-block text-[11px] text-[#71717A]">
               {expanded ? "Show less" : `Show ${analysisBullets.length - BULLET_LIMIT} more`}
-            </button>
+            </span>
           )}
         </div>
       )}

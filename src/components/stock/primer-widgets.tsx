@@ -60,7 +60,7 @@ export function RatingsWidget({ ratings, outlook }: { ratings: NonNullable<Stock
   const outlookText = outlook?.map(p => stripHtml(p)).join("\n\n") ?? "";
 
   return (
-    <WidgetShell title="Ratings" attribution>
+    <WidgetShell title="Ratings" attribution onClick={outlookText ? () => setExpanded(e => !e) : undefined}>
       {/* Overall rating */}
       {overallNum != null && (
         <div className="flex items-center justify-between mb-3">
@@ -114,12 +114,9 @@ export function RatingsWidget({ ratings, outlook }: { ratings: NonNullable<Stock
           >
             {outlookText}
           </p>
-          <button
-            onClick={() => setExpanded(e => !e)}
-            className="mt-1.5 text-[11px] text-[#71717A] hover:text-[#F0F0F0] transition-colors"
-          >
+          <span className="mt-1.5 inline-block text-[11px] text-[#71717A]">
             {expanded ? "Show less" : "Show more"}
-          </button>
+          </span>
         </div>
       )}
     </WidgetShell>
@@ -148,7 +145,7 @@ export function PortersWidget({ porters, swot }: { porters: NonNullable<StockPri
   const swotText = swot?.map(p => stripHtml(p)).join("\n\n") ?? "";
 
   return (
-    <WidgetShell title="Porter's Five Forces" attribution>
+    <WidgetShell title="Porter's Five Forces" attribution onClick={swotText ? () => setExpanded(e => !e) : undefined}>
       <div className="space-y-2.5">
         {FORCES.map(({ key, label }) => {
           const raw = porters[key];
@@ -179,12 +176,9 @@ export function PortersWidget({ porters, swot }: { porters: NonNullable<StockPri
           >
             {swotText}
           </p>
-          <button
-            onClick={() => setExpanded(e => !e)}
-            className="mt-1.5 text-[11px] text-[#71717A] hover:text-[#F0F0F0] transition-colors"
-          >
+          <span className="mt-1.5 inline-block text-[11px] text-[#71717A]">
             {expanded ? "Show less" : "Show more"}
-          </button>
+          </span>
         </div>
       )}
     </WidgetShell>
