@@ -46,6 +46,7 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
   const [fetchingPrice, setFetchingPrice] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
   const [posting, setPosting] = useState(false);
   const [attachments, setAttachments] = useState<{ url: string; type: "image" | "video" | "pdf" }[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -189,6 +190,7 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
   async function handleFiles(files: FileList | null) {
     if (!files?.length) return;
     const toUpload = Array.from(files).slice(0, 4 - attachments.length);
+    setPendingCount(toUpload.length);
     setUploading(true);
     try {
       const formData = new FormData();
@@ -201,6 +203,7 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
       setAttachments(prev => [...prev, ...uploaded].slice(0, 4));
     } finally {
       setUploading(false);
+      setPendingCount(0);
     }
   }
 
@@ -417,8 +420,8 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
                     </div>
                   </div>
                 )}
-                {/* Attachment previews */}
-                {attachments.length > 0 && (
+                {/* Attachment previews + upload placeholders */}
+                {(attachments.length > 0 || pendingCount > 0) && (
                   <div className="flex gap-2 flex-wrap">
                     {attachments.map((att, i) => (
                       <div key={i} className="relative w-20 h-20 rounded overflow-hidden border border-[#333333] bg-[#141414] flex items-center justify-center">
@@ -442,6 +445,12 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
                         >
                           <X className="w-3 h-3 text-white" />
                         </button>
+                      </div>
+                    ))}
+                    {/* Upload placeholders */}
+                    {Array.from({ length: pendingCount }).map((_, i) => (
+                      <div key={`pending-${i}`} className="w-20 h-20 rounded border border-[#333333] border-dashed bg-[#141414] flex items-center justify-center">
+                        <div className="w-5 h-5 border-2 border-[#333333] border-t-[#E8311A] rounded-full animate-spin" />
                       </div>
                     ))}
                   </div>
