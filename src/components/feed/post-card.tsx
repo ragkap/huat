@@ -675,7 +675,7 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
               <div className="flex items-center ml-2">
                 <button
                   onClick={e => { e.stopPropagation(); setReplyOpen(o => !o); setTimeout(() => replyRef.current?.focus(), 50); }}
-                  className={cn("flex items-center justify-center w-8 h-8 rounded-full transition-colors", replyOpen ? "text-[#E8311A]" : "text-[#555555] hover:text-[#9CA3AF]")}
+                  className={cn("flex items-center justify-center w-8 h-8 rounded-full transition-colors", (replyOpen || localRepliesCount > 0) ? "text-[#E8311A]" : "text-[#555555] hover:text-[#9CA3AF]")}
                 >
                   <MessageCircle className="w-[16px] h-[16px]" />
                 </button>
