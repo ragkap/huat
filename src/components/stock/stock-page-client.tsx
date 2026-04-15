@@ -98,6 +98,9 @@ interface StatsData {
 }
 
 interface QuoteData {
+  price: number | null;
+  change: number | null;
+  change_pct: number | null;
   currency: string | null;
   year_high: number | null;
   year_low: number | null;
@@ -707,6 +710,21 @@ export function StockPageClient({
 
   return (
     <>
+      {/* Price quote */}
+      {!isPublic && quote?.price != null && (
+        <div className="px-5 py-3 border-b border-[#282828] bg-[#080808]">
+          <div className="flex flex-wrap items-baseline gap-2">
+            <span className="text-2xl sm:text-3xl font-black font-mono text-[#F0F0F0]">
+              {formatPrice(quote.price, quote.currency ?? "SGD")}
+            </span>
+            {quote.change != null && quote.change_pct != null && (
+              <span className={cn("text-sm font-bold", quote.change >= 0 ? "text-[#22C55E]" : "text-[#EF4444]")}>
+                {quote.change >= 0 ? "+" : ""}{quote.change.toFixed(3)} ({quote.change >= 0 ? "+" : ""}{quote.change_pct.toFixed(2)}%)
+              </span>
+            )}
+          </div>
+        </div>
+      )}
       {/* Chart */}
       <PriceChart ticker={ticker} initialPositive={isPositive} isPublic={isPublic} />
 

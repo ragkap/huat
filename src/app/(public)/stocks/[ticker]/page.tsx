@@ -101,6 +101,9 @@ async function SlowStockData({
         key_risks: primer.primer.key_risks,
       } : null}
       quote={quote ? {
+        price: quote.price,
+        change: quote.change,
+        change_pct: quote.change_pct,
         currency: quote.currency,
         year_high: quote.year_high,
         year_low: quote.year_low,
@@ -179,10 +182,7 @@ export default async function StockPage({ params }: StockPageProps) {
                     (yours if you join) →
                   </span>
                 </a>
-              ) : (
-                // Price loads via Suspense below — show skeleton inline
-                <div className="h-8 w-32 rounded bg-[#1C1C1C] animate-pulse" />
-              )}
+              ) : null}
             </div>
           </div>
           <div className="flex flex-col items-end gap-2 flex-shrink-0">
