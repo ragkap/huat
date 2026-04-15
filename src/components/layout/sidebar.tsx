@@ -90,8 +90,7 @@ function useStockPanelData(ticker: string | null): StockPanelData {
   return data;
 }
 
-function StockDrawer({ ticker, onClose }: { ticker: string; onClose: () => void }) {
-  const data = useStockPanelData(ticker);
+function StockDrawer({ ticker, data, onClose }: { ticker: string; data: StockPanelData; onClose: () => void }) {
   const drawerRef = useRef<HTMLDivElement>(null);
 
   // Close on backdrop tap
@@ -158,39 +157,6 @@ function StockDrawer({ ticker, onClose }: { ticker: string; onClose: () => void 
   );
 }
 
-function StockSidebarWidgets({ ticker }: { ticker: string }) {
-  const [primer, setPrimer] = useState<PrimerOverview | null>(null);
-
-  useEffect(() => {
-    setPrimer(null);
-    fetch(`/api/stocks/${encodeURIComponent(ticker)}/primer`)
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (data?.primer) {
-          setPrimer({
-            company_overview: data.primer.company_overview ?? [],
-            industry_overview: data.primer.industry_overview ?? [],
-            competitive_landscape: data.primer.competitive_landscape ?? [],
-            management: data.primer.management ?? [],
-            key_products_and_services: data.primer.key_products_and_services ?? [],
-          });
-        }
-      })
-      .catch(() => null);
-  }, [ticker]);
-
-  if (!primer) return null;
-
-  return (
-    <div className="mt-4 space-y-2">
-      <OverviewWidget title="Company Overview" items={primer.company_overview} />
-      <OverviewWidget title="Industry Overview" items={primer.industry_overview} />
-      <OverviewWidget title="Products & Services" items={primer.key_products_and_services} />
-      <OverviewWidget title="Competitive Landscape" items={primer.competitive_landscape} />
-      <OverviewWidget title="Management" items={primer.management} />
-    </div>
-  );
-}
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -199,6 +165,9 @@ export function Sidebar() {
   // Extract ticker from /stocks/[ticker]
   const stockMatch = pathname.match(/^\/stocks\/([^/]+)/);
   const stockTicker = stockMatch ? decodeURIComponent(stockMatch[1]) : null;
+
+  // Single primer fetch shared between desktop sidebar and mobile drawer
+  const sidebarData = useStockPanelData(stockTicker);
 
   // Close drawer on route change
   useEffect(() => { setDrawerOpen(false); }, [pathname]);
@@ -228,7 +197,19 @@ export function Sidebar() {
           })}
         </nav>
 
-        {stockTicker && <StockSidebarWidgets ticker={stockTicker} />}
+        {stockTicker && (
+          <div className="mt-4 space-y-2">
+            {sidebarData.primer && (
+              <>
+                <OverviewWidget title="Company Overview" items={sidebarData.primer.company_overview} />
+                <OverviewWidget title="Industry Overview" items={sidebarData.primer.industry_overview} />
+                <OverviewWidget title="Products & Services" items={sidebarData.primer.key_products_and_services} />
+                <OverviewWidget title="Competitive Landscape" items={sidebarData.primer.competitive_landscape} />
+                <OverviewWidget title="Management" items={sidebarData.primer.management} />
+              </>
+            )}
+          </div>
+        )}
       </aside>
 
       {/* Mobile bottom nav */}
@@ -264,7 +245,7 @@ export function Sidebar() {
 
       {/* Bottom drawer */}
       {drawerOpen && stockTicker && (
-        <StockDrawer ticker={stockTicker} onClose={() => setDrawerOpen(false)} />
+        <StockDrawer ticker={stockTicker} data={sidebarData} onClose={() => setDrawerOpen(false)} />
       )}
     </>
   );
