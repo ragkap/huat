@@ -181,7 +181,7 @@ export function FeedList({ tab, profile, stockTicker, postType, initialPosts }: 
 
   function handleQuote(post: Post) {
     setQuotingPost(post);
-    feedTopRef.current?.scrollIntoView({ behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function handleComposerPost(newPost?: Record<string, unknown>) {
