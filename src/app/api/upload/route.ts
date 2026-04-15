@@ -15,7 +15,7 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const formData = await request.formData();
-  const files = formData.getAll("files") as File[];
+  const files = formData.getAll("files").filter((f): f is File => f instanceof File);
 
   if (!files.length) return NextResponse.json({ error: "No files" }, { status: 400 });
   if (files.length > 4) return NextResponse.json({ error: "Max 4 files" }, { status: 400 });
@@ -38,9 +38,10 @@ export async function POST(request: Request) {
     const ext = file.name.split(".").pop() ?? "bin";
     const path = `${user.id}/${randomUUID()}.${ext}`;
 
+    const buffer = Buffer.from(await file.arrayBuffer());
     const { error } = await storage.storage
       .from("post-attachments")
-      .upload(path, file, { contentType: file.type, upsert: false });
+      .upload(path, buffer, { contentType: file.type, upsert: false });
 
     if (error) {
       errors.push(`${file.name}: ${error.message}`);

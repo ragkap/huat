@@ -165,7 +165,9 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
       const formData = new FormData();
       toUpload.forEach(f => formData.append("files", f));
       const res = await fetch("/api/upload", { method: "POST", body: formData });
+      if (!res.ok) { console.error("Upload failed:", res.status); return; }
       const data = await res.json();
+      if (data.errors?.length) console.warn("Upload errors:", data.errors);
       const uploaded: { url: string; type: "image" | "video" | "pdf" }[] = data.files ?? (data.urls ?? []).map((u: string) => ({ url: u, type: "image" as const }));
       setAttachments(prev => [...prev, ...uploaded].slice(0, 4));
     } finally {
