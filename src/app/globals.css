@@ -81,7 +81,7 @@ body {
 .no-scrollbar::-webkit-scrollbar { display: none; }
 
 @keyframes highlight-fade {
-  0% { background-color: rgba(232, 49, 26, 0.08); }
+  0%, 30% { background-color: rgba(232, 49, 26, 0.15); }
   100% { background-color: transparent; }
 }
 .animate-highlight {

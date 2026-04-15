@@ -257,15 +257,19 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
                 )}
                 {/* Quoted post preview */}
                 {quotedPost && (
-                  <div className="relative rounded-lg border border-[#282828] bg-[#111111] px-3.5 py-3">
+                  <div className="relative rounded-lg border-l-2 border-l-[#E8311A]/40 border border-[#222222] bg-[#0A0A0A] pl-3 pr-3.5 py-2.5">
                     <button
                       onClick={() => onCancelQuote?.()}
                       className="absolute top-1.5 right-1.5 w-5 h-5 flex items-center justify-center rounded-full bg-black/60 text-[#9CA3AF] hover:text-white"
                     >
                       <X className="w-3 h-3" />
                     </button>
-                    <p className="text-sm text-[#C0C0C0] line-clamp-3 leading-relaxed">{quotedPost.content}</p>
-                    <p className="text-xs text-[#555555] mt-1">{quotedPost.author?.display_name}</p>
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <span className="text-[10px] text-[#555555] font-medium uppercase tracking-wider">Quoting</span>
+                      <span className="text-[10px] text-[#555555]">·</span>
+                      <span className="text-xs font-semibold text-[#71717A]">{quotedPost.author?.display_name}</span>
+                    </div>
+                    <p className="text-xs text-[#9CA3AF] line-clamp-3 leading-relaxed">{quotedPost.content}</p>
                   </div>
                 )}
                 {/* Poll builder */}
