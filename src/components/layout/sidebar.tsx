@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Compass, LayoutDashboard, X, Star } from "lucide-react";
+import { Home, Compass, LayoutDashboard, X, Star, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState, useRef } from "react";
 import { stripHtml } from "@/lib/smartkarma/primer";
@@ -14,6 +14,7 @@ const navItems = [
   { href: "/feed", label: "Feed", icon: Home },
   { href: "/watchlist", label: "Watchlist", icon: Star },
   { href: "/stocks", label: "Discover", icon: Compass },
+  { href: "/ai", label: "AI", icon: Sparkles },
 ];
 
 interface PrimerOverview {
