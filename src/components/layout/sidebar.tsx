@@ -29,10 +29,10 @@ function OverviewWidget({ title, items }: { title: string; items: string[] }) {
   if (!items.length) return null;
   const text = items.map(p => stripHtml(p)).join("\n\n");
   return (
-    <div className="widget-hover border border-[#282828] rounded-lg p-4">
+    <div className="widget-hover border border-[#282828] rounded-lg p-4 cursor-pointer" onClick={() => setExpanded(e => !e)}>
       <div className="flex items-center justify-between mb-3">
         <p className="text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">{title}</p>
-        <a href="https://www.smartkarma.com/home/smartwealth/" target="_blank" rel="noopener noreferrer" className="text-[10px] text-[#555555] hover:text-[#9CA3AF] transition-colors">by Smartkarma</a>
+        <a href="https://www.smartkarma.com/home/smartwealth/" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-[10px] text-[#555555] hover:text-[#9CA3AF] transition-colors">by Smartkarma</a>
       </div>
       <p
         className="widget-text-muted text-xs text-[#9CA3AF] leading-relaxed whitespace-pre-line"
@@ -40,12 +40,9 @@ function OverviewWidget({ title, items }: { title: string; items: string[] }) {
       >
         {text}
       </p>
-      <button
-        onClick={() => setExpanded(e => !e)}
-        className="mt-2 text-[11px] text-[#71717A] hover:text-[#F0F0F0] transition-colors"
-      >
+      <span className="mt-2 inline-block text-[11px] text-[#71717A]">
         {expanded ? "Show less" : "Show more"}
-      </button>
+      </span>
     </div>
   );
 }

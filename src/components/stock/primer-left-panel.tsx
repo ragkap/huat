@@ -19,10 +19,10 @@ function OverviewWidget({
   const [expanded, setExpanded] = useState(false);
   if (!items.length) return null;
   return (
-    <div className="border border-[#282828] rounded-lg p-4">
+    <div className="border border-[#282828] rounded-lg p-4 cursor-pointer" onClick={() => setExpanded(e => !e)}>
       <div className="flex items-center justify-between mb-3">
         <p className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider">{title}</p>
-        <a href="https://www.smartkarma.com/home/smartwealth/" target="_blank" rel="noopener noreferrer" className="text-[10px] text-[#555555] hover:text-[#9CA3AF] transition-colors">by Smartkarma</a>
+        <a href="https://www.smartkarma.com/home/smartwealth/" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-[10px] text-[#555555] hover:text-[#9CA3AF] transition-colors">by Smartkarma</a>
       </div>
       <ul className="space-y-2">
         {(expanded ? items : items.slice(0, 1)).map((point, i) => (
@@ -33,12 +33,9 @@ function OverviewWidget({
         ))}
       </ul>
       {items.length > 1 && (
-        <button
-          onClick={() => setExpanded(e => !e)}
-          className="mt-2 text-[11px] text-[#71717A] hover:text-[#F0F0F0] transition-colors"
-        >
+        <span className="mt-2 inline-block text-[11px] text-[#71717A]">
           {expanded ? "Show less" : `Show ${items.length - 1} more`}
-        </button>
+        </span>
       )}
     </div>
   );

@@ -740,10 +740,10 @@ export function StockPageClient({
         <div className="px-5 py-4 border-b border-[#282828] space-y-3">
           {/* Executive Summary */}
           {primer.executive_summary.length > 0 && (
-            <div className="widget-hover border border-[#282828] rounded-lg p-4">
+            <div className="widget-hover border border-[#282828] rounded-lg p-4 cursor-pointer" onClick={() => setSummaryExpanded(e => !e)}>
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">Executive Summary</p>
-                <a href="https://www.smartkarma.com/home/smartwealth/" target="_blank" rel="noopener noreferrer" className="text-[10px] text-[#555555] hover:text-[#9CA3AF] transition-colors">by Smartkarma</a>
+                <a href="https://www.smartkarma.com/home/smartwealth/" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-[10px] text-[#555555] hover:text-[#9CA3AF] transition-colors">by Smartkarma</a>
               </div>
               <ul className="space-y-2">
                 {(summaryExpanded ? primer.executive_summary : primer.executive_summary.slice(0, 1)).filter(p => !p.includes("AI-generated")).map((point, i) => (
@@ -766,10 +766,10 @@ export function StockPageClient({
           {(primer.three_bullish_points.length > 0 || primer.three_bearish_points.length > 0) && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {primer.three_bullish_points.length > 0 && (
-                <div className="widget-hover border border-[#282828] rounded-lg p-4">
+                <div className="widget-hover border border-[#282828] rounded-lg p-4 cursor-pointer" onClick={() => setBullishExpanded(e => !e)}>
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-xs font-bold text-[#22C55E] uppercase tracking-wider">Bullish</p>
-                    <a href="https://www.smartkarma.com/home/smartwealth/" target="_blank" rel="noopener noreferrer" className="text-[10px] text-[#555555] hover:text-[#9CA3AF] transition-colors">by Smartkarma</a>
+                    <a href="https://www.smartkarma.com/home/smartwealth/" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-[10px] text-[#555555] hover:text-[#9CA3AF] transition-colors">by Smartkarma</a>
                   </div>
                   <ul className="space-y-2">
                     {(bullishExpanded ? primer.three_bullish_points : primer.three_bullish_points.slice(0, 1)).map((point, i) => (
@@ -788,10 +788,10 @@ export function StockPageClient({
                 </div>
               )}
               {primer.three_bearish_points.length > 0 && (
-                <div className="widget-hover border border-[#282828] rounded-lg p-4">
+                <div className="widget-hover border border-[#282828] rounded-lg p-4 cursor-pointer" onClick={() => setBearishExpanded(e => !e)}>
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-xs font-bold text-[#EF4444] uppercase tracking-wider">Bearish</p>
-                    <a href="https://www.smartkarma.com/home/smartwealth/" target="_blank" rel="noopener noreferrer" className="text-[10px] text-[#555555] hover:text-[#9CA3AF] transition-colors">by Smartkarma</a>
+                    <a href="https://www.smartkarma.com/home/smartwealth/" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-[10px] text-[#555555] hover:text-[#9CA3AF] transition-colors">by Smartkarma</a>
                   </div>
                   <ul className="space-y-2">
                     {(bearishExpanded ? primer.three_bearish_points : primer.three_bearish_points.slice(0, 1)).map((point, i) => (
@@ -814,10 +814,10 @@ export function StockPageClient({
 
           {/* Key Risks */}
           {primer.key_risks.length > 0 && (
-            <div className="widget-hover border border-[#282828] rounded-lg p-4">
+            <div className="widget-hover border border-[#282828] rounded-lg p-4 cursor-pointer" onClick={() => setRisksExpanded(e => !e)}>
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-bold text-[#EF4444] uppercase tracking-wider">Key Risks</p>
-                <a href="https://www.smartkarma.com/home/smartwealth/" target="_blank" rel="noopener noreferrer" className="text-[10px] text-[#555555] hover:text-[#9CA3AF] transition-colors">by Smartkarma</a>
+                <a href="https://www.smartkarma.com/home/smartwealth/" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-[10px] text-[#555555] hover:text-[#9CA3AF] transition-colors">by Smartkarma</a>
               </div>
               <ul className="space-y-2">
                 {(risksExpanded ? primer.key_risks : primer.key_risks.slice(0, 1)).map((point, i) => (
