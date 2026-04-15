@@ -715,12 +715,16 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
                 )}
               </div>
 
-              {/* Like */}
+              {/* Huat (Gold Ingot) */}
               <button
                 onClick={() => onReact?.(post.id, "like")}
-                className="flex items-center gap-1.5 h-9 px-2 rounded-full text-[#9CA3AF] hover:text-[#E8311A] hover:bg-[#1A1A1A] transition-colors"
+                className={cn("flex items-center gap-1.5 h-9 px-2 rounded-full hover:bg-[#1A1A1A] transition-colors", post.user_reaction ? "text-[#F5A623]" : "text-[#9CA3AF] hover:text-[#F5A623]")}
               >
-                <Heart className={cn("w-4 h-4", post.user_reaction && "fill-[#E8311A] text-[#E8311A]")} />
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill={post.user_reaction ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.5">
+                  <path d="M4 14c0 2 1.5 4 8 4s8-2 8-4" strokeLinecap="round" />
+                  <path d="M4 14c0-1.5 2-3 4-3.5C9.5 10 10 8 12 8s2.5 2 4 2.5c2 .5 4 2 4 3.5" strokeLinecap="round" />
+                  <path d="M7 10.5C8 9 9.5 7 12 7s4 2 5 3.5" strokeLinecap="round" />
+                </svg>
                 <span className="text-xs">{reactions.total}</span>
               </button>
 
