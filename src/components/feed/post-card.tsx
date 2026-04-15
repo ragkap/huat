@@ -679,7 +679,7 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
                     >
                       <div className="flex items-center gap-2 mb-1.5">
                         <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ color: badgeColor, backgroundColor: `${badgeColor}15` }}>{badge}</span>
-                        <span className="text-[10px] text-[#555555]">{source}</span>
+                        {source && !/^smartkarma$/i.test(source) && <span className="text-[10px] text-[#555555]">{source}</span>}
                       </div>
                       <p className="text-sm font-medium text-[#F0F0F0] leading-snug line-clamp-2">{title}</p>
                       {summary && <p className="text-xs text-[#9CA3AF] leading-relaxed mt-1.5 line-clamp-3">{summary}</p>}
