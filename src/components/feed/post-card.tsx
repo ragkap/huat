@@ -518,7 +518,7 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
                 style={{
                   backgroundColor: "#E8311A",
                   height: 52,
-                  clipPath: "polygon(0 0, 100% 0, 100% 75%, 50% 100%, 0 75%)",
+                  clipPath: "polygon(0 0, 100% 0, 100% 100%, 50% 75%, 0 100%)",
                 }}
               >
                 <span className="text-[9px] font-black uppercase tracking-widest leading-none">Poll</span>
