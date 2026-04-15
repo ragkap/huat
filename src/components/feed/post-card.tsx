@@ -513,10 +513,11 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
 
             {/* Poll ribbon */}
             {post.post_type === "poll" && post.poll && (
-              <div className="absolute top-0 right-0 overflow-hidden w-24 h-24 pointer-events-none">
-                <div className="absolute top-2.5 -right-5 w-32 text-center rotate-45 bg-[#E8311A] text-white text-[8px] font-bold uppercase tracking-wider py-0.5 shadow-lg">
-                  Poll · {post.poll.ends_at ? (new Date(post.poll.ends_at) > new Date() ? timeLeft(post.poll.ends_at) : "Ended") : "Open"}
-                </div>
+              <div className="absolute top-0 right-4 pointer-events-none flex flex-col items-center bg-[#E8311A] text-white px-2.5 pt-2 pb-3 shadow-lg" style={{ clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 8px), 50% 100%, 0 calc(100% - 8px))" }}>
+                <span className="text-[9px] font-black uppercase tracking-widest leading-none">Poll</span>
+                <span className="text-[8px] font-semibold leading-none mt-1 opacity-80">
+                  {post.poll.ends_at ? (new Date(post.poll.ends_at) > new Date() ? timeLeft(post.poll.ends_at) : "Ended") : "Open"}
+                </span>
               </div>
             )}
             {/* Forecast badge */}
