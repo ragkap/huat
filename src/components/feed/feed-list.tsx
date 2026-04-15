@@ -283,7 +283,7 @@ export function FeedList({ tab, profile, stockTicker, postType, authorId, initia
           </p>
         </div>
       ) : (
-        <div className="divide-y divide-[#1A1A1A]">
+        <div className="feed-divider">
           {posts.map(post => (
             <PostCard
               key={post.id}

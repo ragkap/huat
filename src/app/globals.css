@@ -80,6 +80,9 @@ body {
 .no-scrollbar { scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 
+.feed-divider > * + * { border-top: 1px solid #1A1A1A; }
+html.light .feed-divider > * + * { border-top: 1px solid #EEEEEE; }
+
 @keyframes highlight-fade {
   0%, 40% { background-color: rgba(232, 49, 26, 0.25); border-left: 2px solid rgba(232, 49, 26, 0.6); }
   100% { background-color: transparent; border-left: 2px solid transparent; }
