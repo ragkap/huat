@@ -693,11 +693,11 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
               <div className="relative flex items-center ml-2">
                 <button
                   onClick={e => { e.stopPropagation(); setRepostMenuOpen(o => !o); }}
-                  className={cn("flex items-center justify-center w-8 h-8 rounded-full transition-colors", post.user_reposted ? "text-[#22C55E]" : "text-[#555555] hover:text-[#9CA3AF]")}
+                  className={cn("flex items-center justify-center w-8 h-8 rounded-full transition-colors", post.user_reposted ? "text-[#E8311A]" : "text-[#555555] hover:text-[#9CA3AF]")}
                 >
                   <RefreshCw className="w-[16px] h-[16px]" />
                 </button>
-                {(post.reposts_count ?? 0) > 0 && <span className={cn("text-[11px] min-w-[12px]", post.user_reposted ? "text-[#22C55E]" : "text-[#555555]")}>{post.reposts_count}</span>}
+                {(post.reposts_count ?? 0) > 0 && <span className={cn("text-[11px] min-w-[12px]", post.user_reposted ? "text-[#E8311A]" : "text-[#555555]")}>{post.reposts_count}</span>}
                 {repostMenuOpen && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={e => { e.stopPropagation(); setRepostMenuOpen(false); }} />
@@ -724,7 +724,7 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
               {/* Save */}
               <button
                 onClick={e => { e.stopPropagation(); onSave?.(post.id); }}
-                className={cn("flex items-center justify-center w-8 h-8 rounded-full transition-colors ml-2", post.is_saved ? "text-[#F0F0F0]" : "text-[#555555] hover:text-[#9CA3AF]")}
+                className={cn("flex items-center justify-center w-8 h-8 rounded-full transition-colors ml-2", post.is_saved ? "text-[#E8311A]" : "text-[#555555] hover:text-[#9CA3AF]")}
               >
                 <Bookmark className={cn("w-[16px] h-[16px]", post.is_saved && "fill-current")} />
               </button>
