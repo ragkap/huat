@@ -1,6 +1,13 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
+
+const ALLOWED_TYPES = new Set([
+  "image/jpeg", "image/png", "image/gif", "image/webp", "image/heic",
+  "video/mp4", "video/quicktime", "video/webm",
+  "application/pdf",
+]);
+const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -13,28 +20,32 @@ export async function POST(request: Request) {
   if (!files.length) return NextResponse.json({ error: "No files" }, { status: 400 });
   if (files.length > 4) return NextResponse.json({ error: "Max 4 files" }, { status: 400 });
 
-  const ALLOWED_TYPES = new Set([
-    "image/jpeg", "image/png", "image/gif", "image/webp", "image/heic",
-    "video/mp4", "video/quicktime", "video/webm",
-    "application/pdf",
-  ]);
-  const MAX_SIZE = 10 * 1024 * 1024; // 10MB
-
+  // Use service client for storage uploads (bypasses RLS)
+  const storage = await createServiceClient();
   const results: { url: string; type: "image" | "video" | "pdf" }[] = [];
+  const errors: string[] = [];
 
   for (const file of files) {
-    if (!ALLOWED_TYPES.has(file.type)) continue;
-    if (file.size > MAX_SIZE) continue;
+    if (!ALLOWED_TYPES.has(file.type)) {
+      errors.push(`${file.name}: unsupported type`);
+      continue;
+    }
+    if (file.size > MAX_SIZE) {
+      errors.push(`${file.name}: exceeds 10MB limit`);
+      continue;
+    }
 
     const ext = file.name.split(".").pop() ?? "bin";
     const path = `${user.id}/${randomUUID()}.${ext}`;
 
-    const { error } = await supabase.storage
+    const { error } = await storage.storage
       .from("post-attachments")
       .upload(path, file, { contentType: file.type, upsert: false });
 
-    if (!error) {
-      const { data } = supabase.storage.from("post-attachments").getPublicUrl(path);
+    if (error) {
+      errors.push(`${file.name}: ${error.message}`);
+    } else {
+      const { data } = storage.storage.from("post-attachments").getPublicUrl(path);
       const fileType = file.type.startsWith("image/") ? "image"
         : file.type.startsWith("video/") ? "video"
         : "pdf";
@@ -42,5 +53,5 @@ export async function POST(request: Request) {
     }
   }
 
-  return NextResponse.json({ urls: results.map(r => r.url), files: results });
+  return NextResponse.json({ files: results, urls: results.map(r => r.url), ...(errors.length ? { errors } : {}) });
 }
