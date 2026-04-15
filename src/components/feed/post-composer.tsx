@@ -9,15 +9,23 @@ import type { Profile, Sentiment, PostType } from "@/types/database";
 interface PollOption { id: string; text: string; }
 interface ForecastData { ticker: string; targetPrice: string; targetDate: string; }
 
+interface QuotedPostInfo {
+  id: string;
+  content: string;
+  author?: { display_name?: string; username?: string };
+}
+
 interface PostComposerProps {
   profile: Profile;
-  onPost?: () => void;
+  onPost?: (newPost?: Record<string, unknown>) => void;
   defaultTicker?: string;
+  quotedPost?: QuotedPostInfo | null;
+  onCancelQuote?: () => void;
 }
 
 const MAX_CHARS = 1000;
 
-export function PostComposer({ profile, onPost, defaultTicker }: PostComposerProps) {
+export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCancelQuote }: PostComposerProps) {
   const [content, setContent] = useState("");
   const [sentiment, setSentiment] = useState<Sentiment | null>(null);
   const [postType, setPostType] = useState<PostType>("post");
@@ -99,7 +107,7 @@ export function PostComposer({ profile, onPost, defaultTicker }: PostComposerPro
     if (!canPost) return;
     setPosting(true);
     try {
-      await fetch("/api/posts", {
+      const res = await fetch("/api/posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -107,6 +115,7 @@ export function PostComposer({ profile, onPost, defaultTicker }: PostComposerPro
           sentiment,
           post_type: postType,
           tagged_stocks: taggedStocks,
+          ...(quotedPost ? { quote_of: quotedPost.id } : {}),
           attachments: [
             ...attachmentUrls.map(url => ({ url, type: "image" })),
             ...(linkPreview && !linkPreviewDismissed ? [{
@@ -122,6 +131,7 @@ export function PostComposer({ profile, onPost, defaultTicker }: PostComposerPro
           ...(postType === "forecast" && { forecast }),
         }),
       });
+      const newPost = res.ok ? (await res.json()).post : undefined;
       setContent("");
       setSentiment(null);
       setPostType("post");
@@ -129,7 +139,8 @@ export function PostComposer({ profile, onPost, defaultTicker }: PostComposerPro
       setAttachmentUrls([]);
       setLinkPreview(null);
       setLinkPreviewDismissed(false);
-      onPost?.();
+      onCancelQuote?.();
+      onPost?.(newPost);
     } finally {
       setPosting(false);
     }
@@ -242,6 +253,19 @@ export function PostComposer({ profile, onPost, defaultTicker }: PostComposerPro
                       {linkPreview.og_title && <p className="text-sm text-[#9CA3AF] leading-snug line-clamp-3">{linkPreview.og_title}</p>}
                       {linkPreview.og_description && <p className="text-xs text-[#555555] leading-snug line-clamp-4">{linkPreview.og_description}</p>}
                     </div>
+                  </div>
+                )}
+                {/* Quoted post preview */}
+                {quotedPost && (
+                  <div className="relative rounded-lg border border-[#282828] bg-[#111111] px-3.5 py-3">
+                    <button
+                      onClick={() => onCancelQuote?.()}
+                      className="absolute top-1.5 right-1.5 w-5 h-5 flex items-center justify-center rounded-full bg-black/60 text-[#9CA3AF] hover:text-white"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                    <p className="text-sm text-[#C0C0C0] line-clamp-3 leading-relaxed">{quotedPost.content}</p>
+                    <p className="text-xs text-[#555555] mt-1">{quotedPost.author?.display_name}</p>
                   </div>
                 )}
                 {/* Poll builder */}

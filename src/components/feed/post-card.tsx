@@ -52,7 +52,7 @@ interface PostCardProps {
   onEdit?: (postId: string, newContent: string) => void;
   onDelete?: (postId: string) => void;
   onReply?: (postId: string, newReply: Post) => void;
-  onQuote?: (newPost: Post) => void;
+  onQuote?: (post: Post) => void;
 }
 
 
@@ -307,9 +307,6 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
   const [replyPosting, setReplyPosting] = useState(false);
   const [localRepliesCount, setLocalRepliesCount] = useState(post.replies_count ?? 0);
   const [repostMenuOpen, setRepostMenuOpen] = useState(false);
-  const [quoteOpen, setQuoteOpen] = useState(false);
-  const [quoteContent, setQuoteContent] = useState("");
-  const [quotePosting, setQuotePosting] = useState(false);
   const replyRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -348,35 +345,6 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
     } finally {
       setSaving(false);
     }
-  }
-
-  async function handleQuoteSubmit() {
-    if (!quoteContent.trim() || quotePosting) return;
-    setQuotePosting(true);
-    const res = await fetch("/api/posts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: quoteContent.trim(), quote_of: post.id, post_type: "post", tagged_stocks: post.tagged_stocks }),
-    });
-    if (res.ok) {
-      const { post: newPost } = await res.json();
-      // Attach data so the post renders immediately without refetch
-      newPost.author = currentUserProfile;
-      newPost.quoted_post = {
-        id: post.id,
-        content: post.content,
-        created_at: post.created_at,
-        author: post.author,
-      };
-      newPost.quote_of = post.id;
-      newPost.reactions_count = { like: 0, fire: 0, rocket: 0, bear: 0, total: 0 };
-      newPost.replies_count = 0;
-      newPost.reposts_count = 0;
-      onQuote?.(newPost);
-      setQuoteContent("");
-      setQuoteOpen(false);
-    }
-    setQuotePosting(false);
   }
 
   async function handleDelete() {
@@ -587,7 +555,7 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
                         Repost
                       </button>
                       <button
-                        onClick={e => { e.stopPropagation(); setRepostMenuOpen(false); setQuoteOpen(true); }}
+                        onClick={e => { e.stopPropagation(); setRepostMenuOpen(false); onQuote?.(post); }}
                         className="flex items-center gap-2.5 w-full px-3.5 py-2.5 text-sm text-[#F0F0F0] hover:bg-[#282828] transition-colors"
                       >
                         <PenLine className="w-4 h-4 text-[#9CA3AF]" />
@@ -639,47 +607,6 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
           </Link>
         )}
       </article>
-
-      {/* Inline quote composer */}
-      {quoteOpen && currentUserProfile && (
-        <div className="px-5 pb-4 bg-[#080808]" onClick={e => e.stopPropagation()}>
-          <div className="ml-11 space-y-2">
-            {/* Quoted post preview */}
-            <div className="rounded-lg border border-[#282828] bg-[#111111] px-3 py-2.5">
-              <div className="flex items-center gap-1.5 mb-1">
-                <Avatar src={post.author?.avatar_url ?? null} alt={post.author?.display_name ?? ""} size="xs" />
-                <span className="text-xs font-semibold text-[#9CA3AF]">{post.author?.display_name}</span>
-                <span className="text-[10px] text-[#555555]">@{post.author?.username}</span>
-              </div>
-              <p className="text-xs text-[#71717A] line-clamp-3 leading-relaxed">{post.content}</p>
-            </div>
-            <textarea
-              autoFocus
-              value={quoteContent}
-              onChange={e => setQuoteContent(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleQuoteSubmit();
-                }
-              }}
-              placeholder="What are your thoughts? 发!"
-              rows={3}
-              className="w-full bg-transparent text-sm text-[#F0F0F0] placeholder:text-[#555555] resize-none focus:outline-none leading-relaxed border border-[#333333] rounded-lg px-3 py-2.5 focus:border-[#555555] transition-colors"
-            />
-            <div className="flex justify-end mt-2">
-              <button
-                onClick={handleQuoteSubmit}
-                disabled={!quoteContent.trim() || quotePosting}
-                className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded bg-[#E8311A] text-white disabled:opacity-50 hover:bg-[#c9280f] active:scale-[0.98] transition-all duration-150"
-              >
-                {quotePosting ? <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" /> : null}
-                Huat 发
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Inline reply composer */}
       {replyOpen && currentUserProfile && (

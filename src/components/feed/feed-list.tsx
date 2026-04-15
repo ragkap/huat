@@ -177,11 +177,37 @@ export function FeedList({ tab, profile, stockTicker, postType, initialPosts }: 
 
   const [toast, setToast] = useState<string | null>(null);
   const feedTopRef = useRef<HTMLDivElement>(null);
+  const [quotingPost, setQuotingPost] = useState<Post | null>(null);
 
-  function handleQuote(newPost: Post) {
-    setPosts(prev => [newPost, ...prev]);
-    setToast("quoted");
-    setTimeout(() => setToast(null), 4000);
+  function handleQuote(post: Post) {
+    setQuotingPost(post);
+    feedTopRef.current?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  function handleComposerPost(newPost?: Record<string, unknown>) {
+    if (newPost && quotingPost) {
+      // Attach quoted post data for immediate rendering
+      const enriched = {
+        ...newPost,
+        author: profile,
+        quoted_post: {
+          id: quotingPost.id,
+          content: quotingPost.content,
+          created_at: quotingPost.created_at,
+          author: quotingPost.author,
+        },
+        quote_of: quotingPost.id,
+        reactions_count: { like: 0, fire: 0, rocket: 0, bear: 0, total: 0 },
+        replies_count: 0,
+        reposts_count: 0,
+      } as unknown as Post;
+      setPosts(prev => [enriched, ...prev]);
+      setToast("quoted");
+      setTimeout(() => setToast(null), 4000);
+    } else {
+      fetchPosts(0, true);
+    }
+    setQuotingPost(null);
   }
 
   const showComposer = tab === "foryou" || tab === "followed" || !!stockTicker;
@@ -191,7 +217,13 @@ export function FeedList({ tab, profile, stockTicker, postType, initialPosts }: 
     <div>
       <div ref={feedTopRef} />
       {showComposer && (
-        <PostComposer profile={profile} onPost={() => fetchPosts(0, true)} defaultTicker={stockTicker} />
+        <PostComposer
+          profile={profile}
+          onPost={handleComposerPost}
+          defaultTicker={stockTicker}
+          quotedPost={quotingPost ? { id: quotingPost.id, content: quotingPost.content, author: quotingPost.author } : null}
+          onCancelQuote={() => setQuotingPost(null)}
+        />
       )}
 
       {initialLoading ? (
