@@ -642,125 +642,67 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
 
       {/* Inline quote composer */}
       {quoteOpen && currentUserProfile && (
-        <div className="border-b border-[#1C1C1C] bg-[#080808] px-5 py-3" onClick={e => e.stopPropagation()}>
-          <div className="flex gap-2.5">
-            <Avatar src={currentUserProfile.avatar_url} alt={currentUserProfile.display_name} size="sm" />
-            <div className="flex-1 min-w-0 overflow-hidden">
-              <textarea
-                autoFocus
-                value={quoteContent}
-                onChange={e => setQuoteContent(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                    e.preventDefault();
-                    handleQuoteSubmit();
-                  }
-                }}
-                placeholder="Add your thoughts…"
-                rows={2}
-                className="w-full bg-transparent text-sm text-[#F0F0F0] placeholder:text-[#555555] resize-none focus:outline-none leading-relaxed"
-              />
-              {/* Quoted post preview */}
-              <div className="mt-2 rounded-lg border border-[#282828] bg-[#111111] px-3 py-2.5">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Avatar src={post.author?.avatar_url ?? null} alt={post.author?.display_name ?? ""} size="xs" />
-                  <span className="text-xs font-semibold text-[#9CA3AF]">{post.author?.display_name}</span>
-                  <span className="text-[10px] text-[#555555]">@{post.author?.username}</span>
-                </div>
-                <p className="text-xs text-[#71717A] line-clamp-3 leading-relaxed">{post.content}</p>
+        <div className="px-5 pb-4 bg-[#080808]" onClick={e => e.stopPropagation()}>
+          <div className="ml-11 space-y-2">
+            {/* Quoted post preview */}
+            <div className="rounded-lg border border-[#282828] bg-[#111111] px-3 py-2.5">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Avatar src={post.author?.avatar_url ?? null} alt={post.author?.display_name ?? ""} size="xs" />
+                <span className="text-xs font-semibold text-[#9CA3AF]">{post.author?.display_name}</span>
+                <span className="text-[10px] text-[#555555]">@{post.author?.username}</span>
               </div>
-              <div className="flex items-center justify-end gap-2 mt-2">
-                <button
-                  onClick={() => { setQuoteOpen(false); setQuoteContent(""); }}
-                  className="text-xs text-[#555555] hover:text-[#9CA3AF] transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleQuoteSubmit}
-                  disabled={!quoteContent.trim() || quotePosting}
-                  className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded bg-[#E8311A] text-white disabled:opacity-50 hover:bg-[#c9280f] active:scale-[0.98] transition-all duration-150"
-                >
-                  {quotePosting ? <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" /> : null}
-                  Huat 发
-                </button>
-              </div>
+              <p className="text-xs text-[#71717A] line-clamp-3 leading-relaxed">{post.content}</p>
             </div>
+            <textarea
+              autoFocus
+              value={quoteContent}
+              onChange={e => setQuoteContent(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleQuoteSubmit();
+                }
+              }}
+              placeholder="What are your thoughts? 发!"
+              rows={3}
+              className="w-full bg-transparent text-sm text-[#F0F0F0] placeholder:text-[#555555] resize-none focus:outline-none leading-relaxed border border-[#333333] rounded-lg px-3 py-2.5 focus:border-[#555555] transition-colors"
+            />
           </div>
         </div>
       )}
 
       {/* Inline reply composer */}
       {replyOpen && currentUserProfile && (
-        <div className="flex gap-0 border-b border-[#1C1C1C] bg-[#080808]" onClick={e => e.stopPropagation()}>
-          {/* Thread line indent */}
-          <div className="w-[52px] flex-shrink-0 flex justify-center pt-3">
-            <div className="w-px bg-[#333333] h-full" />
-          </div>
-          <div className="flex gap-2.5 flex-1 py-3 pr-5">
-            <Avatar src={currentUserProfile.avatar_url} alt={currentUserProfile.display_name} size="sm" />
-            <div className="flex-1 min-w-0">
-              <textarea
-                ref={replyRef}
-                value={replyContent}
-                onChange={e => setReplyContent(e.target.value)}
-                onKeyDown={async e => {
-                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                    e.preventDefault();
-                    if (!replyContent.trim() || replyPosting) return;
-                    setReplyPosting(true);
-                    const res = await fetch("/api/posts", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ content: replyContent.trim(), parent_id: post.id, post_type: "post" }),
-                    });
-                    if (res.ok) {
-                      const { post: newReply } = await res.json();
-                      setLocalRepliesCount(c => c + 1);
-                      setReplyContent("");
-                      setReplyOpen(false);
-                      onReply?.(post.id, newReply);
-                    }
-                    setReplyPosting(false);
+        <div className="px-5 pb-4 bg-[#080808]" onClick={e => e.stopPropagation()}>
+          <div className="ml-11">
+            <textarea
+              ref={replyRef}
+              value={replyContent}
+              onChange={e => setReplyContent(e.target.value)}
+              onKeyDown={async e => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  if (!replyContent.trim() || replyPosting) return;
+                  setReplyPosting(true);
+                  const res = await fetch("/api/posts", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ content: replyContent.trim(), parent_id: post.id, post_type: "post" }),
+                  });
+                  if (res.ok) {
+                    const { post: newReply } = await res.json();
+                    setLocalRepliesCount(c => c + 1);
+                    setReplyContent("");
+                    setReplyOpen(false);
+                    onReply?.(post.id, newReply);
                   }
-                }}
-                placeholder={`Reply to ${post.author?.display_name ?? "this post"}…`}
-                rows={2}
-                className="w-full bg-transparent text-sm text-[#F0F0F0] placeholder:text-[#555555] resize-none focus:outline-none leading-relaxed"
-              />
-              <div className="flex items-center justify-end gap-2 mt-1.5">
-                <button
-                  onClick={() => { setReplyOpen(false); setReplyContent(""); }}
-                  className="text-xs text-[#555555] hover:text-[#9CA3AF] transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={async () => {
-                    if (!replyContent.trim() || replyPosting) return;
-                    setReplyPosting(true);
-                    const res = await fetch("/api/posts", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ content: replyContent.trim(), parent_id: post.id, post_type: "post" }),
-                    });
-                    if (res.ok) {
-                      const { post: newReply } = await res.json();
-                      setLocalRepliesCount(c => c + 1);
-                      setReplyContent("");
-                      setReplyOpen(false);
-                      onReply?.(post.id, newReply);
-                    }
-                    setReplyPosting(false);
-                  }}
-                  disabled={!replyContent.trim() || replyPosting}
-                  className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded bg-[#E8311A] text-white disabled:opacity-50 hover:bg-[#c9280f] active:scale-[0.98] transition-all duration-150"
-                >
-                  {replyPosting ? <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" /> : null}
-                  Huat 发
-                </button>
-              </div>
-            </div>
+                  setReplyPosting(false);
+                }
+              }}
+              placeholder="What are your thoughts? 发!"
+              rows={3}
+              className="w-full bg-transparent text-sm text-[#F0F0F0] placeholder:text-[#555555] resize-none focus:outline-none leading-relaxed border border-[#333333] rounded-lg px-3 py-2.5 focus:border-[#555555] transition-colors"
+            />
           </div>
         </div>
       )}
