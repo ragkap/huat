@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabase } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getStockNamesByTickers as _getStockNamesByTickers } from "@/lib/stocks-db/client";
@@ -239,14 +240,18 @@ export async function POST(request: Request) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  await Promise.all([
-    post_type === "poll" && poll
-      ? supabase.from("polls").insert({ post_id: post.id, question: content, options: poll.options, ends_at: poll.ends_at ?? null })
-      : null,
-    post_type === "forecast" && forecast
-      ? supabase.from("forecasts").insert({ post_id: post.id, ticker: forecast.ticker, target_price: parseFloat(forecast.targetPrice), target_date: forecast.targetDate })
-      : null,
-  ].filter(Boolean));
+  // Use admin client for poll/forecast inserts (no INSERT RLS policy on these tables)
+  if ((post_type === "poll" && poll) || (post_type === "forecast" && forecast)) {
+    const admin = createSupabase(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+    await Promise.all([
+      post_type === "poll" && poll
+        ? admin.from("polls").insert({ post_id: post.id, question: content, options: poll.options, ends_at: poll.ends_at ?? null })
+        : null,
+      post_type === "forecast" && forecast
+        ? admin.from("forecasts").insert({ post_id: post.id, ticker: forecast.ticker, target_price: parseFloat(forecast.targetPrice), target_date: forecast.targetDate })
+        : null,
+    ].filter(Boolean));
+  }
 
   // Re-fetch with joins so the response includes poll/forecast data
   if (post_type === "poll" || post_type === "forecast") {
