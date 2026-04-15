@@ -679,10 +679,10 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
                 <button
                   onClick={handleQuoteSubmit}
                   disabled={!quoteContent.trim() || quotePosting}
-                  className="flex items-center gap-1 px-3 py-1 rounded bg-[#E8311A] text-white text-xs font-bold disabled:opacity-40 hover:bg-[#D02A15] transition-colors"
+                  className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded bg-[#E8311A] text-white disabled:opacity-50 hover:bg-[#c9280f] active:scale-[0.98] transition-all duration-150"
                 >
-                  <Send className="w-3 h-3" />
-                  {quotePosting ? "Posting…" : "Quote"}
+                  {quotePosting ? <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" /> : null}
+                  Huat 发
                 </button>
               </div>
             </div>
@@ -754,10 +754,10 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
                     setReplyPosting(false);
                   }}
                   disabled={!replyContent.trim() || replyPosting}
-                  className="flex items-center gap-1 px-3 py-1 rounded bg-[#E8311A] text-white text-xs font-bold disabled:opacity-40 hover:bg-[#D02A15] transition-colors"
+                  className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded bg-[#E8311A] text-white disabled:opacity-50 hover:bg-[#c9280f] active:scale-[0.98] transition-all duration-150"
                 >
-                  <Send className="w-3 h-3" />
-                  {replyPosting ? "Posting…" : "Reply"}
+                  {replyPosting ? <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" /> : null}
+                  Huat 发
                 </button>
               </div>
             </div>

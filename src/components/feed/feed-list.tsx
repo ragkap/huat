@@ -169,10 +169,19 @@ export function FeedList({ tab, profile, stockTicker, postType, initialPosts }: 
       reposts_count: (p.reposts_count ?? 0) + (wasReposted ? -1 : 1),
     }));
     await fetch(`/api/posts/${postId}/repost`, { method: "POST" });
+    if (!wasReposted) {
+      setToast("reposted");
+      setTimeout(() => setToast(null), 4000);
+    }
   }
+
+  const [toast, setToast] = useState<string | null>(null);
+  const feedTopRef = useRef<HTMLDivElement>(null);
 
   function handleQuote(newPost: Post) {
     setPosts(prev => [newPost, ...prev]);
+    setToast("quoted");
+    setTimeout(() => setToast(null), 4000);
   }
 
   const showComposer = tab === "foryou" || tab === "followed" || !!stockTicker;
@@ -180,6 +189,7 @@ export function FeedList({ tab, profile, stockTicker, postType, initialPosts }: 
 
   return (
     <div>
+      <div ref={feedTopRef} />
       {showComposer && (
         <PostComposer profile={profile} onPost={() => fetchPosts(0, true)} defaultTicker={stockTicker} />
       )}
@@ -233,6 +243,19 @@ export function FeedList({ tab, profile, stockTicker, postType, initialPosts }: 
           <div className="w-5 h-5 border-2 border-[#333333] border-t-[#E8311A] rounded-full animate-spin" />
         )}
       </div>
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-20 lg:bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-[#1C1C1C] border border-[#333333] rounded-lg px-4 py-2.5 shadow-xl animate-in fade-in slide-in-from-bottom-4">
+          <span className="text-sm text-[#F0F0F0]">{toast === "reposted" ? "Reposted!" : "The post was quoted."}</span>
+          <button
+            onClick={() => { feedTopRef.current?.scrollIntoView({ behavior: "smooth" }); setToast(null); }}
+            className="text-sm font-bold text-[#E8311A] hover:text-[#FF4433] transition-colors whitespace-nowrap"
+          >
+            View Post
+          </button>
+        </div>
+      )}
     </div>
   );
 }
