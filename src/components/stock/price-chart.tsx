@@ -254,10 +254,10 @@ export function PriceChart({ ticker, initialPositive, isPublic = false }: { tick
           <button
             key={iv.value}
             onClick={() => setInterval(iv.value)}
-            className={`px-2.5 py-1 text-xs font-bold rounded transition-colors ${
+            className={`px-2.5 py-1 text-xs font-bold rounded border transition-colors ${
               interval === iv.value
-                ? "bg-[#E8311A] text-white"
-                : "text-[#71717A] hover:text-[#F0F0F0] hover:bg-[#1C1C1C]"
+                ? "border-[#E8311A] text-[#E8311A]"
+                : "border-[#333333] text-[#71717A] hover:text-[#F0F0F0] hover:border-[#555555]"
             }`}
           >
             {iv.label}
