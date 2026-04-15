@@ -111,16 +111,17 @@ export default async function OgImage({ params }: { params: Promise<{ id: string
             {typeLabel && (
               <div
                 style={{
-                  background: "rgba(232,49,26,0.12)",
-                  border: "1px solid rgba(232,49,26,0.3)",
-                  borderRadius: 100,
-                  padding: "4px 14px",
-                  color: "#E8311A",
-                  fontSize: 14,
-                  fontWeight: 700,
+                  background: "#E8311A",
+                  borderRadius: 8,
+                  padding: "6px 18px",
+                  color: "#FFFFFF",
+                  fontSize: 20,
+                  fontWeight: 800,
+                  letterSpacing: "0.05em",
+                  textTransform: "uppercase",
                 }}
               >
-                {typeLabel}
+                {typeLabel === "Poll" ? "📊 Poll" : "🎯 Prediction"}
               </div>
             )}
           </div>
