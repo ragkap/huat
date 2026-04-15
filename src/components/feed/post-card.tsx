@@ -511,20 +511,6 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
               <MoreMenu isOwn={isOwn} onEdit={() => setEditing(true)} onDelete={handleDelete} />
             </div>
 
-            {/* Poll ribbon */}
-            {post.post_type === "poll" && post.poll && (
-              <div className="absolute -top-px right-5 pointer-events-none" style={{ width: 42, height: 52 }}>
-                <svg width="42" height="52" viewBox="0 0 42 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M0 0H42V44L21 36L0 44V0Z" fill="#E8311A" fillOpacity="0.5" />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center pt-2.5 text-white">
-                  <span className="text-[9px] font-black uppercase tracking-widest leading-none">Poll</span>
-                  <span className="text-[8px] font-semibold leading-none mt-1.5 opacity-90">
-                    {post.poll.ends_at ? (new Date(post.poll.ends_at) > new Date() ? timeLeft(post.poll.ends_at) : "Ended") : "Open"}
-                  </span>
-                </div>
-              </div>
-            )}
             {/* Forecast badge */}
             {post.post_type === "forecast" && (
               <div className="flex items-center gap-1.5 mb-2">
