@@ -368,14 +368,15 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
                         </p>
                       </div>
                       <div className="text-[#555555] text-lg">→</div>
-                      <div className="flex-1">
+                      <div className="flex-1 bg-[#141414] border border-[#282828] rounded px-3 py-2">
+                        <p className="text-[10px] text-[#555555] uppercase tracking-wider mb-0.5">Target Price</p>
                         <input
                           value={forecast.targetPrice}
                           onChange={e => setForecast(f => ({ ...f, targetPrice: e.target.value }))}
-                          placeholder="Target price"
+                          placeholder="$0.00"
                           type="number"
                           step="0.01"
-                          className="w-full bg-[#141414] border border-[#333333] rounded px-3 py-2 text-sm text-[#F0F0F0] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#444444] font-mono"
+                          className="w-full bg-transparent text-sm text-[#F0F0F0] placeholder:text-[#555555] focus:outline-none font-mono"
                         />
                       </div>
                     </div>
