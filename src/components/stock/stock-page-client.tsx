@@ -378,7 +378,7 @@ function ResearchShareComposer({
                     canPost && !posting ? "bg-[#E8311A] text-white hover:bg-[#c9280f] active:scale-[0.98]" : "bg-[#E8311A]/30 text-white/40 cursor-not-allowed"
                   )}
                 >
-                  {posting ? "Posting…" : "Huat!"}
+                  {posting ? "Posting…" : "Huat 发"}
                 </button>
                 {!canPost && !posting && (
                   <div className="absolute bottom-full right-0 mb-2 w-40 bg-[#1C1C1C] border border-[#333333] rounded px-2.5 py-2 text-xs text-[#9CA3AF] shadow-lg pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
