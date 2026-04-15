@@ -41,7 +41,6 @@ html.light {
 }
 
 * { box-sizing: border-box; }
-button, [role="button"], a { cursor: pointer; }
 
 html {
   background: var(--surface);
@@ -102,4 +101,7 @@ body {
 
 /* Only show focus ring on keyboard-navigable interactive elements, not text inputs */
 :focus-visible:not(input):not(textarea):not(select) { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+/* Pointer cursor for all interactive elements */
+button, [role="button"], a, summary { cursor: pointer !important; }
 input:focus-visible, textarea:focus-visible, select:focus-visible { outline: none; }
