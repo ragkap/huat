@@ -338,10 +338,16 @@ function ResearchShareComposer({
             href={item.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="block border border-[#282828] rounded p-2.5 mb-3 bg-[#141414] hover:border-[#444444] transition-colors"
+            className="block border border-[#282828] rounded p-3 mb-3 bg-[#141414] hover:border-[#444444] transition-colors"
           >
-            <p className="text-xs font-semibold text-[#F0F0F0] leading-snug line-clamp-2">{item.tagline}</p>
-            <p className="text-xs text-[#71717A] mt-1">{item.author}</p>
+            <p className="text-sm font-semibold text-[#F0F0F0] leading-snug line-clamp-2">{item.tagline}</p>
+            {item.executive_summary && (
+              <div
+                className="text-xs text-[#9CA3AF] leading-relaxed mt-2 line-clamp-4"
+                dangerouslySetInnerHTML={{ __html: item.executive_summary.replace(/<a[^>]*>(.*?)<\/a>/gi, "$1").replace(/This content is AI-generated.*?before use\.?/gi, "") }}
+              />
+            )}
+            <p className="text-[11px] text-[#555555] mt-2">{item.author} · {new Date(item.published_at).toLocaleDateString("en-SG", { day: "numeric", month: "short", year: "numeric" })}</p>
           </a>
           <div className="flex items-center gap-2 mb-3">
             <span className="text-xs text-[#71717A] uppercase tracking-wider">Sentiment:</span>
