@@ -129,18 +129,14 @@ export default async function OgImage({ params }: { params: Promise<{ id: string
           <p
             style={{
               color: "#F0F0F0",
-              fontSize: content.length > 200 ? 28 : content.length > 100 ? 36 : 44,
+              fontSize: 40,
               fontWeight: 700,
               lineHeight: 1.3,
               margin: 0,
               maxWidth: 1000,
-              display: "-webkit-box",
-              WebkitLineClamp: 4,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
             }}
           >
-            {content}
+            {content.length > 100 ? content.slice(0, 100) + "…" : content}
           </p>
         </div>
 
