@@ -218,20 +218,24 @@ export async function POST(request: Request) {
 
   const { content, sentiment, post_type, tagged_stocks, parent_id, quote_of, attachments, poll, forecast } = parsed.data;
 
-  const { data: post, error } = await supabase
-    .from("posts")
-    .insert({
-      author_id: user.id,
-      content,
-      sentiment: sentiment ?? null,
-      post_type,
-      tagged_stocks: tagged_stocks ?? [],
-      attachments: attachments ?? [],
-      parent_id: parent_id ?? null,
-      ...(quote_of ? { quote_of } : {}),
-    })
-    .select()
-    .single();
+  const insertData = {
+    author_id: user.id,
+    content,
+    sentiment: sentiment ?? null,
+    post_type,
+    tagged_stocks: tagged_stocks ?? [],
+    attachments: attachments ?? [],
+    parent_id: parent_id ?? null,
+    ...(quote_of ? { quote_of } : {}),
+  };
+
+  let { data: post, error } = await supabase.from("posts").insert(insertData).select().single();
+
+  // If quote_of column doesn't exist yet, retry without it
+  if (error && quote_of) {
+    const { quote_of: _, ...withoutQuote } = insertData;
+    ({ data: post, error } = await supabase.from("posts").insert(withoutQuote).select().single());
+  }
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
