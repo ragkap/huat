@@ -682,7 +682,7 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
                 {localRepliesCount > 0 && (
                   <button
                     onClick={e => { e.stopPropagation(); router.push(`/post/${post.id}`); }}
-                    className="text-[11px] text-[#555555] hover:text-[#9CA3AF] transition-colors min-w-[12px]"
+                    className="text-[11px] text-[#E8311A] hover:text-[#E8311A] transition-colors min-w-[12px]"
                   >
                     {localRepliesCount}
                   </button>
