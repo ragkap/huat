@@ -248,5 +248,26 @@ export async function POST(request: Request) {
       : null,
   ].filter(Boolean));
 
+  // Re-fetch with joins so the response includes poll/forecast data
+  if (post_type === "poll" || post_type === "forecast") {
+    const { data: fullPost } = await supabase
+      .from("posts")
+      .select(`*, author:profiles!posts_author_id_fkey(id, username, display_name, avatar_url, is_verified, country), poll:polls(*), forecast:forecasts(*)`)
+      .eq("id", post.id)
+      .single();
+    if (fullPost) {
+      // Enrich poll with empty vote data
+      if (fullPost.poll) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (fullPost.poll as any).vote_counts = {};
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (fullPost.poll as any).user_vote = null;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (fullPost.poll as any).total_votes = 0;
+      }
+      return NextResponse.json({ post: fullPost }, { status: 201 });
+    }
+  }
+
   return NextResponse.json({ post }, { status: 201 });
 }
