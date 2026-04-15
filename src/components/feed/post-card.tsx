@@ -269,24 +269,39 @@ function PollDisplay({ poll, postId, onVote }: { poll: NonNullable<Post["poll"]>
 }
 
 function ForecastDisplay({ forecast }: { forecast: NonNullable<Post["forecast"]> }) {
+  const targetDate = new Date(forecast.target_date);
+  const now = new Date();
+  const isPending = forecast.outcome === "pending";
+  const isExpired = targetDate < now;
+  const countdown = isPending && !isExpired ? timeLeft(forecast.target_date) : null;
+
   const outcomeColors = {
-    pending: "text-[#9CA3AF]",
+    pending: "text-[#F59E0B]",
     hit: "text-[#22C55E]",
     missed: "text-[#EF4444]",
   };
 
   return (
-    <div className="mt-3 border border-[#333333] rounded p-3 bg-[#0F0F0F]">
-      <div className="flex items-center justify-between">
+    <div className="mt-3 border border-[#282828] rounded-lg overflow-hidden bg-[#0A0A0A]">
+      {/* Countdown / status bar */}
+      <div className={cn(
+        "flex items-center justify-between px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider",
+        forecast.outcome === "hit" ? "bg-[#22C55E]/10 text-[#22C55E]"
+          : forecast.outcome === "missed" ? "bg-[#EF4444]/10 text-[#EF4444]"
+          : "bg-[#F59E0B]/10 text-[#F59E0B]"
+      )}>
+        <span>Prediction</span>
+        <span>{countdown ? `⏱ ${countdown}` : forecast.outcome === "hit" ? "✓ Hit" : forecast.outcome === "missed" ? "✗ Missed" : "Expired"}</span>
+      </div>
+      {/* Body */}
+      <div className="flex items-center justify-between px-3 py-2.5">
         <div>
-          <p className="text-xs text-[#C0C0C0] uppercase tracking-wider mb-1">Price Forecast</p>
           <p className="text-lg font-bold text-[#F0F0F0] font-mono">{formatPrice(forecast.target_price)}</p>
-          <p className="text-xs text-[#C0C0C0]">by {new Date(forecast.target_date).toLocaleDateString("en-SG", { day: "numeric", month: "short", year: "numeric" })}</p>
+          <p className="text-[11px] text-[#555555]">by {targetDate.toLocaleDateString("en-SG", { day: "numeric", month: "short", year: "numeric" })}</p>
         </div>
         <div className={cn("text-right", outcomeColors[forecast.outcome])}>
-          <span className="text-sm font-bold uppercase">{forecast.outcome}</span>
-          {forecast.current_price && (
-            <p className="text-xs text-[#9CA3AF] mt-1">Current: {formatPrice(forecast.current_price)}</p>
+          {forecast.current_price != null && (
+            <p className="text-xs text-[#9CA3AF]">Now: <span className="font-mono font-bold text-[#F0F0F0]">{formatPrice(forecast.current_price)}</span></p>
           )}
         </div>
       </div>
@@ -511,12 +526,6 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
               <MoreMenu isOwn={isOwn} onEdit={() => setEditing(true)} onDelete={handleDelete} />
             </div>
 
-            {/* Forecast badge */}
-            {post.post_type === "forecast" && (
-              <div className="flex items-center gap-1.5 mb-2">
-                <Badge variant="brand">Forecast</Badge>
-              </div>
-            )}
 
             {/* Post text — parse news embeds, render URLs as links */}
             {(() => {
