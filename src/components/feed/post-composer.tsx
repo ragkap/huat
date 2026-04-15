@@ -381,6 +381,7 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
                       </div>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[10px] text-[#555555] uppercase tracking-wider font-bold">Timeframe</span>
                       {([
                         { label: "1D", days: 1 },
                         { label: "1W", days: 7 },
