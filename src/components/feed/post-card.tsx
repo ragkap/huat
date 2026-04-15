@@ -416,7 +416,7 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
                             <SentimentIcon sentiment={post.sentiment} />
                           </span>
                         )}
-                        ${displayTicker}
+                        {displayTicker}
                       </Link>
                     );
                   })
