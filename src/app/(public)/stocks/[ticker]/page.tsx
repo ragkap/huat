@@ -161,7 +161,7 @@ export default async function StockPage({ params }: StockPageProps) {
   return (
     <div>
       {/* Header renders immediately with fast DB data */}
-      <div className="border-b border-[#282828] px-5 py-4 bg-[#080808]">
+      <div className="border-b border-[#282828] px-5 py-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
             <h1 className="text-base sm:text-xl font-black text-[#F0F0F0] leading-snug">{stock.name}</h1>
