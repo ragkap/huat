@@ -99,8 +99,9 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
       {/* Posts */}
       <FeedList
-        tab="followed"
+        tab="foryou"
         profile={myProfileRes.data as Profile ?? profile as Profile}
+        authorId={profile.id as string}
       />
     </div>
   );

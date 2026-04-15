@@ -36,10 +36,11 @@ interface FeedListProps {
   profile: Profile;
   stockTicker?: string;
   postType?: string;
+  authorId?: string;
   initialPosts?: Post[];
 }
 
-export function FeedList({ tab, profile, stockTicker, postType, initialPosts }: FeedListProps) {
+export function FeedList({ tab, profile, stockTicker, postType, authorId, initialPosts }: FeedListProps) {
   const [posts, setPosts] = useState<Post[]>(initialPosts ?? []);
   const [page, setPage] = useState(initialPosts?.length ? 1 : 0);
   const [loading, setLoading] = useState(!initialPosts);
@@ -53,6 +54,7 @@ export function FeedList({ tab, profile, stockTicker, postType, initialPosts }: 
       const params = new URLSearchParams({ tab, page: String(p), limit: "20" });
       if (stockTicker) params.set("ticker", stockTicker);
       if (postType) params.set("post_type", postType);
+      if (authorId) params.set("author_id", authorId);
       const res = await fetch(`/api/posts?${params}`);
       const data = await res.json();
       const newPosts: Post[] = data.posts ?? [];
@@ -219,7 +221,7 @@ export function FeedList({ tab, profile, stockTicker, postType, initialPosts }: 
     setQuotingPost(null);
   }
 
-  const showComposer = tab === "foryou" || tab === "followed" || !!stockTicker;
+  const showComposer = !authorId && (tab === "foryou" || tab === "followed" || !!stockTicker);
   const initialLoading = loading && posts.length === 0;
 
   return (
