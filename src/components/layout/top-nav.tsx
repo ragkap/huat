@@ -258,9 +258,7 @@ function ProfileMenu({ profile }: { profile: Profile }) {
             <User className="w-4 h-4" />
             View profile
           </Link>
-          <div className="flex items-center gap-2 px-3 py-2.5 text-sm text-[#9CA3AF] hover:bg-[#1C1C1C] transition-colors">
-            <ThemeToggle />
-          </div>
+          <ThemeToggle menuItem />
           <button
             onClick={handleLogout}
             className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-[#9CA3AF] hover:text-[#EF4444] hover:bg-[#1C1C1C] transition-colors border-t border-[#282828]"

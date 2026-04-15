@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { Sun, Moon } from "lucide-react";
 
-export function ThemeToggle() {
+export function ThemeToggle({ menuItem }: { menuItem?: boolean } = {}) {
   const [dark, setDark] = useState(true);
 
   useEffect(() => {
@@ -19,6 +19,18 @@ export function ThemeToggle() {
     localStorage.setItem("theme", next ? "dark" : "light");
     document.documentElement.classList.toggle("dark", next);
     document.documentElement.classList.toggle("light", !next);
+  }
+
+  if (menuItem) {
+    return (
+      <button
+        onClick={toggle}
+        className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-[#9CA3AF] hover:text-[#F0F0F0] hover:bg-[#1C1C1C] transition-colors"
+      >
+        {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        {dark ? "Light mode" : "Dark mode"}
+      </button>
+    );
   }
 
   return (
