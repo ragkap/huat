@@ -147,6 +147,7 @@ html.light [class*="border-[#1A1A1A]"] { border-color: #EEEEEE !important; }
 html.light [class*="border-[#141414]"] { border-color: #F0F0F0 !important; }
 
 /* Divide colors — override all dark divide borders in light mode */
+html.light [class*="divide-"] > :not(:first-child) { border-color: #EEEEEE !important; }
 html.light [class*="divide-"] > * + * { border-color: #EEEEEE !important; }
 
 /* Hover backgrounds */
