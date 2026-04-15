@@ -667,6 +667,16 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
               rows={3}
               className="w-full bg-transparent text-sm text-[#F0F0F0] placeholder:text-[#555555] resize-none focus:outline-none leading-relaxed border border-[#333333] rounded-lg px-3 py-2.5 focus:border-[#555555] transition-colors"
             />
+            <div className="flex justify-end mt-2">
+              <button
+                onClick={handleQuoteSubmit}
+                disabled={!quoteContent.trim() || quotePosting}
+                className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded bg-[#E8311A] text-white disabled:opacity-50 hover:bg-[#c9280f] active:scale-[0.98] transition-all duration-150"
+              >
+                {quotePosting ? <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" /> : null}
+                Huat 发
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -703,6 +713,32 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
               rows={3}
               className="w-full bg-transparent text-sm text-[#F0F0F0] placeholder:text-[#555555] resize-none focus:outline-none leading-relaxed border border-[#333333] rounded-lg px-3 py-2.5 focus:border-[#555555] transition-colors"
             />
+            <div className="flex justify-end mt-2">
+              <button
+                onClick={async () => {
+                  if (!replyContent.trim() || replyPosting) return;
+                  setReplyPosting(true);
+                  const res = await fetch("/api/posts", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ content: replyContent.trim(), parent_id: post.id, post_type: "post" }),
+                  });
+                  if (res.ok) {
+                    const { post: newReply } = await res.json();
+                    setLocalRepliesCount(c => c + 1);
+                    setReplyContent("");
+                    setReplyOpen(false);
+                    onReply?.(post.id, newReply);
+                  }
+                  setReplyPosting(false);
+                }}
+                disabled={!replyContent.trim() || replyPosting}
+                className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded bg-[#E8311A] text-white disabled:opacity-50 hover:bg-[#c9280f] active:scale-[0.98] transition-all duration-150"
+              >
+                {replyPosting ? <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" /> : null}
+                Huat 发
+              </button>
+            </div>
           </div>
         </div>
       )}
