@@ -612,13 +612,10 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
 
       {/* Inline quote composer */}
       {quoteOpen && currentUserProfile && (
-        <div className="flex gap-0 border-b border-[#1C1C1C] bg-[#080808]" onClick={e => e.stopPropagation()}>
-          <div className="w-[52px] flex-shrink-0 flex justify-center pt-3">
-            <div className="w-px bg-[#333333] h-full" />
-          </div>
-          <div className="flex gap-2.5 flex-1 py-3 pr-5">
+        <div className="border-b border-[#1C1C1C] bg-[#080808] px-5 py-3" onClick={e => e.stopPropagation()}>
+          <div className="flex gap-2.5">
             <Avatar src={currentUserProfile.avatar_url} alt={currentUserProfile.display_name} size="sm" />
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 overflow-hidden">
               <textarea
                 autoFocus
                 value={quoteContent}
