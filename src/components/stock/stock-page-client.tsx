@@ -443,9 +443,10 @@ function ResearchTab({ ticker, displayTicker, profile }: { ticker: string; displ
               {item.executive_summary && (
                 <div className="mb-2">
                   <p className="text-[10px] font-bold text-[#555555] uppercase tracking-wider mb-1.5">Executive Summary</p>
-                  <p className="text-xs text-[#9CA3AF] leading-relaxed">
-                    {stripHtml(item.executive_summary).replace(/This content is AI-generated.*?before use\.?/gi, "").trim()}
-                  </p>
+                  <div
+                    className="research-html text-xs text-[#9CA3AF] leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: item.executive_summary.replace(/<a[^>]*>(.*?)<\/a>/gi, "$1").replace(/This content is AI-generated.*?before use\.?/gi, "") }}
+                  />
                 </div>
               )}
               <span className="text-xs text-[#555555]">
