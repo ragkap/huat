@@ -410,9 +410,9 @@ function MoreMenu({
     <div ref={menuRef} className="relative">
       <button
         onClick={() => setOpen(o => !o)}
-        className="opacity-0 group-hover:opacity-100 text-[#71717A] hover:text-[#9CA3AF] transition-all"
+        className="flex items-center justify-center w-8 h-8 rounded-full opacity-0 group-hover:opacity-100 text-[#555555] hover:text-[#9CA3AF] hover:bg-[#1A1A1A] transition-all"
       >
-        <MoreHorizontal className="w-4 h-4" />
+        <MoreHorizontal className="w-[16px] h-[16px]" />
       </button>
 
       {open && (
