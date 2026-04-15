@@ -36,7 +36,7 @@ function renderTextWithLinks(text: string) {
     ) : part
   );
 }
-import { ThumbsUp, MessageCircle, Repeat2, Share2, Bookmark, MoreHorizontal, TrendingUp, TrendingDown, Flag, Pencil, Trash2, Send, PenLine, X } from "lucide-react";
+import { Heart, MessageCircle, Repeat2, Upload, Bookmark, MoreHorizontal, TrendingUp, TrendingDown, Flag, Pencil, Trash2, Send, PenLine, X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn, timeAgo, timeLeft, formatPrice } from "@/lib/utils";
@@ -658,40 +658,46 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
             )}
 
 
-            {/* Actions */}
-            <div className="flex items-center mt-4 -ml-2 gap-2">
-              {/* Reply — icon toggles composer, count navigates to thread */}
+            {/* Actions — Substack-style: ♡ count · 💬 count · 🔁 count · 🔖 · ↑ */}
+            <div className="flex items-center mt-4 -ml-1.5">
+              {/* Like */}
               <div className="flex items-center">
                 <button
-                  onClick={e => { e.stopPropagation(); setReplyOpen(o => !o); setTimeout(() => replyRef.current?.focus(), 50); }}
-                  className={cn("flex items-center justify-center w-9 h-9 rounded-full transition-colors", replyOpen ? "text-[#E8311A]" : "text-[#9CA3AF] hover:text-[#C0C0C0] hover:bg-[#1A1A1A]")}
+                  onClick={e => { e.stopPropagation(); onReact?.(post.id, "like"); }}
+                  className={cn("flex items-center justify-center w-8 h-8 rounded-full transition-colors", post.user_reaction ? "text-[#E8311A]" : "text-[#555555] hover:text-[#E8311A]")}
                 >
-                  <MessageCircle className="w-4 h-4" />
+                  <Heart className={cn("w-[16px] h-[16px]", post.user_reaction && "fill-current")} />
                 </button>
-                {localRepliesCount > 0 ? (
+                {reactions.total > 0 && <span className={cn("text-[11px] min-w-[12px]", post.user_reaction ? "text-[#E8311A]" : "text-[#555555]")}>{reactions.total}</span>}
+              </div>
+
+              {/* Comment */}
+              <div className="flex items-center ml-2">
+                <button
+                  onClick={e => { e.stopPropagation(); setReplyOpen(o => !o); setTimeout(() => replyRef.current?.focus(), 50); }}
+                  className={cn("flex items-center justify-center w-8 h-8 rounded-full transition-colors", replyOpen ? "text-[#E8311A]" : "text-[#555555] hover:text-[#9CA3AF]")}
+                >
+                  <MessageCircle className="w-[16px] h-[16px]" />
+                </button>
+                {localRepliesCount > 0 && (
                   <button
                     onClick={e => { e.stopPropagation(); router.push(`/post/${post.id}`); }}
-                    className="text-xs text-[#9CA3AF] hover:text-[#C0C0C0] hover:underline transition-colors -ml-1 pr-1"
+                    className="text-[11px] text-[#555555] hover:text-[#9CA3AF] transition-colors min-w-[12px]"
                   >
                     {localRepliesCount}
                   </button>
-                ) : (
-                  <span className="text-xs text-[#9CA3AF] -ml-1 pr-1">{localRepliesCount}</span>
                 )}
               </div>
 
               {/* Repost / Quote */}
-              <div className="relative">
+              <div className="relative flex items-center ml-2">
                 <button
                   onClick={e => { e.stopPropagation(); setRepostMenuOpen(o => !o); }}
-                  className={cn(
-                    "flex items-center gap-1.5 h-9 px-2 rounded-full transition-colors hover:bg-[#1A1A1A]",
-                    post.user_reposted ? "text-[#22C55E]" : "text-[#9CA3AF] hover:text-[#22C55E]"
-                  )}
+                  className={cn("flex items-center justify-center w-8 h-8 rounded-full transition-colors", post.user_reposted ? "text-[#22C55E]" : "text-[#555555] hover:text-[#9CA3AF]")}
                 >
-                  <Repeat2 className="w-4 h-4" />
-                  {(post.reposts_count ?? 0) > 0 && <span className="text-xs">{post.reposts_count}</span>}
+                  <Repeat2 className="w-[16px] h-[16px]" />
                 </button>
+                {(post.reposts_count ?? 0) > 0 && <span className={cn("text-[11px] min-w-[12px]", post.user_reposted ? "text-[#22C55E]" : "text-[#555555]")}>{post.reposts_count}</span>}
                 {repostMenuOpen && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={e => { e.stopPropagation(); setRepostMenuOpen(false); }} />
@@ -715,29 +721,20 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
                 )}
               </div>
 
-              {/* Like (Thumbs up) */}
-              <button
-                onClick={() => onReact?.(post.id, "like")}
-                className={cn("flex items-center gap-1.5 h-9 px-2 rounded-full hover:bg-[#1A1A1A] transition-colors", post.user_reaction ? "text-[#E8311A]" : "text-[#9CA3AF] hover:text-[#E8311A]")}
-              >
-                <ThumbsUp className={cn("w-4 h-4", post.user_reaction && "fill-current")} />
-                <span className="text-xs">{reactions.total}</span>
-              </button>
-
               {/* Save */}
               <button
-                onClick={() => onSave?.(post.id)}
-                className={cn(
-                  "flex items-center justify-center w-9 h-9 rounded-full transition-colors hover:bg-[#1A1A1A]",
-                  post.is_saved ? "text-[#F0F0F0]" : "text-[#9CA3AF] hover:text-[#F0F0F0]"
-                )}
+                onClick={e => { e.stopPropagation(); onSave?.(post.id); }}
+                className={cn("flex items-center justify-center w-8 h-8 rounded-full transition-colors ml-2", post.is_saved ? "text-[#F0F0F0]" : "text-[#555555] hover:text-[#9CA3AF]")}
               >
-                <Bookmark className={cn("w-4 h-4", post.is_saved && "fill-current")} />
+                <Bookmark className={cn("w-[16px] h-[16px]", post.is_saved && "fill-current")} />
               </button>
 
               {/* Share */}
-              <button className="flex items-center justify-center w-9 h-9 rounded-full text-[#9CA3AF] hover:text-[#C0C0C0] hover:bg-[#1A1A1A] transition-colors ml-auto">
-                <Share2 className="w-4 h-4" />
+              <button
+                onClick={e => e.stopPropagation()}
+                className="flex items-center justify-center w-8 h-8 rounded-full text-[#555555] hover:text-[#9CA3AF] transition-colors ml-auto"
+              >
+                <Upload className="w-[16px] h-[16px]" />
               </button>
             </div>
           </div>
