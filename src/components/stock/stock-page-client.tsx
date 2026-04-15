@@ -726,7 +726,7 @@ export function StockPageClient({
             ].map(item => (
               <div key={item.label}>
                 <p className="text-[10px] sm:text-xs text-[#71717A] uppercase tracking-wider">{item.label}</p>
-                <p className="text-xs sm:text-sm font-bold font-mono mt-0.5" style={{ color: item.color ?? "#F0F0F0" }}>{item.value}</p>
+                <p className={`text-xs sm:text-sm font-bold font-mono mt-0.5 ${item.color ? "" : "text-[#F0F0F0]"}`} style={item.color ? { color: item.color } : undefined}>{item.value}</p>
               </div>
             ))}
           </div>
