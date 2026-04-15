@@ -282,8 +282,8 @@ function LiveCountdown({ targetDate }: { targetDate: string }) {
   const pad = (n: number) => String(n).padStart(2, "0");
   return (
     <span className="font-mono tabular-nums">
-      {d > 0 && <>{d}<span className="opacity-50">d</span> </>}
-      {pad(h)}<span className="opacity-50">:</span>{pad(m)}<span className="opacity-50">:</span>{pad(s)}
+      {d > 0 && <>{d} {d === 1 ? "Day" : "Days"} </>}
+      {pad(h)}:{pad(m)}:{pad(s)}
     </span>
   );
 }
