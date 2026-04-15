@@ -199,10 +199,14 @@ function NewsShareComposer({
             href={item.link}
             target="_blank"
             rel="noopener noreferrer"
-            className="block border border-[#282828] rounded p-2.5 mb-3 bg-[#141414] hover:border-[#444444] transition-colors"
+            className="block border border-[#282828] rounded-lg p-3 mb-3 bg-[#0D0D0D] hover:border-[#444444] transition-colors"
           >
-            <p className="text-xs font-semibold text-[#F0F0F0] leading-snug line-clamp-2">{item.title}</p>
-            <p className="text-xs text-[#71717A] mt-1">{item.source} · {new Date(item.pubDate).toLocaleDateString("en-SG", { day: "numeric", month: "short", year: "numeric" })}</p>
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ color: item.source === "SGX" ? "#F59E0B" : "#3B82F6", backgroundColor: item.source === "SGX" ? "#F59E0B15" : "#3B82F615" }}>{item.source === "SGX" ? "Announcement" : "News"}</span>
+              <span className="text-[10px] text-[#555555]">{item.source}</span>
+            </div>
+            <p className="text-sm font-semibold text-[#F0F0F0] leading-snug line-clamp-2">{item.title}</p>
+            <p className="text-[11px] text-[#555555] mt-1.5">{new Date(item.pubDate).toLocaleDateString("en-SG", { day: "numeric", month: "short", year: "numeric" })}</p>
           </a>
 
           {/* Sentiment */}
@@ -338,8 +342,12 @@ function ResearchShareComposer({
             href={item.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="block border border-[#282828] rounded p-3 mb-3 bg-[#141414] hover:border-[#444444] transition-colors"
+            className="block border border-[#282828] rounded-lg p-3 mb-3 bg-[#0D0D0D] hover:border-[#444444] transition-colors"
           >
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded text-[#8B5CF6] bg-[#8B5CF6]/10">Research</span>
+              <span className="text-[10px] text-[#555555]">Smartkarma</span>
+            </div>
             <p className="text-sm font-semibold text-[#F0F0F0] leading-snug line-clamp-2">{item.tagline}</p>
             {item.executive_summary && (
               <div

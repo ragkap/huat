@@ -656,6 +656,10 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
               const newsMatch = localContent.match(/^([\s\S]*?)\n\n📰 ([\s\S]+?) — (.+?)\n(https?:\/\/\S+)\s*$/);
               if (newsMatch) {
                 const [, userText, title, source, url] = newsMatch;
+                const badge = source.toLowerCase().includes("smartkarma") ? "Research"
+                  : source.toLowerCase().includes("sgx") ? "Announcement"
+                  : "News";
+                const badgeColor = badge === "Research" ? "#8B5CF6" : badge === "Announcement" ? "#F59E0B" : "#3B82F6";
                 return (
                   <>
                     {(tickerPrefix || userText.trim()) && (
@@ -664,11 +668,14 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
                       </p>
                     )}
                     <a href={url} target="_blank" rel="noopener noreferrer"
-                      className="block border border-[#282828] rounded p-3 bg-[#141414] hover:border-[#444444] transition-colors"
+                      className="block border border-[#282828] rounded-lg p-3 bg-[#0D0D0D] hover:border-[#444444] transition-colors"
                       onClick={e => e.stopPropagation()}
                     >
-                      <p className="text-xs text-[#555555] mb-1">{source}</p>
-                      <p className="text-sm text-[#9CA3AF] leading-snug line-clamp-2">{title}</p>
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ color: badgeColor, backgroundColor: `${badgeColor}15` }}>{badge}</span>
+                        <span className="text-[10px] text-[#555555]">{source}</span>
+                      </div>
+                      <p className="text-sm font-medium text-[#F0F0F0] leading-snug line-clamp-3">{title}</p>
                     </a>
                   </>
                 );
