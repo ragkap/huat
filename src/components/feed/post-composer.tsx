@@ -125,7 +125,7 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           content,
-          sentiment,
+          sentiment: postType === "poll" ? "neutral" : sentiment,
           post_type: postType,
           tagged_stocks: taggedStocks,
           ...(quotedPost ? { quote_of: quotedPost.id } : {}),
@@ -388,8 +388,8 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
               </div>
             </div>
 
-            {/* Step 3: Sentiment */}
-            <div className="flex gap-2 items-start">
+            {/* Step 3: Sentiment (hidden for polls — defaults to neutral) */}
+            {postType !== "poll" && <div className="flex gap-2 items-start">
               <span className="text-xs font-black text-[#555555] pt-1.5 leading-none flex-shrink-0 w-3 text-center">3</span>
               <div className="flex items-center gap-2">
                 {([
@@ -412,7 +412,7 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
                   </button>
                 ))}
               </div>
-            </div>
+            </div>}
 
           </div>
 
