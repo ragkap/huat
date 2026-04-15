@@ -126,7 +126,7 @@ html.light [class*="bg-[#111111]"] { background-color: #FAFAFA !important; }
 html.light [class*="bg-[#141414]"] { background-color: #F7F7F7 !important; }
 html.light [class*="bg-[#1A1A1A]"] { background-color: #F2F2F2 !important; }
 html.light [class*="bg-[#1C1C1C]"] { background-color: #F0F0F0 !important; }
-html.light [class*="bg-[#282828]"] { background-color: #EAEAEA !important; }
+html.light [class*="bg-[#282828]"] { background-color: #F3F3F3 !important; }
 
 /* Text remapping */
 html.light [class*="text-[#F0F0F0]"] { color: #1A1A1A !important; }
