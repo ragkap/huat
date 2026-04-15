@@ -375,7 +375,7 @@ function ResearchShareComposer({
                   disabled={!canPost || posting}
                   className={cn(
                     "text-xs font-bold px-3 py-1.5 rounded transition-colors",
-                    canPost && !posting ? "bg-[#E8311A] text-white hover:bg-[#d12d17]" : "bg-[#282828] text-[#71717A] cursor-not-allowed"
+                    canPost && !posting ? "bg-[#E8311A] text-white hover:bg-[#c9280f] active:scale-[0.98]" : "bg-[#E8311A]/30 text-white/40 cursor-not-allowed"
                   )}
                 >
                   {posting ? "Posting…" : "Huat!"}
