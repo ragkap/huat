@@ -171,6 +171,10 @@ export function FeedList({ tab, profile, stockTicker, postType, initialPosts }: 
     await fetch(`/api/posts/${postId}/repost`, { method: "POST" });
   }
 
+  function handleQuote(newPost: Post) {
+    setPosts(prev => [newPost, ...prev]);
+  }
+
   const showComposer = tab === "foryou" || tab === "followed" || !!stockTicker;
   const initialLoading = loading && posts.length === 0;
 
@@ -215,6 +219,7 @@ export function FeedList({ tab, profile, stockTicker, postType, initialPosts }: 
               onReact={handleReact}
               onSave={handleSave}
               onRepost={handleRepost}
+              onQuote={handleQuote}
               onEdit={handleEdit}
               onDelete={handleDelete}
               onReply={handleReply}

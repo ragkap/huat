@@ -52,6 +52,7 @@ interface PostCardProps {
   onEdit?: (postId: string, newContent: string) => void;
   onDelete?: (postId: string) => void;
   onReply?: (postId: string, newReply: Post) => void;
+  onQuote?: (newPost: Post) => void;
 }
 
 
@@ -295,7 +296,7 @@ function MoreMenu({
 
 interface OgData { og_title?: string | null; og_description?: string | null; og_image?: string | null; og_site_name?: string | null; }
 
-export function PostCard({ post, currentUserId, currentUserProfile, onReact, onSave, onRepost, onEdit, onDelete, onReply }: PostCardProps) {
+export function PostCard({ post, currentUserId, currentUserProfile, onReact, onSave, onRepost, onEdit, onDelete, onReply, onQuote }: PostCardProps) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -347,6 +348,35 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
     } finally {
       setSaving(false);
     }
+  }
+
+  async function handleQuoteSubmit() {
+    if (!quoteContent.trim() || quotePosting) return;
+    setQuotePosting(true);
+    const res = await fetch("/api/posts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: quoteContent.trim(), quote_of: post.id, post_type: "post", tagged_stocks: post.tagged_stocks }),
+    });
+    if (res.ok) {
+      const { post: newPost } = await res.json();
+      // Attach data so the post renders immediately without refetch
+      newPost.author = currentUserProfile;
+      newPost.quoted_post = {
+        id: post.id,
+        content: post.content,
+        created_at: post.created_at,
+        author: post.author,
+      };
+      newPost.quote_of = post.id;
+      newPost.reactions_count = { like: 0, fire: 0, rocket: 0, bear: 0, total: 0 };
+      newPost.replies_count = 0;
+      newPost.reposts_count = 0;
+      onQuote?.(newPost);
+      setQuoteContent("");
+      setQuoteOpen(false);
+    }
+    setQuotePosting(false);
   }
 
   async function handleDelete() {
@@ -620,21 +650,10 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
                 autoFocus
                 value={quoteContent}
                 onChange={e => setQuoteContent(e.target.value)}
-                onKeyDown={async e => {
+                onKeyDown={e => {
                   if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
                     e.preventDefault();
-                    if (!quoteContent.trim() || quotePosting) return;
-                    setQuotePosting(true);
-                    const res = await fetch("/api/posts", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ content: quoteContent.trim(), quote_of: post.id, post_type: "post", tagged_stocks: post.tagged_stocks }),
-                    });
-                    if (res.ok) {
-                      setQuoteContent("");
-                      setQuoteOpen(false);
-                    }
-                    setQuotePosting(false);
+                    handleQuoteSubmit();
                   }
                 }}
                 placeholder="Add your thoughts…"
@@ -658,20 +677,7 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
                   Cancel
                 </button>
                 <button
-                  onClick={async () => {
-                    if (!quoteContent.trim() || quotePosting) return;
-                    setQuotePosting(true);
-                    const res = await fetch("/api/posts", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ content: quoteContent.trim(), quote_of: post.id, post_type: "post", tagged_stocks: post.tagged_stocks }),
-                    });
-                    if (res.ok) {
-                      setQuoteContent("");
-                      setQuoteOpen(false);
-                    }
-                    setQuotePosting(false);
-                  }}
+                  onClick={handleQuoteSubmit}
                   disabled={!quoteContent.trim() || quotePosting}
                   className="flex items-center gap-1 px-3 py-1 rounded bg-[#E8311A] text-white text-xs font-bold disabled:opacity-40 hover:bg-[#D02A15] transition-colors"
                 >
