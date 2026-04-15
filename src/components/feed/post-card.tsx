@@ -513,9 +513,9 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
 
             {/* Poll ribbon */}
             {post.post_type === "poll" && post.poll && (
-              <div className="absolute top-0 right-4 pointer-events-none flex flex-col items-center bg-[#E8311A] text-white px-2.5 pt-2 pb-3 shadow-lg" style={{ clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 8px), 50% 100%, 0 calc(100% - 8px))" }}>
+              <div className="absolute -top-0.5 right-5 pointer-events-none flex flex-col items-center bg-[#E8311A] text-white rounded-b-sm px-2 pt-2 pb-3 shadow-lg" style={{ clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 10px), 50% 100%, 0 calc(100% - 10px))" }}>
                 <span className="text-[9px] font-black uppercase tracking-widest leading-none">Poll</span>
-                <span className="text-[8px] font-semibold leading-none mt-1 opacity-80">
+                <span className="text-[7px] font-semibold leading-none mt-1.5 opacity-80">
                   {post.poll.ends_at ? (new Date(post.poll.ends_at) > new Date() ? timeLeft(post.poll.ends_at) : "Ended") : "Open"}
                 </span>
               </div>
