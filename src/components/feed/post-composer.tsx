@@ -41,6 +41,7 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
   const [pollOptions, setPollOptions] = useState<PollOption[]>([
     { id: "1", text: "" }, { id: "2", text: "" },
   ]);
+  const [pollDays, setPollDays] = useState(3);
   const [forecast, setForecast] = useState<ForecastData>({ ticker: "", targetPrice: "", targetDate: "" });
   const [uploading, setUploading] = useState(false);
   const [posting, setPosting] = useState(false);
@@ -112,7 +113,8 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
   }
 
   const remaining = MAX_CHARS - content.length;
-  const canPost = content.trim().length > 0 && !posting && taggedStocks.length === 1 && sentiment !== null;
+  const pollValid = postType !== "poll" || pollOptions.filter(o => o.text.trim()).length >= 2;
+  const canPost = content.trim().length > 0 && !posting && taggedStocks.length === 1 && (postType === "poll" || sentiment !== null) && pollValid;
 
   async function handlePost() {
     if (!canPost) return;
@@ -138,7 +140,7 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
               og_site_name: linkPreview.og_site_name,
             }] : []),
           ],
-          ...(postType === "poll" && { poll: { options: pollOptions.filter(o => o.text.trim()) } }),
+          ...(postType === "poll" && { poll: { options: pollOptions.filter(o => o.text.trim()), ends_at: new Date(Date.now() + pollDays * 86400000).toISOString() } }),
           ...(postType === "forecast" && { forecast }),
         }),
       });
@@ -148,6 +150,8 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
       setPostType("post");
       setTaggedStocks([]);
       setAttachments([]);
+      setPollOptions([{ id: "1", text: "" }, { id: "2", text: "" }]);
+      setPollDays(3);
       setLinkPreview(null);
       setLinkPreviewDismissed(false);
       onCancelQuote?.();
@@ -304,14 +308,28 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
                         )}
                       </div>
                     ))}
-                    {pollOptions.length < 4 && (
-                      <button
-                        onClick={() => setPollOptions(prev => [...prev, { id: Date.now().toString(), text: "" }])}
-                        className="flex items-center gap-1 text-xs text-[#E8311A] hover:underline"
-                      >
-                        <Plus className="w-3 h-3" /> Add option
-                      </button>
-                    )}
+                    <div className="flex items-center justify-between">
+                      {pollOptions.length < 4 && (
+                        <button
+                          onClick={() => setPollOptions(prev => [...prev, { id: Date.now().toString(), text: "" }])}
+                          className="flex items-center gap-1 text-xs text-[#E8311A] hover:underline"
+                        >
+                          <Plus className="w-3 h-3" /> Add option
+                        </button>
+                      )}
+                      <div className="flex items-center gap-2 ml-auto">
+                        <span className="text-xs text-[#555555]">Expires in</span>
+                        <select
+                          value={pollDays}
+                          onChange={e => setPollDays(Number(e.target.value))}
+                          className="bg-[#141414] border border-[#333333] rounded px-2 py-1 text-xs text-[#F0F0F0] focus:outline-none focus:border-[#444444]"
+                        >
+                          {[1, 2, 3, 5, 7, 14, 30].map(d => (
+                            <option key={d} value={d}>{d} day{d > 1 ? "s" : ""}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
                   </div>
                 )}
                 {/* Forecast builder */}

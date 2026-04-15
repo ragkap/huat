@@ -160,6 +160,27 @@ export function FeedList({ tab, profile, stockTicker, postType, authorId, initia
     }));
   }
 
+  async function handleVote(postId: string, optionId: string) {
+    // Optimistic update
+    setPosts(prev => prev.map(p => {
+      if (p.id !== postId || !p.poll) return p;
+      const poll = { ...p.poll };
+      const counts = { ...(poll.vote_counts ?? {}) };
+      // Remove old vote if changing
+      if (poll.user_vote) {
+        counts[poll.user_vote] = Math.max(0, (counts[poll.user_vote] ?? 1) - 1);
+      }
+      counts[optionId] = (counts[optionId] ?? 0) + 1;
+      const total = Object.values(counts).reduce((s, v) => s + v, 0);
+      return { ...p, poll: { ...poll, vote_counts: counts, user_vote: optionId, total_votes: total } };
+    }));
+    await fetch(`/api/posts/${postId}/vote`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ option_id: optionId }),
+    });
+  }
+
   async function handleRepost(postId: string) {
     const post = posts.find(p => p.id === postId);
     if (!post) return;
@@ -274,6 +295,7 @@ export function FeedList({ tab, profile, stockTicker, postType, authorId, initia
               onSave={handleSave}
               onRepost={handleRepost}
               onQuote={handleQuote}
+              onVote={handleVote}
               onEdit={handleEdit}
               onDelete={handleDelete}
               onReply={handleReply}

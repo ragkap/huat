@@ -53,6 +53,7 @@ interface PostCardProps {
   onDelete?: (postId: string) => void;
   onReply?: (postId: string, newReply: Post) => void;
   onQuote?: (post: Post) => void;
+  onVote?: (postId: string, optionId: string) => void;
   isNew?: boolean;
 }
 
@@ -218,10 +219,11 @@ function AttachmentGrid({ attachments }: { attachments: Post["attachments"] }) {
   );
 }
 
-function PollDisplay({ poll }: { poll: NonNullable<Post["poll"]> }) {
+function PollDisplay({ poll, postId, onVote }: { poll: NonNullable<Post["poll"]>; postId: string; onVote?: (postId: string, optionId: string) => void }) {
   const total = poll.total_votes ?? 0;
   const voted = !!poll.user_vote;
   const expired = poll.ends_at ? new Date(poll.ends_at) < new Date() : false;
+  const showResults = voted || expired;
 
   return (
     <div className="mt-3 space-y-2">
@@ -233,31 +235,33 @@ function PollDisplay({ poll }: { poll: NonNullable<Post["poll"]> }) {
         return (
           <button
             key={opt.id}
+            onClick={e => { e.stopPropagation(); if (!showResults) onVote?.(postId, opt.id); }}
             className={cn(
               "w-full relative text-left px-3 py-2 rounded border text-sm overflow-hidden transition-colors",
               isVoted
                 ? "border-[#E8311A] text-[#F0F0F0]"
-                : "border-[#333333] text-[#9CA3AF] hover:border-[#444444]",
-              (voted || expired) && "cursor-default"
+                : showResults
+                  ? "border-[#282828] text-[#9CA3AF] cursor-default"
+                  : "border-[#333333] text-[#9CA3AF] hover:border-[#555555] hover:text-[#F0F0F0]"
             )}
-            disabled={voted || expired}
+            disabled={showResults}
           >
-            {(voted || expired) && (
+            {showResults && (
               <div
-                className={cn("absolute inset-y-0 left-0 opacity-10", isVoted ? "bg-[#E8311A]" : "bg-[#9CA3AF]")}
+                className={cn("absolute inset-y-0 left-0 transition-all duration-500", isVoted ? "bg-[#E8311A]/15" : "bg-[#9CA3AF]/10")}
                 style={{ width: `${pct}%` }}
               />
             )}
             <span className="relative flex items-center justify-between">
               <span>{opt.text}</span>
-              {(voted || expired) && <span className="text-xs font-bold">{pct}%</span>}
+              {showResults && <span className="text-xs font-bold">{pct}%</span>}
             </span>
           </button>
         );
       })}
-      <p className="text-xs text-[#9CA3AF]">
+      <p className="text-xs text-[#555555]">
         {total} vote{total !== 1 ? "s" : ""}
-        {poll.ends_at && !expired && ` · ${timeAgo(poll.ends_at)} left`}
+        {poll.ends_at && !expired && ` · Ends ${timeAgo(poll.ends_at)}`}
         {expired && " · Ended"}
       </p>
     </div>
@@ -415,7 +419,7 @@ function MoreMenu({
 
 interface OgData { og_title?: string | null; og_description?: string | null; og_image?: string | null; og_site_name?: string | null; }
 
-export function PostCard({ post, currentUserId, currentUserProfile, onReact, onSave, onRepost, onEdit, onDelete, onReply, onQuote, isNew }: PostCardProps) {
+export function PostCard({ post, currentUserId, currentUserProfile, onReact, onSave, onRepost, onEdit, onDelete, onReply, onQuote, onVote, isNew }: PostCardProps) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -605,7 +609,7 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
             {post.post_type === "post" && <AttachmentGrid attachments={post.attachments?.filter(a => a.type !== "link")} />}
 
             {/* Poll */}
-            {post.post_type === "poll" && post.poll && <PollDisplay poll={post.poll} />}
+            {post.post_type === "poll" && post.poll && <PollDisplay poll={post.poll} postId={post.id} onVote={onVote} />}
 
             {/* Forecast */}
             {post.post_type === "forecast" && post.forecast && <ForecastDisplay forecast={post.forecast} />}

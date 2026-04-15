@@ -125,6 +125,21 @@ export function PostThreadClient({ initialPost, initialReplies, profile, autoRep
     fetch(`/api/posts/${postId}/repost`, { method: "POST" });
   }
 
+  function handleVote(postId: string, optionId: string) {
+    const update = (p: Post): Post => {
+      if (p.id !== postId || !p.poll) return p;
+      const poll = { ...p.poll };
+      const counts = { ...(poll.vote_counts ?? {}) };
+      if (poll.user_vote) counts[poll.user_vote] = Math.max(0, (counts[poll.user_vote] ?? 1) - 1);
+      counts[optionId] = (counts[optionId] ?? 0) + 1;
+      const total = Object.values(counts).reduce((s, v) => s + v, 0);
+      return { ...p, poll: { ...poll, vote_counts: counts, user_vote: optionId, total_votes: total } };
+    };
+    if (post.id === postId) setPost(p => update(p));
+    setReplies(rs => rs.map(update));
+    fetch(`/api/posts/${postId}/vote`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ option_id: optionId }) });
+  }
+
   function handleReply(newPost: Post) {
     setReplies(rs => [...rs, newPost]);
     setPost(p => ({ ...p, replies_count: (p.replies_count ?? 0) + 1 }));
@@ -147,6 +162,7 @@ export function PostThreadClient({ initialPost, initialReplies, profile, autoRep
         onReact={handleReact}
         onSave={handleSave}
         onRepost={handleRepost}
+        onVote={handleVote}
         onEdit={handleEdit}
         onDelete={handleDelete}
       />
