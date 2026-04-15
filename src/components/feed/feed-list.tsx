@@ -230,7 +230,7 @@ export function FeedList({ tab, profile, stockTicker, postType, initialPosts }: 
           profile={profile}
           onPost={handleComposerPost}
           defaultTicker={stockTicker}
-          quotedPost={quotingPost ? { id: quotingPost.id, content: quotingPost.content, author: quotingPost.author } : null}
+          quotedPost={quotingPost ? { id: quotingPost.id, content: quotingPost.content, author: quotingPost.author, tagged_stocks: quotingPost.tagged_stocks } : null}
           onCancelQuote={() => setQuotingPost(null)}
         />
       )}

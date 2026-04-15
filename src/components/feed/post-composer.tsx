@@ -13,6 +13,7 @@ interface QuotedPostInfo {
   id: string;
   content: string;
   author?: { display_name?: string; username?: string };
+  tagged_stocks?: string[];
 }
 
 interface PostComposerProps {
@@ -58,6 +59,16 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
     document.addEventListener("mousedown", onClick);
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
+
+  // When quoting, prefill stock and focus textarea
+  useEffect(() => {
+    if (quotedPost) {
+      if (quotedPost.tagged_stocks?.length) {
+        setTaggedStocks(quotedPost.tagged_stocks.slice(0, 1));
+      }
+      setTimeout(() => textareaRef.current?.focus(), 100);
+    }
+  }, [quotedPost]);
 
   // Detect URLs in content and fetch OG preview
   useEffect(() => {
