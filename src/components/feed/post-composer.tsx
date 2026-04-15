@@ -380,18 +380,36 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
                         />
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <div className="flex-1">
-                        <input
-                          value={forecast.targetDate}
-                          onChange={e => setForecast(f => ({ ...f, targetDate: e.target.value }))}
-                          type="date"
-                          min={new Date(Date.now() + 86400000).toISOString().split("T")[0]}
-                          className="w-full bg-[#141414] border border-[#333333] rounded px-3 py-2 text-sm text-[#F0F0F0] focus:outline-none focus:border-[#444444]"
-                        />
-                      </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {([
+                        { label: "1D", days: 1 },
+                        { label: "1W", days: 7 },
+                        { label: "1M", days: 30 },
+                        { label: "1Q", days: 90 },
+                        { label: "2Q", days: 180 },
+                        { label: "1Y", days: 365 },
+                        { label: "5Y", days: 1825 },
+                      ] as const).map(({ label, days }) => {
+                        const date = new Date(Date.now() + days * 86400000).toISOString().split("T")[0];
+                        const selected = forecast.targetDate === date;
+                        return (
+                          <button
+                            key={label}
+                            type="button"
+                            onClick={() => setForecast(f => ({ ...f, targetDate: date }))}
+                            className={cn(
+                              "px-2.5 py-1 text-xs font-bold rounded transition-colors",
+                              selected
+                                ? "bg-[#E8311A] text-white"
+                                : "text-[#9CA3AF] border border-[#333333] hover:border-[#555555] hover:text-[#F0F0F0]"
+                            )}
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
                       {forecastSentiment && (
-                        <span className={cn("text-xs font-bold px-2 py-1 rounded", forecastSentiment === "bullish" ? "text-[#22C55E] bg-[#22C55E]/10" : "text-[#EF4444] bg-[#EF4444]/10")}>
+                        <span className={cn("text-xs font-bold px-2 py-1 rounded ml-auto", forecastSentiment === "bullish" ? "text-[#22C55E] bg-[#22C55E]/10" : "text-[#EF4444] bg-[#EF4444]/10")}>
                           {forecastSentiment === "bullish" ? "▲ Bullish" : "▼ Bearish"}
                         </span>
                       )}
