@@ -119,14 +119,14 @@ html.light {
 
 /* Background remapping */
 html.light [class*="bg-[#0A0A0A]"] { background-color: #FFFFFF !important; }
-html.light [class*="bg-[#080808]"] { background-color: #FAFAFA !important; }
-html.light [class*="bg-[#0D0D0D]"] { background-color: #F8F8F8 !important; }
-html.light [class*="bg-[#0F0F0F]"] { background-color: #F5F5F5 !important; }
-html.light [class*="bg-[#111111]"] { background-color: #F3F3F3 !important; }
-html.light [class*="bg-[#141414]"] { background-color: #F0F0F0 !important; }
-html.light [class*="bg-[#1A1A1A]"] { background-color: #EBEBEB !important; }
-html.light [class*="bg-[#1C1C1C]"] { background-color: #E8E8E8 !important; }
-html.light [class*="bg-[#282828]"] { background-color: #E0E0E0 !important; }
+html.light [class*="bg-[#080808]"] { background-color: #FFFFFF !important; }
+html.light [class*="bg-[#0D0D0D]"] { background-color: #FFFFFF !important; }
+html.light [class*="bg-[#0F0F0F]"] { background-color: #FFFFFF !important; }
+html.light [class*="bg-[#111111]"] { background-color: #FAFAFA !important; }
+html.light [class*="bg-[#141414]"] { background-color: #F7F7F7 !important; }
+html.light [class*="bg-[#1A1A1A]"] { background-color: #F2F2F2 !important; }
+html.light [class*="bg-[#1C1C1C]"] { background-color: #F0F0F0 !important; }
+html.light [class*="bg-[#282828]"] { background-color: #EAEAEA !important; }
 
 /* Text remapping */
 html.light [class*="text-[#F0F0F0]"] { color: #1A1A1A !important; }
@@ -152,10 +152,11 @@ html.light [class*="divide-[#282828]"] > * + * { border-color: #E0E0E0 !importan
 
 /* Hover backgrounds */
 html.light [class*="hover:bg-[#0D0D0D]"]:hover { background-color: #F5F5F5 !important; }
-html.light [class*="hover:bg-[#141414]"]:hover { background-color: #F0F0F0 !important; }
-html.light [class*="hover:bg-[#1A1A1A]"]:hover { background-color: #EBEBEB !important; }
-html.light [class*="hover:bg-[#1C1C1C]"]:hover { background-color: #E8E8E8 !important; }
-html.light [class*="hover:bg-[#282828]"]:hover { background-color: #E0E0E0 !important; }
+html.light [class*="hover:bg-[#141414]"]:hover { background-color: #F2F2F2 !important; }
+html.light [class*="hover:bg-[#151515]"]:hover { background-color: #F2F2F2 !important; }
+html.light [class*="hover:bg-[#1A1A1A]"]:hover { background-color: #F0F0F0 !important; }
+html.light [class*="hover:bg-[#1C1C1C]"]:hover { background-color: #EEEEEE !important; }
+html.light [class*="hover:bg-[#282828]"]:hover { background-color: #EAEAEA !important; }
 
 /* Placeholder text */
 html.light [class*="placeholder:text-[#555555]"]::placeholder { color: #AAAAAA !important; }
@@ -164,7 +165,8 @@ html.light [class*="placeholder:text-[#9CA3AF]"]::placeholder { color: #888888 !
 
 /* Backdrop/overlay */
 html.light [class*="bg-black/95"] { background-color: rgba(255,255,255,0.95) !important; }
-html.light [class*="bg-[#0A0A0A]/95"] { background-color: rgba(255,255,255,0.95) !important; }
+html.light [class*="bg-[#0A0A0A]/95"] { background-color: rgba(255,255,255,0.97) !important; }
+html.light [class*="bg-black/70"] { background-color: rgba(0,0,0,0.3) !important; }
 
 /* Animate pulse skeleton */
 html.light .animate-pulse [class*="bg-[#1C1C1C]"] { background-color: #E0E0E0 !important; }
