@@ -41,6 +41,15 @@ export function timeAgo(date: string | Date): string {
   return new Date(date).toLocaleDateString("en-SG", { day: "numeric", month: "short" });
 }
 
+export function timeLeft(date: string | Date): string {
+  const diff = Math.floor((new Date(date).getTime() - Date.now()) / 1000);
+  if (diff <= 0) return "ended";
+  if (diff < 3600) return `${Math.ceil(diff / 60)}m left`;
+  if (diff < 86400) return `${Math.ceil(diff / 3600)}h left`;
+  const days = Math.ceil(diff / 86400);
+  return `${days}d left`;
+}
+
 export function pluralize(count: number, singular: string, plural?: string): string {
   return `${count} ${count === 1 ? singular : (plural ?? singular + "s")}`;
 }

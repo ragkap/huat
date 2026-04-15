@@ -39,7 +39,7 @@ function renderTextWithLinks(text: string) {
 import { Heart, MessageCircle, Repeat2, Share2, Bookmark, MoreHorizontal, TrendingUp, TrendingDown, Flag, Pencil, Trash2, Send, PenLine, X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { cn, timeAgo, formatPrice } from "@/lib/utils";
+import { cn, timeAgo, timeLeft, formatPrice } from "@/lib/utils";
 import type { Post, Sentiment, Profile } from "@/types/database";
 
 interface PostCardProps {
@@ -261,7 +261,7 @@ function PollDisplay({ poll, postId, onVote }: { poll: NonNullable<Post["poll"]>
       })}
       <p className="text-xs text-[#555555]">
         {total} vote{total !== 1 ? "s" : ""}
-        {poll.ends_at && !expired && ` · Ends ${timeAgo(poll.ends_at)}`}
+        {poll.ends_at && !expired && ` · ${timeLeft(poll.ends_at)}`}
         {expired && " · Ended"}
       </p>
     </div>
@@ -487,7 +487,7 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
         />
       )}
 
-      <article className={cn("px-5 pt-5 pb-4 hover:bg-[#0D0D0D] transition-colors group", isNew && "animate-highlight")}>
+      <article className={cn("px-5 pt-5 pb-4 hover:bg-[#0D0D0D] transition-colors group relative overflow-hidden", isNew && "animate-highlight")}>
         <div className="flex gap-3">
           {/* Avatar */}
           <Link href={`/profile/${post.author?.username}`} className="flex-shrink-0">
@@ -511,11 +511,18 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
               <MoreMenu isOwn={isOwn} onEdit={() => setEditing(true)} onDelete={handleDelete} />
             </div>
 
-            {/* Type badge (poll/forecast only) */}
-            {post.post_type !== "post" && (
+            {/* Poll ribbon */}
+            {post.post_type === "poll" && post.poll && (
+              <div className="absolute top-0 right-0 overflow-hidden w-28 h-28 pointer-events-none">
+                <div className="absolute top-3.5 -right-6 w-36 text-center rotate-45 bg-[#E8311A] text-white text-[10px] font-bold uppercase tracking-wider py-0.5 shadow-lg">
+                  Poll · {post.poll.ends_at ? (new Date(post.poll.ends_at) > new Date() ? timeLeft(post.poll.ends_at) : "Ended") : "Open"}
+                </div>
+              </div>
+            )}
+            {/* Forecast badge */}
+            {post.post_type === "forecast" && (
               <div className="flex items-center gap-1.5 mb-2">
-                {post.post_type === "poll" && <Badge variant="brand">Poll</Badge>}
-                {post.post_type === "forecast" && <Badge variant="brand">Forecast</Badge>}
+                <Badge variant="brand">Forecast</Badge>
               </div>
             )}
 
