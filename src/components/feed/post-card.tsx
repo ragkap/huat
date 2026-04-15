@@ -356,7 +356,7 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
   }
 
   return (
-    <>
+    <div>
       {editing && (
         <EditModal
           content={localContent}
@@ -759,6 +759,6 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
         </div>
       )}
 
-    </>
+    </div>
   );
 }
