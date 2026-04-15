@@ -14,7 +14,7 @@ const DIMENSIONS = [
 
 function scoreColor(score: number): string {
   if (score >= 4) return "#22C55E";
-  if (score >= 3) return "#F0F0F0";
+  if (score >= 3) return "#F59E0B";
   return "#EF4444";
 }
 
