@@ -53,6 +53,7 @@ interface PostCardProps {
   onDelete?: (postId: string) => void;
   onReply?: (postId: string, newReply: Post) => void;
   onQuote?: (post: Post) => void;
+  isNew?: boolean;
 }
 
 
@@ -296,7 +297,7 @@ function MoreMenu({
 
 interface OgData { og_title?: string | null; og_description?: string | null; og_image?: string | null; og_site_name?: string | null; }
 
-export function PostCard({ post, currentUserId, currentUserProfile, onReact, onSave, onRepost, onEdit, onDelete, onReply, onQuote }: PostCardProps) {
+export function PostCard({ post, currentUserId, currentUserProfile, onReact, onSave, onRepost, onEdit, onDelete, onReply, onQuote, isNew }: PostCardProps) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -364,7 +365,7 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
         />
       )}
 
-      <article className="px-5 pt-5 pb-4 hover:bg-[#0D0D0D] transition-colors group">
+      <article className={cn("px-5 pt-5 pb-4 hover:bg-[#0D0D0D] transition-colors group", isNew && "animate-highlight")}>
         <div className="flex gap-3">
           {/* Avatar */}
           <Link href={`/profile/${post.author?.username}`} className="flex-shrink-0">
@@ -495,16 +496,17 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
             {post.quoted_post && (
               <Link
                 href={`/post/${post.quoted_post.id}`}
-                className="mt-2 block rounded-lg border border-[#282828] bg-[#0D0D0D] hover:border-[#333333] transition-colors px-3.5 py-3"
+                className="mt-3 block rounded-lg border-l-2 border-l-[#E8311A]/40 border border-[#222222] bg-[#0A0A0A] hover:bg-[#111111] transition-colors pl-3 pr-3.5 py-2.5"
                 onClick={e => e.stopPropagation()}
               >
-                <div className="flex items-center gap-1.5 mb-1.5">
-                  <Avatar src={post.quoted_post.author?.avatar_url ?? null} alt={post.quoted_post.author?.display_name ?? ""} size="xs" />
-                  <span className="text-xs font-semibold text-[#9CA3AF]">{post.quoted_post.author?.display_name}</span>
-                  <span className="text-[10px] text-[#555555]">@{post.quoted_post.author?.username}</span>
-                  <span className="text-[10px] text-[#555555]">· {timeAgo(post.quoted_post.created_at)}</span>
+                <div className="flex items-center gap-1.5">
+                  <Repeat2 className="w-3 h-3 text-[#555555]" />
+                  <span className="text-[10px] text-[#555555] font-medium uppercase tracking-wider">Quoting</span>
+                  <span className="text-[10px] text-[#555555]">·</span>
+                  <span className="text-xs font-semibold text-[#71717A]">{post.quoted_post.author?.display_name}</span>
+                  <span className="text-[10px] text-[#444444]">{timeAgo(post.quoted_post.created_at)}</span>
                 </div>
-                <p className="text-xs text-[#C0C0C0] line-clamp-4 leading-relaxed">{post.quoted_post.content}</p>
+                <p className="text-xs text-[#9CA3AF] line-clamp-3 leading-relaxed mt-1">{post.quoted_post.content}</p>
               </Link>
             )}
 

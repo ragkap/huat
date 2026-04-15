@@ -80,6 +80,14 @@ body {
 .no-scrollbar { scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 
+@keyframes highlight-fade {
+  0% { background-color: rgba(232, 49, 26, 0.08); }
+  100% { background-color: transparent; }
+}
+.animate-highlight {
+  animation: highlight-fade 3s ease-out forwards;
+}
+
 /* Research HTML content */
 .research-html { overflow: visible; }
 .research-html ul { list-style-type: disc; list-style-position: outside; padding-left: 1.1rem; margin: 0.25rem 0; }

@@ -169,24 +169,24 @@ export function FeedList({ tab, profile, stockTicker, postType, initialPosts }: 
       reposts_count: (p.reposts_count ?? 0) + (wasReposted ? -1 : 1),
     }));
     await fetch(`/api/posts/${postId}/repost`, { method: "POST" });
-    if (!wasReposted) {
-      setToast("reposted");
-      setTimeout(() => setToast(null), 4000);
-    }
   }
 
-  const [toast, setToast] = useState<string | null>(null);
   const feedTopRef = useRef<HTMLDivElement>(null);
   const [quotingPost, setQuotingPost] = useState<Post | null>(null);
+  const [newPostIds, setNewPostIds] = useState<Set<string>>(new Set());
 
   function handleQuote(post: Post) {
     setQuotingPost(post);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  function markNew(id: string) {
+    setNewPostIds(prev => new Set(prev).add(id));
+    setTimeout(() => setNewPostIds(prev => { const next = new Set(prev); next.delete(id); return next; }), 3500);
+  }
+
   function handleComposerPost(newPost?: Record<string, unknown>) {
     if (newPost && quotingPost) {
-      // Attach quoted post data for immediate rendering
       const enriched = {
         ...newPost,
         author: profile,
@@ -202,8 +202,17 @@ export function FeedList({ tab, profile, stockTicker, postType, initialPosts }: 
         reposts_count: 0,
       } as unknown as Post;
       setPosts(prev => [enriched, ...prev]);
-      setToast("quoted");
-      setTimeout(() => setToast(null), 4000);
+      markNew(enriched.id);
+    } else if (newPost) {
+      const enriched = {
+        ...newPost,
+        author: profile,
+        reactions_count: { like: 0, fire: 0, rocket: 0, bear: 0, total: 0 },
+        replies_count: 0,
+        reposts_count: 0,
+      } as unknown as Post;
+      setPosts(prev => [enriched, ...prev]);
+      markNew(enriched.id);
     } else {
       fetchPosts(0, true);
     }
@@ -258,6 +267,7 @@ export function FeedList({ tab, profile, stockTicker, postType, initialPosts }: 
               post={post}
               currentUserId={profile.id}
               currentUserProfile={profile}
+              isNew={newPostIds.has(post.id)}
               onReact={handleReact}
               onSave={handleSave}
               onRepost={handleRepost}
@@ -276,18 +286,6 @@ export function FeedList({ tab, profile, stockTicker, postType, initialPosts }: 
         )}
       </div>
 
-      {/* Toast */}
-      {toast && (
-        <div className="fixed bottom-20 lg:bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-[#1C1C1C] border border-[#333333] rounded-lg px-4 py-2.5 shadow-xl animate-in fade-in slide-in-from-bottom-4">
-          <span className="text-sm text-[#F0F0F0]">{toast === "reposted" ? "Reposted!" : "The post was quoted."}</span>
-          <button
-            onClick={() => { feedTopRef.current?.scrollIntoView({ behavior: "smooth" }); setToast(null); }}
-            className="text-sm font-bold text-[#E8311A] hover:text-[#FF4433] transition-colors whitespace-nowrap"
-          >
-            View Post
-          </button>
-        </div>
-      )}
     </div>
   );
 }
