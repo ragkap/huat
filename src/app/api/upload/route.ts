@@ -1,4 +1,5 @@
-import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabase } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 
@@ -20,8 +21,11 @@ export async function POST(request: Request) {
   if (!files.length) return NextResponse.json({ error: "No files" }, { status: 400 });
   if (files.length > 4) return NextResponse.json({ error: "Max 4 files" }, { status: 400 });
 
-  // Use service client for storage uploads (bypasses RLS)
-  const storage = await createServiceClient();
+  // Plain admin client for storage (bypasses RLS)
+  const storage = createSupabase(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  );
   const results: { url: string; type: "image" | "video" | "pdf" }[] = [];
   const errors: string[] = [];
 
