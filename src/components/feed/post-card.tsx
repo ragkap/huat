@@ -301,7 +301,7 @@ function ForecastDisplay({ forecast }: { forecast: NonNullable<Post["forecast"]>
         "flex items-center justify-between px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider",
         forecast.outcome === "hit" ? "bg-[#22C55E]/10 text-[#22C55E]"
           : forecast.outcome === "missed" ? "bg-[#EF4444]/10 text-[#EF4444]"
-          : "bg-[#F59E0B]/10 text-[#F59E0B]"
+          : "bg-[#E8311A]/10 text-[#E8311A]"
       )}>
         <span>Prediction</span>
         {isPending && !isExpired ? (
