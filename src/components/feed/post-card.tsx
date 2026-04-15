@@ -281,9 +281,10 @@ function LiveCountdown({ targetDate }: { targetDate: string }) {
   const s = diff % 60;
   const pad = (n: number) => String(n).padStart(2, "0");
   return (
-    <span className="font-mono tabular-nums">
+    <span className="font-mono tabular-nums inline-flex items-center gap-1">
+      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
       {d > 0 && <>{d} {d === 1 ? "Day" : "Days"} </>}
-      {pad(h)}:{pad(m)}:{pad(s)}
+      {pad(h)}:{pad(m)}:{pad(s)} Left
     </span>
   );
 }
