@@ -282,7 +282,7 @@ function MobileSearchOverlay() {
         <Search style={{ width: 20, height: 20 }} />
       </button>
       {open && (
-        <div className="sm:hidden fixed inset-x-0 top-14 bottom-0 z-50 bg-[#0A0A0A]/95 backdrop-blur-md px-4 pt-3">
+        <div className="sm:hidden fixed inset-0 z-50 bg-[#0A0A0A]/95 backdrop-blur-md px-4 pt-4 pb-4">
           <div className="flex items-center gap-2">
             <div className="flex-1 min-w-0">
               <SearchBar autoFocus />
