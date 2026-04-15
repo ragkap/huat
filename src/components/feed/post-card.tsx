@@ -434,7 +434,7 @@ function ShareButton({ postId, postContent, authorName }: { postId: string; post
         <Upload className="w-[16px] h-[16px]" />
       </button>
       {open && (
-        <div className="absolute right-0 bottom-full mb-1 z-50 bg-[#1C1C1C] border border-[#333333] rounded-lg shadow-xl py-1 min-w-[160px]">
+        <div className="absolute right-0 top-full mt-1 z-50 bg-[#1C1C1C] border border-[#333333] rounded-lg shadow-xl py-1 min-w-[160px]">
           {shareLinks.map(item => (
             item.href ? (
               <a
@@ -601,7 +601,7 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
         />
       )}
 
-      <article className={cn("px-5 pt-5 pb-4 hover:bg-[#0D0D0D] transition-colors group relative overflow-hidden", isNew && "animate-highlight")}>
+      <article className={cn("px-5 pt-5 pb-4 hover:bg-[#0D0D0D] transition-colors group relative", isNew && "animate-highlight")}>
         <div className="flex gap-3">
           {/* Avatar */}
           <Link href={`/profile/${post.author?.username}`} className="flex-shrink-0">
