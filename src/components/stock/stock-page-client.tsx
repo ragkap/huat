@@ -312,7 +312,7 @@ function ResearchShareComposer({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          content: `${content}\n\n📰 ${item.tagline} — Smartkarma\n${item.url}`,
+          content: `${content}\n\n📰 ${item.tagline}\n${item.executive_summary ? stripHtml(item.executive_summary).replace(/This content is AI-generated.*?before use\.?/gi, "").trim().slice(0, 250) + "\n" : ""}— ${item.author}\n${item.url}`,
           sentiment,
           post_type: "post",
           tagged_stocks: [displayTicker],

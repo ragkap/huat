@@ -652,11 +652,17 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
                   })
                 : null;
 
-              // News posts have format: "{user text}\n\n📰 {title} — {source}\n{url}"
-              const newsMatch = localContent.match(/^([\s\S]*?)\n\n📰 ([\s\S]+?) — (.+?)\n(https?:\/\/\S+)\s*$/);
-              if (newsMatch) {
-                const [, userText, title, source, url] = newsMatch;
-                const badge = source.toLowerCase().includes("smartkarma") ? "Research"
+              // News/research embed: "{text}\n\n📰 {title}\n{summary?}\n— {source}\n{url}" or old: "📰 {title} — {source}\n{url}"
+              const embedMatch = localContent.match(/^([\s\S]*?)\n\n📰 (.+?)(?:\n([\s\S]*?))?\n— (.+?)\n(https?:\/\/\S+)\s*$/)
+                ?? localContent.match(/^([\s\S]*?)\n\n📰 ([\s\S]+?) — (.+?)\n()(https?:\/\/\S+)\s*$/);
+              if (embedMatch) {
+                const [, userText, title, summaryOrSource, sourceOrEmpty, url] = embedMatch;
+                // New format: summary is between title and source; Old format: summary is actually the source
+                const hasNewFormat = url !== "";
+                const summary = hasNewFormat ? (summaryOrSource ?? "").trim() : "";
+                const source = hasNewFormat ? sourceOrEmpty : summaryOrSource;
+                const isSmartkarma = /smartkarma/i.test(localContent);
+                const badge = isSmartkarma ? "Research"
                   : source.toLowerCase().includes("sgx") ? "Announcement"
                   : "News";
                 const badgeColor = badge === "Research" ? "#8B5CF6" : badge === "Announcement" ? "#F59E0B" : "#3B82F6";
@@ -667,7 +673,7 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
                         {tickerPrefix}{renderTextWithLinks(userText.trim())}
                       </p>
                     )}
-                    <a href={url} target="_blank" rel="noopener noreferrer"
+                    <a href={url || sourceOrEmpty} target="_blank" rel="noopener noreferrer"
                       className="block border border-[#282828] rounded-lg p-3 bg-[#0D0D0D] hover:border-[#444444] transition-colors"
                       onClick={e => e.stopPropagation()}
                     >
@@ -675,7 +681,8 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
                         <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ color: badgeColor, backgroundColor: `${badgeColor}15` }}>{badge}</span>
                         <span className="text-[10px] text-[#555555]">{source}</span>
                       </div>
-                      <p className="text-sm font-medium text-[#F0F0F0] leading-snug line-clamp-3">{title}</p>
+                      <p className="text-sm font-medium text-[#F0F0F0] leading-snug line-clamp-2">{title}</p>
+                      {summary && <p className="text-xs text-[#9CA3AF] leading-relaxed mt-1.5 line-clamp-3">{summary}</p>}
                     </a>
                   </>
                 );
