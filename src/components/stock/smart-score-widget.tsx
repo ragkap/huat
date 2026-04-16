@@ -28,7 +28,7 @@ export function SmartScoreWidget({ smartScore, analysis }: { smartScore: SmartSc
   const BULLET_LIMIT = 1;
 
   return (
-    <div className="widget-hover relative overflow-hidden border border-[#282828] rounded-lg p-4 cursor-pointer" onClick={(e: React.MouseEvent<HTMLDivElement>) => { ripple(e); setExpanded(v => !v); }}>
+    <div className="widget-hover relative overflow-hidden border border-[#282828] rounded-lg p-4 cursor-pointer" onClick={(e: React.MouseEvent<HTMLElement>) => { ripple(e); setExpanded(v => !v); }}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>

@@ -30,7 +30,7 @@ function OverviewWidget({ title, items }: { title: string; items: string[] }) {
   if (!items.length) return null;
   const text = items.map(p => stripHtml(p)).join("\n\n");
   return (
-    <div className="widget-hover relative overflow-hidden border border-[#282828] rounded-lg p-4 cursor-pointer" onClick={(e: React.MouseEvent<HTMLDivElement>) => { ripple(e); setExpanded(v => !v); }}>
+    <div className="widget-hover relative overflow-hidden border border-[#282828] rounded-lg p-4 cursor-pointer" onClick={(e: React.MouseEvent<HTMLElement>) => { ripple(e); setExpanded(v => !v); }}>
       <div className="flex items-center justify-between mb-3">
         <p className="text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">{title}</p>
         <a href="https://www.smartkarma.com/home/smartwealth/" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-[10px] text-[#555555] hover:text-[#9CA3AF] transition-colors">by Smartkarma</a>
