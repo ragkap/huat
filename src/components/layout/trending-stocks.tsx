@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import Link from "next/link";
 import { getStocksBySlugs } from "@/lib/stocks-db/client";
+import { RippleLink } from "@/components/ui/ripple-link";
 import { LastVisitedWidget } from "@/components/layout/last-visited-widget";
 
 async function getTrendingStocks() {
@@ -61,7 +61,7 @@ export async function TrendingStocks() {
         ) : (
           <div className="space-y-0.5">
             {trending.map((s, i) => (
-              <Link
+              <RippleLink
                 key={s.ticker}
                 href={`/stocks/${encodeURIComponent(s.slug)}`}
                 className="flex items-center justify-between hover:bg-[#141414] -mx-2 px-2 py-1.5 rounded transition-colors group"
@@ -74,7 +74,7 @@ export async function TrendingStocks() {
                   </div>
                 </div>
                 <span className="text-[10px] text-[#555555] flex-shrink-0 ml-2">{s.count} post{s.count !== 1 ? "s" : ""}</span>
-              </Link>
+              </RippleLink>
             ))}
           </div>
         )}

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Compass, LayoutDashboard, X, Star, Sparkles } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, ripple } from "@/lib/utils";
 import { useEffect, useState, useRef } from "react";
 import { stripHtml } from "@/lib/smartkarma/primer";
 import { RHSWidgetsClient } from "@/components/stock/rhs-widgets-client";
@@ -30,7 +30,7 @@ function OverviewWidget({ title, items }: { title: string; items: string[] }) {
   if (!items.length) return null;
   const text = items.map(p => stripHtml(p)).join("\n\n");
   return (
-    <div className="widget-hover border border-[#282828] rounded-lg p-4 cursor-pointer" onClick={() => setExpanded(e => !e)}>
+    <div className="widget-hover relative overflow-hidden border border-[#282828] rounded-lg p-4 cursor-pointer" onClick={(e: React.MouseEvent<HTMLDivElement>) => { ripple(e); setExpanded(v => !v); }}>
       <div className="flex items-center justify-between mb-3">
         <p className="text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">{title}</p>
         <a href="https://www.smartkarma.com/home/smartwealth/" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-[10px] text-[#555555] hover:text-[#9CA3AF] transition-colors">by Smartkarma</a>
@@ -181,8 +181,9 @@ export function Sidebar() {
               <Link
                 key={href}
                 href={href}
+                onClick={ripple}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium transition-colors",
+                  "relative overflow-hidden flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium transition-colors",
                   active
                     ? "text-[#F0F0F0] bg-[#282828]"
                     : "text-[#9CA3AF] hover:text-[#F0F0F0] hover:bg-[#141414]"
@@ -218,8 +219,9 @@ export function Sidebar() {
             <Link
               key={href}
               href={href}
+              onClick={ripple}
               className={cn(
-                "flex-1 flex flex-col items-center justify-center gap-1 py-3 text-xs font-medium transition-colors",
+                "relative overflow-hidden flex-1 flex flex-col items-center justify-center gap-1 py-3 text-xs font-medium transition-colors",
                 active ? "text-[#F0F0F0]" : "text-[#555555]"
               )}
             >

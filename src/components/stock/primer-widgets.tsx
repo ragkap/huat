@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import type { StockPrimer } from "@/lib/smartkarma/primer";
 import { stripHtml } from "@/lib/smartkarma/primer";
+import { ripple } from "@/lib/utils";
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
@@ -13,7 +14,7 @@ function WidgetShell({ title, attribution, children, onClick }: {
   onClick?: () => void;
 }) {
   return (
-    <div className={`widget-hover border border-[#282828] rounded-lg p-4${onClick ? " cursor-pointer" : ""}`} onClick={onClick}>
+    <div className={`widget-hover relative overflow-hidden border border-[#282828] rounded-lg p-4${onClick ? " cursor-pointer" : ""}`} onClick={onClick ? (e: React.MouseEvent<HTMLDivElement>) => { ripple(e); onClick(); } : undefined}>
       <div className="flex items-center justify-between mb-3">
         <p className="text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">{title}</p>
         {attribution && <a href="https://www.smartkarma.com/home/smartwealth/" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-[10px] text-[#555555] hover:text-[#9CA3AF] transition-colors">by Smartkarma</a>}

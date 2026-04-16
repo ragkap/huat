@@ -6,7 +6,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { PenLine, X, FileText, ExternalLink } from "lucide-react";
 import { recordStockVisit } from "@/components/layout/last-visited-widget";
-import { formatPrice, formatMarketCap } from "@/lib/utils";
+import { formatPrice, formatMarketCap, ripple } from "@/lib/utils";
 import { stripHtml } from "@/lib/smartkarma/primer";
 import type { Profile, Sentiment } from "@/types/database";
 
@@ -772,7 +772,7 @@ export function StockPageClient({
         <div className="px-5 py-4 border-b border-[#282828] space-y-3">
           {/* Executive Summary */}
           {primer.executive_summary.length > 0 && (
-            <div className="widget-hover border border-[#282828] rounded-lg p-4 cursor-pointer" onClick={() => setSummaryExpanded(e => !e)}>
+            <div className="widget-hover relative overflow-hidden border border-[#282828] rounded-lg p-4 cursor-pointer" onClick={(e: React.MouseEvent<HTMLDivElement>) => { ripple(e); setSummaryExpanded(v => !v); }}>
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">Executive Summary</p>
                 <a href="https://www.smartkarma.com/home/smartwealth/" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-[10px] text-[#555555] hover:text-[#9CA3AF] transition-colors">by Smartkarma</a>
@@ -788,7 +788,7 @@ export function StockPageClient({
                   </li>
                 ))}
               </ul>
-              <button onClick={() => setSummaryExpanded(e => !e)} className="mt-2 text-[11px] text-[#71717A] hover:text-[#F0F0F0] transition-colors">
+              <button onClick={(e: React.MouseEvent<HTMLDivElement>) => { ripple(e); setSummaryExpanded(v => !v); }} className="mt-2 text-[11px] text-[#71717A] hover:text-[#F0F0F0] transition-colors">
                 {summaryExpanded ? "Show less" : "Show more"}
               </button>
             </div>
@@ -798,7 +798,7 @@ export function StockPageClient({
           {(primer.three_bullish_points.length > 0 || primer.three_bearish_points.length > 0) && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {primer.three_bullish_points.length > 0 && (
-                <div className="widget-hover border border-[#282828] rounded-lg p-4 cursor-pointer" onClick={() => setBullishExpanded(e => !e)}>
+                <div className="widget-hover relative overflow-hidden border border-[#282828] rounded-lg p-4 cursor-pointer" onClick={(e: React.MouseEvent<HTMLDivElement>) => { ripple(e); setBullishExpanded(v => !v); }}>
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-xs font-bold text-[#22C55E] uppercase tracking-wider">Bullish</p>
                     <a href="https://www.smartkarma.com/home/smartwealth/" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-[10px] text-[#555555] hover:text-[#9CA3AF] transition-colors">by Smartkarma</a>
@@ -814,13 +814,13 @@ export function StockPageClient({
                       </li>
                     ))}
                   </ul>
-                  <button onClick={() => setBullishExpanded(e => !e)} className="mt-2 text-[11px] text-[#71717A] hover:text-[#F0F0F0] transition-colors">
+                  <button onClick={(e: React.MouseEvent<HTMLDivElement>) => { ripple(e); setBullishExpanded(v => !v); }} className="mt-2 text-[11px] text-[#71717A] hover:text-[#F0F0F0] transition-colors">
                     {bullishExpanded ? "Show less" : "Show more"}
                   </button>
                 </div>
               )}
               {primer.three_bearish_points.length > 0 && (
-                <div className="widget-hover border border-[#282828] rounded-lg p-4 cursor-pointer" onClick={() => setBearishExpanded(e => !e)}>
+                <div className="widget-hover relative overflow-hidden border border-[#282828] rounded-lg p-4 cursor-pointer" onClick={(e: React.MouseEvent<HTMLDivElement>) => { ripple(e); setBearishExpanded(v => !v); }}>
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-xs font-bold text-[#EF4444] uppercase tracking-wider">Bearish</p>
                     <a href="https://www.smartkarma.com/home/smartwealth/" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-[10px] text-[#555555] hover:text-[#9CA3AF] transition-colors">by Smartkarma</a>
@@ -836,7 +836,7 @@ export function StockPageClient({
                       </li>
                     ))}
                   </ul>
-                  <button onClick={() => setBearishExpanded(e => !e)} className="mt-2 text-[11px] text-[#71717A] hover:text-[#F0F0F0] transition-colors">
+                  <button onClick={(e: React.MouseEvent<HTMLDivElement>) => { ripple(e); setBearishExpanded(v => !v); }} className="mt-2 text-[11px] text-[#71717A] hover:text-[#F0F0F0] transition-colors">
                     {bearishExpanded ? "Show less" : "Show more"}
                   </button>
                 </div>
@@ -846,7 +846,7 @@ export function StockPageClient({
 
           {/* Key Risks */}
           {primer.key_risks.length > 0 && (
-            <div className="widget-hover border border-[#282828] rounded-lg p-4 cursor-pointer" onClick={() => setRisksExpanded(e => !e)}>
+            <div className="widget-hover relative overflow-hidden border border-[#282828] rounded-lg p-4 cursor-pointer" onClick={(e: React.MouseEvent<HTMLDivElement>) => { ripple(e); setRisksExpanded(v => !v); }}>
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-bold text-[#EF4444] uppercase tracking-wider">Key Risks</p>
                 <a href="https://www.smartkarma.com/home/smartwealth/" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-[10px] text-[#555555] hover:text-[#9CA3AF] transition-colors">by Smartkarma</a>
@@ -862,7 +862,7 @@ export function StockPageClient({
                   </li>
                 ))}
               </ul>
-              <button onClick={() => setRisksExpanded(e => !e)} className="mt-2 text-[11px] text-[#71717A] hover:text-[#F0F0F0] transition-colors">
+              <button onClick={(e: React.MouseEvent<HTMLDivElement>) => { ripple(e); setRisksExpanded(v => !v); }} className="mt-2 text-[11px] text-[#71717A] hover:text-[#F0F0F0] transition-colors">
                 {risksExpanded ? "Show less" : "Show more"}
               </button>
             </div>

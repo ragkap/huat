@@ -1,6 +1,6 @@
 "use client";
-import { cn } from "@/lib/utils";
-import { ButtonHTMLAttributes, forwardRef } from "react";
+import { cn, ripple } from "@/lib/utils";
+import { ButtonHTMLAttributes, forwardRef, useCallback } from "react";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "ghost" | "danger";
@@ -9,10 +9,15 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = "primary", size = "md", loading, children, disabled, ...props }, ref) => {
-    const base = "inline-flex items-center justify-center font-semibold transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed";
+  ({ className, variant = "primary", size = "md", loading, children, disabled, onClick, ...props }, ref) => {
+    const handleClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+      ripple(e);
+      onClick?.(e);
+    }, [onClick]);
+
+    const base = "relative overflow-hidden inline-flex items-center justify-center font-semibold transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed";
     const variants = {
-      primary: "bg-[#E8311A] text-white hover:bg-[#c9280f] active:scale-[0.98]",
+      primary: "bg-[#E8311A] text-white hover:bg-[#c9280f]",
       secondary: "bg-[#282828] text-[#F0F0F0] border border-[#333333] hover:border-[#444444] hover:bg-[#222]",
       ghost: "text-[#9CA3AF] hover:text-[#F0F0F0] hover:bg-[#282828]",
       danger: "bg-[#EF4444] text-white hover:bg-[#dc2626]",
@@ -28,6 +33,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         className={cn(base, variants[variant], sizes[size], className)}
         disabled={disabled || loading}
+        onClick={handleClick}
         {...props}
       >
         {loading ? (

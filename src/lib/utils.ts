@@ -58,3 +58,15 @@ export function truncate(str: string, max: number): string {
   if (str.length <= max) return str;
   return str.slice(0, max - 1) + "…";
 }
+
+export function ripple(e: React.MouseEvent<HTMLElement>) {
+  const el = e.currentTarget;
+  const rect = el.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const span = document.createElement("span");
+  const size = Math.max(rect.width, rect.height) * 2;
+  span.style.cssText = `position:absolute;border-radius:50%;transform:scale(0);animation:btn-ripple 500ms ease-out;pointer-events:none;width:${size}px;height:${size}px;left:${x - size / 2}px;top:${y - size / 2}px;background:currentColor;opacity:0.15;`;
+  el.appendChild(span);
+  span.addEventListener("animationend", () => span.remove());
+}

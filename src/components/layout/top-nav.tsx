@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { TrendingUp, User, Search, X, Bell, MessageSquare, LogOut } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, ripple } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { ThemeToggle } from "@/components/theme-toggle";
 import type { Profile } from "@/types/database";
@@ -235,9 +235,9 @@ function ProfileMenu({ profile }: { profile: Profile }) {
   return (
     <div ref={ref} className="relative flex-shrink-0">
       <button
-        onClick={() => setOpen(o => !o)}
+        onClick={e => { ripple(e); setOpen(o => !o); }}
         className={cn(
-          "w-8 h-8 rounded-full bg-[#282828] border flex items-center justify-center text-xs font-bold transition-colors",
+          "relative overflow-hidden w-8 h-8 rounded-full bg-[#282828] border flex items-center justify-center text-xs font-bold transition-colors",
           open ? "border-[#555555] text-[#F0F0F0]" : "border-[#333333] text-[#9CA3AF] hover:border-[#555555] hover:text-[#F0F0F0]"
         )}
       >
@@ -277,8 +277,8 @@ function MobileSearchOverlay() {
   return (
     <>
       <button
-        onClick={() => setOpen(true)}
-        className="sm:hidden relative w-10 h-10 flex items-center justify-center rounded-lg text-[#71717A] hover:text-[#F0F0F0] hover:bg-[#141414] transition-colors"
+        onClick={e => { ripple(e); setOpen(true); }}
+        className="sm:hidden relative overflow-hidden w-10 h-10 flex items-center justify-center rounded-lg text-[#71717A] hover:text-[#F0F0F0] hover:bg-[#141414] transition-colors"
       >
         <Search style={{ width: 20, height: 20 }} />
       </button>
@@ -346,7 +346,8 @@ export function TopNav({ unreadNotifs = 0, unreadMessages = 0, profile }: { unre
           <Link
             href="/notifications"
             title="Notifications"
-            className="relative w-10 h-10 flex items-center justify-center rounded-lg text-[#71717A] hover:text-[#F0F0F0] hover:bg-[#141414] transition-colors"
+            onClick={ripple}
+            className="relative overflow-hidden w-10 h-10 flex items-center justify-center rounded-lg text-[#71717A] hover:text-[#F0F0F0] hover:bg-[#141414] transition-colors"
           >
             <Bell style={{ width: 22, height: 22 }} />
             {unreadNotifs > 0 && (
@@ -358,7 +359,8 @@ export function TopNav({ unreadNotifs = 0, unreadMessages = 0, profile }: { unre
           <Link
             href="/messages"
             title="Messages"
-            className="relative w-10 h-10 flex items-center justify-center rounded-lg text-[#71717A] hover:text-[#F0F0F0] hover:bg-[#141414] transition-colors"
+            onClick={ripple}
+            className="relative overflow-hidden w-10 h-10 flex items-center justify-center rounded-lg text-[#71717A] hover:text-[#F0F0F0] hover:bg-[#141414] transition-colors"
           >
             <MessageSquare style={{ width: 22, height: 22 }} />
             {unreadMessages > 0 && (

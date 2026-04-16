@@ -39,7 +39,7 @@ function renderTextWithLinks(text: string) {
 import { Heart, MessageCircle, Repeat2, RefreshCw, Upload, Bookmark, MoreHorizontal, TrendingUp, TrendingDown, Flag, Pencil, Trash2, Send, PenLine, X, Link2, Check } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { cn, timeAgo, timeLeft, formatPrice } from "@/lib/utils";
+import { cn, timeAgo, timeLeft, formatPrice, ripple } from "@/lib/utils";
 import type { Post, Sentiment, Profile } from "@/types/database";
 
 interface PostCardProps {
@@ -637,8 +637,8 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
                       <Link
                         key={ticker}
                         href={`/stocks/${ticker}`}
-                        onClick={e => e.stopPropagation()}
-                        className="inline-flex items-center gap-0.5 text-xs font-mono tracking-wider mr-1.5 border border-[#333333] rounded px-1.5 py-0.5 text-[#F0F0F0] bg-[#1C1C1C] hover:bg-[#282828] transition-colors"
+                        onClick={e => { e.stopPropagation(); ripple(e); }}
+                        className="relative overflow-hidden inline-flex items-center gap-0.5 text-xs font-mono tracking-wider mr-1.5 border border-[#333333] rounded px-1.5 py-0.5 text-[#F0F0F0] bg-[#1C1C1C] hover:bg-[#282828] transition-colors"
                         style={{ verticalAlign: "middle" }}
                       >
                         {post.sentiment && (

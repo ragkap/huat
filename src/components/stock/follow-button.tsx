@@ -48,7 +48,7 @@ export function FollowButton({
       onClick={toggle}
       className={following
         ? "relative flex items-center gap-1.5 px-3 py-1.5 rounded border border-[#333333] bg-[#1C1C1C] text-[#9CA3AF] text-sm font-medium hover:border-[#EF4444] hover:text-[#EF4444] transition-colors"
-        : "relative flex items-center gap-1.5 px-3 py-1.5 rounded border border-[#E8311A]/40 text-[#E8311A] text-sm font-medium hover:bg-[#E8311A]/10 transition-colors"
+        : "relative flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#E8311A] text-white text-sm font-semibold hover:bg-[#c9280f] transition-colors"
       }
     >
       <style>{`
@@ -68,16 +68,11 @@ export function FollowButton({
         }
       `}</style>
 
-      {/* Idle glow pulse on Watch */}
-      {!following && (
-        <span className="absolute inset-0 rounded" style={{ animation: "watch-glow 2s ease-in-out infinite" }} />
-      )}
-
       {/* Burst particles */}
       {burst && PARTICLES.map((p, i) => (
         <span
           key={i}
-          className="pointer-events-none absolute left-1/2 top-1/2 w-1.5 h-1.5 rounded-full bg-[#E8311A]"
+          className="pointer-events-none absolute left-1/2 top-1/2 w-1.5 h-1.5 rounded-full bg-white"
           style={{
             "--a": `${p.angle}deg`,
             "--d": `-${p.d}px`,
