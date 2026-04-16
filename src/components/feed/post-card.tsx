@@ -710,7 +710,8 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
                   {/* Thumbnail — real image or placeholder */}
                   <div className="w-1/3 min-h-[160px] flex-shrink-0 bg-[#141414] flex items-center justify-center overflow-hidden">
                     {og.og_image ? (
-                      <img src={og.og_image} alt="" className="w-full h-full object-cover" />
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={og.og_image} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                     ) : (
                       <svg className="w-6 h-6 text-[#333333]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                         <rect x="3" y="3" width="18" height="18" rx="2" />

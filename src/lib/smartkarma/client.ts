@@ -106,7 +106,8 @@ export async function getChart(ticker: string, yahooTicker: string, interval = "
     const encodedTicker = encodeURIComponent(ticker);
     const encodedYahoo = encodeURIComponent(yahooTicker);
     const data = (await skFetch(
-      `${SK_API_BASE}/price-api/get-chart?ticker=${encodedTicker}&yahoo_ticker=${encodedYahoo}&interval=${interval}`
+      `${SK_API_BASE}/price-api/get-chart?ticker=${encodedTicker}&yahoo_ticker=${encodedYahoo}&interval=${interval}`,
+      3600
     )) as { close?: number[]; time_period?: string[] };
     return {
       dates: data.time_period ?? [],

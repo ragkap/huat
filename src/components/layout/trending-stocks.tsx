@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { getStockBySlugOrTicker } from "@/lib/stocks-db/client";
+import { getStocksBySlugs } from "@/lib/stocks-db/client";
 import { LastVisitedWidget } from "@/components/layout/last-visited-widget";
 
 async function getTrendingStocks() {
@@ -29,20 +29,20 @@ async function getTrendingStocks() {
       .slice(0, 10)
       .map(([ticker, count]) => ({ ticker, count }));
 
-    // Resolve names
-    const resolved = await Promise.all(
-      top.map(async ({ ticker, count }) => {
-        const stock = await getStockBySlugOrTicker(ticker).catch(() => null);
-        return {
-          ticker,
-          count,
-          name: stock?.name ?? ticker,
-          slug: stock?.slug ?? ticker,
-        };
-      })
-    );
+    // Resolve names in a single batch query instead of N individual lookups
+    const tickers = top.map(t => t.ticker);
+    const stocks = await getStocksBySlugs(tickers).catch(() => []);
+    const stockMap = new Map(stocks.map(s => [s.slug, s]));
 
-    return resolved;
+    return top.map(({ ticker, count }) => {
+      const stock = stockMap.get(ticker);
+      return {
+        ticker,
+        count,
+        name: stock?.name ?? ticker,
+        slug: stock?.slug ?? ticker,
+      };
+    });
   } catch {
     return [];
   }

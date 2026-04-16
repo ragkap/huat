@@ -99,7 +99,7 @@ export async function searchStocks(query: string, limit = 20): Promise<SGStock[]
   }
 }
 
-export async function getStockNamesByTickers(tickers: string[]): Promise<Record<string, string>> {
+async function _getStockNamesByTickers(tickers: string[]): Promise<Record<string, string>> {
   if (!tickers.length) return {};
   const client = await getPool().connect();
   try {
@@ -119,6 +119,12 @@ export async function getStockNamesByTickers(tickers: string[]): Promise<Record<
     client.release();
   }
 }
+
+export const getStockNamesByTickers = unstable_cache(
+  _getStockNamesByTickers,
+  ["stock-names"],
+  { revalidate: 300 }
+);
 
 export interface StockIdentity {
   slug: string;
@@ -179,7 +185,7 @@ export async function getResearchForTicker(bloombergTicker: string, limit = 20):
   }
 }
 
-export async function getStockBySlugOrTicker(identifier: string): Promise<SGStock | null> {
+async function _getStockBySlugOrTicker(identifier: string): Promise<SGStock | null> {
   const client = await getPool().connect();
   try {
     const result = await client.query<SGStock>(
@@ -197,3 +203,9 @@ export async function getStockBySlugOrTicker(identifier: string): Promise<SGStoc
     client.release();
   }
 }
+
+export const getStockBySlugOrTicker = unstable_cache(
+  _getStockBySlugOrTicker,
+  ["stock-by-id"],
+  { revalidate: 3600 }
+);
