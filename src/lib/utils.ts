@@ -59,14 +59,21 @@ export function truncate(str: string, max: number): string {
   return str.slice(0, max - 1) + "…";
 }
 
-export function ripple(e: React.MouseEvent<HTMLElement>) {
+export function ripple(e: React.MouseEvent<HTMLElement> | React.TouchEvent<HTMLElement>) {
   const el = e.currentTarget;
   const rect = el.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
+  let x = rect.width / 2;
+  let y = rect.height / 2;
+  if ("clientX" in e && (e.clientX || e.clientY)) {
+    x = e.clientX - rect.left;
+    y = e.clientY - rect.top;
+  } else if ("touches" in e && e.touches.length) {
+    x = e.touches[0].clientX - rect.left;
+    y = e.touches[0].clientY - rect.top;
+  }
   const span = document.createElement("span");
-  const size = Math.max(rect.width, rect.height) * 2;
-  span.style.cssText = `position:absolute;border-radius:50%;transform:scale(0);animation:btn-ripple 500ms ease-out;pointer-events:none;width:${size}px;height:${size}px;left:${x - size / 2}px;top:${y - size / 2}px;background:currentColor;opacity:0.15;`;
+  const sz = Math.max(rect.width, rect.height) * 2;
+  span.style.cssText = `position:absolute;border-radius:50%;transform:scale(0);animation:btn-ripple 400ms ease-out forwards;pointer-events:none;z-index:0;width:${sz}px;height:${sz}px;left:${x - sz / 2}px;top:${y - sz / 2}px;background:currentColor;opacity:0.2;`;
   el.appendChild(span);
-  span.addEventListener("animationend", () => span.remove());
+  setTimeout(() => span.remove(), 500);
 }
