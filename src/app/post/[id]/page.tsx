@@ -89,33 +89,49 @@ export default async function PostThreadPage({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  // Unauthenticated: show minimal public view (for OG crawlers + link previews)
+  // Unauthenticated: show full public view with interactions gated behind login
   if (!user) {
     const adminSb = (await import("@supabase/supabase-js")).createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
     );
-    const { data: post } = await adminSb
-      .from("posts")
-      .select("content, tagged_stocks, sentiment, created_at, author:profiles!posts_author_id_fkey(display_name, username, avatar_url)")
-      .eq("id", id)
-      .single();
-    if (!post) notFound();
-    const author = post.author as { display_name?: string; username?: string } | null;
+    const [postRes, repliesRes] = await Promise.all([
+      adminSb.from("posts").select(SELECT).eq("id", id).single(),
+      adminSb.from("posts").select(SELECT).eq("parent_id", id).order("created_at", { ascending: true }),
+    ]);
+    if (postRes.error || !postRes.data) notFound();
+
+    // Enrich with reaction counts (no user-specific data)
+    const allPosts = [postRes.data as Record<string, unknown>, ...((repliesRes.data ?? []) as Record<string, unknown>[])];
+    const postIds = allPosts.map(p => p.id as string);
+    const allTickers = [...new Set(allPosts.flatMap(p => (p.tagged_stocks as string[]) ?? []))];
+    const [reactionsResult, stockNames] = await Promise.all([
+      adminSb.from("reactions").select("post_id, type").in("post_id", postIds),
+      getStockNamesByTickers(allTickers).catch(() => ({} as Record<string, string>)),
+    ]);
+    const allReactions = reactionsResult.data ?? [];
+    const enriched = allPosts.map(post => {
+      const postReactions = allReactions.filter(r => r.post_id === post.id);
+      const counts = { like: 0, fire: 0, rocket: 0, bear: 0, total: 0 };
+      for (const r of postReactions) {
+        counts[r.type as keyof typeof counts] = (counts[r.type as keyof typeof counts] as number) + 1;
+        counts.total++;
+      }
+      const tagged_stock_names: Record<string, string> = {};
+      for (const t of (post.tagged_stocks as string[]) ?? []) {
+        if (stockNames[t]) tagged_stock_names[t] = stockNames[t];
+      }
+      return { ...(post as unknown as Post), reactions_count: counts, user_reaction: null, is_saved: false, tagged_stock_names };
+    }) as Post[];
+
+    const [publicPost, ...publicReplies] = enriched;
     return (
-      <div className="max-w-xl mx-auto px-5 py-10">
-        <div className="mb-6">
-          <p className="text-lg font-bold text-[#F0F0F0]">{author?.display_name}</p>
-          <p className="text-sm text-[#71717A]">@{author?.username}</p>
-        </div>
-        <p className="text-[#F0F0F0] text-base leading-relaxed mb-6">{post.content as string}</p>
-        <a
-          href="/login"
-          className="inline-flex items-center gap-2 px-6 py-3 rounded bg-[#E8311A] text-white font-bold hover:bg-[#c9280f] transition-colors"
-        >
-          Join Huat.co to reply — it&apos;s free
-        </a>
-      </div>
+      <PostThreadClient
+        initialPost={publicPost}
+        initialReplies={publicReplies}
+        profile={null}
+        autoReply={false}
+      />
     );
   }
 

@@ -66,7 +66,7 @@ function ReplyComposer({ parentId, profile, onReply, autoFocus }: {
 interface PostThreadClientProps {
   initialPost: Post;
   initialReplies: Post[];
-  profile: Profile;
+  profile: Profile | null;
   autoReply?: boolean;
 }
 
@@ -74,8 +74,14 @@ export function PostThreadClient({ initialPost, initialReplies, profile, autoRep
   const router = useRouter();
   const [post, setPost] = useState<Post>(initialPost);
   const [replies, setReplies] = useState<Post[]>(initialReplies);
+  const isGuest = !profile;
+
+  function gateLogin() {
+    router.push("/login");
+  }
 
   function handleReact(postId: string, type: string) {
+    if (isGuest) { gateLogin(); return; }
     const update = (p: Post): Post => {
       if (p.id !== postId) return p;
       const wasReacted = !!p.user_reaction;
@@ -95,6 +101,7 @@ export function PostThreadClient({ initialPost, initialReplies, profile, autoRep
   }
 
   function handleSave(postId: string) {
+    if (isGuest) { gateLogin(); return; }
     const update = (p: Post): Post => p.id === postId ? { ...p, is_saved: !p.is_saved } : p;
     if (post.id === postId) setPost(p => update(p));
     setReplies(rs => rs.map(update));
@@ -115,6 +122,7 @@ export function PostThreadClient({ initialPost, initialReplies, profile, autoRep
   }
 
   function handleRepost(postId: string) {
+    if (isGuest) { gateLogin(); return; }
     const update = (p: Post): Post => p.id !== postId ? p : {
       ...p,
       user_reposted: !p.user_reposted,
@@ -126,6 +134,7 @@ export function PostThreadClient({ initialPost, initialReplies, profile, autoRep
   }
 
   function handleVote(postId: string, optionId: string) {
+    if (isGuest) { gateLogin(); return; }
     const update = (p: Post): Post => {
       if (p.id !== postId || !p.poll) return p;
       const poll = { ...p.poll };
@@ -149,7 +158,7 @@ export function PostThreadClient({ initialPost, initialReplies, profile, autoRep
     <div>
       {/* Back header */}
       <div className="sticky top-14 z-10 flex items-center gap-3 px-4 py-3 border-b border-[#282828] bg-[#0A0A0A]/95 backdrop-blur-md">
-        <button onClick={() => router.back()} className="w-8 h-8 flex items-center justify-center rounded-lg text-[#71717A] hover:text-[#F0F0F0] hover:bg-[#141414] transition-colors">
+        <button onClick={() => isGuest ? router.push("/") : router.back()} className="w-8 h-8 flex items-center justify-center rounded-lg text-[#71717A] hover:text-[#F0F0F0] hover:bg-[#141414] transition-colors">
           <ArrowLeft className="w-4 h-4" />
         </button>
         <p className="text-sm font-bold text-[#F0F0F0]">Post</p>
@@ -157,8 +166,8 @@ export function PostThreadClient({ initialPost, initialReplies, profile, autoRep
 
       <PostCard
         post={post}
-        currentUserId={profile.id}
-        currentUserProfile={profile}
+        currentUserId={profile?.id}
+        currentUserProfile={profile ?? undefined}
         onReact={handleReact}
         onSave={handleSave}
         onRepost={handleRepost}
@@ -167,7 +176,18 @@ export function PostThreadClient({ initialPost, initialReplies, profile, autoRep
         onDelete={handleDelete}
       />
 
-      <ReplyComposer parentId={post.id} profile={profile} onReply={handleReply} autoFocus={autoReply} />
+      {profile ? (
+        <ReplyComposer parentId={post.id} profile={profile} onReply={handleReply} autoFocus={autoReply} />
+      ) : (
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-[#282828] bg-[#080808]">
+          <a
+            href="/login"
+            className="flex-1 text-center px-4 py-2.5 text-sm font-semibold rounded bg-[#E8311A] text-white hover:bg-[#c9280f] transition-colors"
+          >
+            Join Huat.co to reply — it&apos;s free
+          </a>
+        </div>
+      )}
 
       {replies.length > 0 && (
         <div>
