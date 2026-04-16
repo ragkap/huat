@@ -200,8 +200,8 @@ export function PostThreadClient({ initialPost, initialReplies, profile, autoRep
             <PostCard
               key={reply.id}
               post={reply}
-              currentUserId={profile.id}
-              currentUserProfile={profile}
+              currentUserId={profile?.id}
+              currentUserProfile={profile ?? undefined}
               onReact={handleReact}
               onSave={handleSave}
               onRepost={handleRepost}
