@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { TrendingUp, Users, MessageSquare, BarChart2 } from "lucide-react";
+import { LoadingLink } from "@/components/ui/loading-link";
 
 export default function LandingPage() {
   return (
@@ -10,12 +10,12 @@ export default function LandingPage() {
           <span className="text-[#E8311A] font-black text-3xl tracking-tighter leading-none">Huat</span>
           <span className="text-[#E8311A] font-black text-3xl">发</span>
         </div>
-        <Link
+        <LoadingLink
           href="/login"
-          className="px-5 py-2 text-sm font-semibold text-white bg-[#E8311A] rounded hover:bg-[#c9280f] transition-colors"
+          className="inline-flex items-center justify-center px-5 py-2 text-sm font-semibold text-white bg-[#E8311A] rounded hover:bg-[#c9280f] transition-colors"
         >
           Sign in
-        </Link>
+        </LoadingLink>
       </nav>
 
       {/* Hero */}
@@ -33,18 +33,18 @@ export default function LandingPage() {
           </p>
 
           <div className="flex items-center justify-center gap-4 mt-12">
-            <Link
+            <LoadingLink
               href="/login"
-              className="px-8 py-4 text-base font-black text-white bg-[#E8311A] rounded hover:bg-[#c9280f] transition-colors"
+              className="inline-flex items-center justify-center px-8 py-4 text-base font-black text-white bg-[#E8311A] rounded hover:bg-[#c9280f] transition-colors"
             >
-              Get started — it's free
-            </Link>
-            <Link
+              Get started — it&apos;s free
+            </LoadingLink>
+            <LoadingLink
               href="/stocks"
-              className="px-8 py-4 text-base font-semibold text-[#F0F0F0] border border-[#333333] rounded hover:border-[#444444] transition-colors"
+              className="inline-flex items-center justify-center px-8 py-4 text-base font-semibold text-[#F0F0F0] border border-[#333333] rounded hover:border-[#444444] transition-colors"
             >
               Browse SGX stocks
-            </Link>
+            </LoadingLink>
           </div>
         </div>
 

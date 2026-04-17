@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Send } from "lucide-react";
 import { PostCard } from "@/components/feed/post-card";
 import { Avatar } from "@/components/ui/avatar";
+import { LoadingLink } from "@/components/ui/loading-link";
 import type { Post, Profile } from "@/types/database";
 
 function ReplyComposer({ parentId, profile, onReply, autoFocus }: {
@@ -157,7 +158,7 @@ export function PostThreadClient({ initialPost, initialReplies, profile, autoRep
   return (
     <div>
       {/* Back header */}
-      <div className="sticky top-14 z-10 flex items-center gap-3 px-4 py-3 border-b border-[#282828] bg-[#0A0A0A]/95 backdrop-blur-md">
+      <div className={`sticky ${isGuest ? "top-14" : "top-14"} z-10 flex items-center gap-3 px-4 py-3 border-b border-[#282828] bg-[#0A0A0A]/95 backdrop-blur-md`}>
         <button onClick={() => isGuest ? router.push("/") : router.back()} className="w-8 h-8 flex items-center justify-center rounded-lg text-[#71717A] hover:text-[#F0F0F0] hover:bg-[#141414] transition-colors">
           <ArrowLeft className="w-4 h-4" />
         </button>
@@ -179,13 +180,22 @@ export function PostThreadClient({ initialPost, initialReplies, profile, autoRep
       {profile ? (
         <ReplyComposer parentId={post.id} profile={profile} onReply={handleReply} autoFocus={autoReply} />
       ) : (
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-[#282828] bg-[#080808]">
-          <a
-            href="/login"
-            className="flex-1 text-center px-4 py-2.5 text-sm font-semibold rounded bg-[#E8311A] text-white hover:bg-[#c9280f] transition-colors"
-          >
-            Join Huat.co to reply — it&apos;s free
-          </a>
+        <div className="px-5 py-5">
+          <div className="flex flex-col items-center gap-3 py-4">
+            <p className="text-sm text-[#9CA3AF]">Join the conversation on Huat.co</p>
+            <LoadingLink
+              href="/login"
+              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-semibold rounded bg-[#E8311A] text-white hover:bg-[#c9280f] transition-colors"
+            >
+              Sign up to reply — it&apos;s free
+            </LoadingLink>
+          </div>
+        </div>
+      )}
+
+      {replies.length === 0 && !isGuest && (
+        <div className="flex flex-col items-center justify-center py-16 text-center px-8">
+          <p className="text-[#555555] text-sm">No replies yet. Be the first!</p>
         </div>
       )}
 
@@ -212,11 +222,6 @@ export function PostThreadClient({ initialPost, initialReplies, profile, autoRep
         </div>
       )}
 
-      {replies.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-16 text-center px-8">
-          <p className="text-[#555555] text-sm">No replies yet. Be the first!</p>
-        </div>
-      )}
     </div>
   );
 }

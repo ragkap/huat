@@ -1,30 +1,42 @@
-import { createClient } from "@/lib/supabase/server";
+import { cache } from "react";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { createClient as createSupabase } from "@supabase/supabase-js";
-import { redirect, notFound } from "next/navigation";
+import { notFound } from "next/navigation";
 import { PostThreadClient } from "@/components/post/post-thread-client";
 import type { Post, Profile } from "@/types/database";
 import type { Metadata as NextMetadata } from "next";
 import { getStockNamesByTickers } from "@/lib/stocks-db/client";
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<NextMetadata> {
-  const { id } = await params;
+// Deduplicate post fetch between generateMetadata and page component
+const getPostMeta = cache(async (id: string) => {
   const supabase = createSupabase(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
-  const { data: post } = await supabase
+  const { data } = await supabase
     .from("posts")
-    .select("content, author:profiles!posts_author_id_fkey(display_name)")
+    .select("content, tagged_stocks, author:profiles!posts_author_id_fkey(display_name)")
     .eq("id", id)
     .single();
+  return data;
+});
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<NextMetadata> {
+  const { id } = await params;
+  const post = await getPostMeta(id);
 
   const author = (post?.author as { display_name?: string } | null)?.display_name ?? "Someone";
-  const content = (post?.content as string)?.slice(0, 160) ?? "";
+  const tickers = (post?.tagged_stocks as string[] | null) ?? [];
+  const tickerPrefix = tickers.length ? `$${tickers.map(t => t.replace(/ SP$/, "")).join(" $")} — ` : "";
+  const content = (post?.content as string)?.slice(0, 160 - tickerPrefix.length) ?? "";
   const title = `${author} on Huat.co`;
-  const description = content || `See what ${author} posted on Huat.co`;
-  const ogImage = `https://www.huat.co/post/${id}/opengraph-image`;
+  const description = `${tickerPrefix}${content}` || `See what ${author} posted on Huat.co`;
+  const url = `https://www.huat.co/post/${id}`;
+  const ogImage = `${url}/opengraph-image`;
 
   return {
     title,
     description,
-    openGraph: { title, description, url: `https://www.huat.co/post/${id}`, siteName: "Huat.co", type: "article", images: [{ url: ogImage, width: 1200, height: 630 }] },
+    alternates: { canonical: url },
+    robots: { index: true, follow: true },
+    openGraph: { title, description, url, siteName: "Huat.co", type: "article", images: [{ url: ogImage, width: 1200, height: 630 }] },
     twitter: { card: "summary_large_image", title, description, images: [ogImage] },
   };
 }
@@ -91,20 +103,18 @@ export default async function PostThreadPage({
 
   // Unauthenticated: show full public view with interactions gated behind login
   if (!user) {
-    const adminSb = (await import("@supabase/supabase-js")).createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    );
+    const adminSb = await createServiceClient();
+    // Fetch post, replies, and start stock name lookup all in parallel
     const [postRes, repliesRes] = await Promise.all([
       adminSb.from("posts").select(SELECT).eq("id", id).single(),
       adminSb.from("posts").select(SELECT).eq("parent_id", id).order("created_at", { ascending: true }),
     ]);
     if (postRes.error || !postRes.data) notFound();
 
-    // Enrich with reaction counts (no user-specific data)
     const allPosts = [postRes.data as Record<string, unknown>, ...((repliesRes.data ?? []) as Record<string, unknown>[])];
     const postIds = allPosts.map(p => p.id as string);
     const allTickers = [...new Set(allPosts.flatMap(p => (p.tagged_stocks as string[]) ?? []))];
+    // Reactions + stock names in parallel
     const [reactionsResult, stockNames] = await Promise.all([
       adminSb.from("reactions").select("post_id, type").in("post_id", postIds),
       getStockNamesByTickers(allTickers).catch(() => ({} as Record<string, string>)),

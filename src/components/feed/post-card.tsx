@@ -383,7 +383,7 @@ function EditModal({
   );
 }
 
-function ShareButton({ postId, postContent, authorName }: { postId: string; postContent: string; authorName: string }) {
+function ShareButton({ postId, postContent, authorName, tickers }: { postId: string; postContent: string; authorName: string; tickers?: string[] }) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -398,14 +398,15 @@ function ShareButton({ postId, postContent, authorName }: { postId: string; post
   }, [open]);
 
   const url = `https://www.huat.co/post/${postId}`;
-  const text = `${postContent.slice(0, 100)}${postContent.length > 100 ? "…" : ""} — ${authorName} on Huat.co`;
+  const tickerPrefix = tickers?.length ? `$${tickers.map(t => t.replace(/ SP$/, "")).join(" $")} ` : "";
+  const text = `${tickerPrefix}${postContent.slice(0, 100)}${postContent.length > 100 ? "…" : ""} — ${authorName} on Huat.co`;
 
   async function handleShare(e: React.MouseEvent) {
     e.stopPropagation();
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     if (isMobile && typeof navigator !== "undefined" && navigator.share) {
       try {
-        await navigator.share({ title: `${authorName} on Huat.co`, text: postContent.slice(0, 200), url });
+        await navigator.share({ title: `${authorName} on Huat.co`, text: `${tickerPrefix}${postContent.slice(0, 200)}`, url });
         return;
       } catch { /* user cancelled — fall through to menu */ }
     }
@@ -828,7 +829,7 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
               </button>
 
               {/* Share */}
-              <ShareButton postId={post.id} postContent={post.content} authorName={post.author?.display_name ?? ""} />
+              <ShareButton postId={post.id} postContent={post.content} authorName={post.author?.display_name ?? ""} tickers={post.tagged_stocks} />
             </div>
           </div>
         </div>
