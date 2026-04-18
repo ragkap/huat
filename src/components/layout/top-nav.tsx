@@ -6,6 +6,7 @@ import { TrendingUp, User, Search, X, Bell, MessageSquare, LogOut } from "lucide
 import { cn, ripple } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { AngBaoBadge } from "@/components/angbao/balance-badge";
 import type { Profile } from "@/types/database";
 
 interface SearchResult {
@@ -37,10 +38,23 @@ export function SearchBar({ autoFocus }: { autoFocus?: boolean } = {}) {
   const [recent, setRecent] = useState<SearchResult[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [focused, setFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const router = useRouter();
+
+  // Cmd+K / Ctrl+K global shortcut
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        inputRef.current?.focus();
+      }
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   useEffect(() => { if (autoFocus) inputRef.current?.focus(); }, [autoFocus]);
 
@@ -99,10 +113,46 @@ export function SearchBar({ autoFocus }: { autoFocus?: boolean } = {}) {
     }
   }
 
+  const [selectedIdx, setSelectedIdx] = useState(-1);
+
+  // Reset selection when results change
+  useEffect(() => { setSelectedIdx(-1); }, [results, recent]);
+
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    const items = query.trim() ? results : recent;
+    if (open && items.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setSelectedIdx(i => (i + 1) % (items.length + (query.trim() ? 1 : 0))); // +1 for "See all results"
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        const total = items.length + (query.trim() ? 1 : 0);
+        setSelectedIdx(i => (i - 1 + total) % total);
+        return;
+      }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (selectedIdx >= 0 && selectedIdx < items.length) {
+          const item = items[selectedIdx];
+          handleResultClick(item);
+          router.push(item.href);
+        } else {
+          // "See all results" or no selection
+          setOpen(false);
+          router.push(`/explore?q=${encodeURIComponent(query.trim())}`);
+        }
+        return;
+      }
+    }
     if (e.key === "Enter" && query.trim()) {
       setOpen(false);
       router.push(`/explore?q=${encodeURIComponent(query.trim())}`);
+    }
+    if (e.key === "Escape") {
+      setOpen(false);
+      inputRef.current?.blur();
     }
   }
 
@@ -136,7 +186,8 @@ export function SearchBar({ autoFocus }: { autoFocus?: boolean } = {}) {
           type="text"
           value={query}
           onChange={e => setQuery(e.target.value)}
-          onFocus={handleFocus}
+          onFocus={e => { setFocused(true); handleFocus(); }}
+          onBlur={() => setFocused(false)}
           onKeyDown={handleKeyDown}
           placeholder="Search stocks, people…"
           className="flex-1 bg-transparent text-sm text-[#F0F0F0] placeholder:text-[#71717A] outline-none min-w-0"
@@ -149,6 +200,11 @@ export function SearchBar({ autoFocus }: { autoFocus?: boolean } = {}) {
             <X className="w-3.5 h-3.5" />
           </button>
         )}
+        {!query && !focused && !loading && (
+          <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded border border-[#333333] bg-[#1C1C1C] text-[10px] text-[#555555] font-mono flex-shrink-0">
+            <span className="text-[9px]">⌘</span>K
+          </kbd>
+        )}
       </div>
 
       {showRecent && (
@@ -159,7 +215,7 @@ export function SearchBar({ autoFocus }: { autoFocus?: boolean } = {}) {
               key={i}
               href={r.href}
               onClick={() => handleResultClick(r)}
-              className="flex items-center gap-3 px-3 py-2.5 hover:bg-[#1C1C1C] transition-colors group"
+              className={cn("flex items-center gap-3 px-3 py-2.5 transition-colors group", i === selectedIdx ? "bg-[#E8311A]/10" : "hover:bg-[#1C1C1C]")}
             >
               <div className="w-7 h-7 rounded flex items-center justify-center flex-shrink-0 bg-[#1C1C1C] text-[#555555] text-xs font-bold">
                 {i + 1}
@@ -186,7 +242,7 @@ export function SearchBar({ autoFocus }: { autoFocus?: boolean } = {}) {
               key={i}
               href={r.href}
               onClick={() => handleResultClick(r)}
-              className="flex items-center gap-3 px-3 py-2.5 hover:bg-[#1C1C1C] transition-colors"
+              className={cn("flex items-center gap-3 px-3 py-2.5 transition-colors", i === selectedIdx ? "bg-[#E8311A]/10" : "hover:bg-[#1C1C1C]")}
             >
               <div className={cn(
                 "w-7 h-7 rounded flex items-center justify-center flex-shrink-0",
@@ -202,7 +258,7 @@ export function SearchBar({ autoFocus }: { autoFocus?: boolean } = {}) {
           ))}
           <button
             onClick={() => { setOpen(false); router.push(`/explore?q=${encodeURIComponent(query.trim())}`); }}
-            className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-[#71717A] hover:bg-[#1C1C1C] hover:text-[#F0F0F0] transition-colors border-t border-[#282828]"
+            className={cn("w-full flex items-center gap-2 px-3 py-2.5 text-sm text-[#71717A] transition-colors border-t border-[#282828]", selectedIdx === results.length ? "bg-[#E8311A]/10 text-[#F0F0F0]" : "hover:bg-[#1C1C1C] hover:text-[#F0F0F0]")}
           >
             <Search className="w-3.5 h-3.5" />
             See all results for "{query}"
@@ -313,6 +369,8 @@ function LogoLink() {
       onClick={() => {
         if (pathname === "/feed") {
           window.scrollTo({ top: 0, behavior: "smooth" });
+          window.dispatchEvent(new Event("huat:refresh-feed"));
+          router.refresh();
         } else {
           setLoading(true);
           router.push("/feed");
@@ -369,6 +427,7 @@ export function TopNav({ unreadNotifs = 0, unreadMessages = 0, profile }: { unre
               </span>
             )}
           </Link>
+          {profile && <AngBaoBadge username={profile.username} />}
           {profile && <ProfileMenu profile={profile} />}
         </div>
       </div>

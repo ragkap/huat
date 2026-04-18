@@ -413,7 +413,7 @@ function ResearchShareComposer({
   );
 }
 
-function ResearchTab({ ticker, displayTicker, profile }: { ticker: string; displayTicker: string; profile: Profile }) {
+function ResearchTab({ ticker, displayTicker, profile, onPosted }: { ticker: string; displayTicker: string; profile: Profile; onPosted?: () => void }) {
   const [items, setItems] = useState<ResearchItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [sharingIdx, setSharingIdx] = useState<number | null>(null);
@@ -490,7 +490,7 @@ function ResearchTab({ ticker, displayTicker, profile }: { ticker: string; displ
               displayTicker={displayTicker}
               profile={profile}
               onClose={() => setSharingIdx(null)}
-              onPost={() => setSharingIdx(null)}
+              onPost={() => { setSharingIdx(null); onPosted?.(); }}
             />
           )}
         </div>
@@ -505,7 +505,7 @@ interface AnnouncementItem {
   pubDate: string;
 }
 
-function AnnouncementsTab({ ticker, displayTicker, profile }: { ticker: string; displayTicker: string; profile: Profile }) {
+function AnnouncementsTab({ ticker, displayTicker, profile, onPosted }: { ticker: string; displayTicker: string; profile: Profile; onPosted?: () => void }) {
   const [items, setItems] = useState<AnnouncementItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [sharingIdx, setSharingIdx] = useState<number | null>(null);
@@ -581,7 +581,7 @@ function AnnouncementsTab({ ticker, displayTicker, profile }: { ticker: string; 
               displayTicker={displayTicker}
               profile={profile}
               onClose={() => setSharingIdx(null)}
-              onPost={() => setSharingIdx(null)}
+              onPost={() => { setSharingIdx(null); onPosted?.(); }}
             />
           )}
         </div>
@@ -590,7 +590,7 @@ function AnnouncementsTab({ ticker, displayTicker, profile }: { ticker: string; 
   );
 }
 
-function NewsTab({ ticker, displayTicker, profile }: { ticker: string; displayTicker: string; profile: Profile }) {
+function NewsTab({ ticker, displayTicker, profile, onPosted }: { ticker: string; displayTicker: string; profile: Profile; onPosted?: () => void }) {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [sharingIdx, setSharingIdx] = useState<number | null>(null);
@@ -662,7 +662,7 @@ function NewsTab({ ticker, displayTicker, profile }: { ticker: string; displayTi
               displayTicker={displayTicker}
               profile={profile}
               onClose={() => setSharingIdx(null)}
-              onPost={() => setSharingIdx(null)}
+              onPost={() => { setSharingIdx(null); onPosted?.(); }}
             />
           )}
         </div>
@@ -896,11 +896,11 @@ export function StockPageClient({
       {!profile ? (
         <SignupGate stockName={stockName} followerCount={followerCount} postCount={postCount} />
       ) : topTab === "news" ? (
-        <NewsTab ticker={ticker} displayTicker={displayTicker} profile={profile} />
+        <NewsTab ticker={ticker} displayTicker={displayTicker} profile={profile} onPosted={() => setTopTab("posts")} />
       ) : topTab === "announcement" ? (
-        <AnnouncementsTab ticker={ticker} displayTicker={displayTicker} profile={profile} />
+        <AnnouncementsTab ticker={ticker} displayTicker={displayTicker} profile={profile} onPosted={() => setTopTab("posts")} />
       ) : topTab === "research" ? (
-        <ResearchTab ticker={ticker} displayTicker={displayTicker} profile={profile} />
+        <ResearchTab ticker={ticker} displayTicker={displayTicker} profile={profile} onPosted={() => setTopTab("posts")} />
       ) : (
         <FeedList
           tab="foryou"

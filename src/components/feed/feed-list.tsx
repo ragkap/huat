@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { PostComposer } from "@/components/feed/post-composer";
 import { PostCard } from "@/components/feed/post-card";
+import { useAngBaoToast } from "@/components/angbao/credit-toast";
 import type { Post, Profile } from "@/types/database";
 
 function PostSkeleton() {
@@ -41,7 +42,17 @@ interface FeedListProps {
 }
 
 export function FeedList({ tab, profile, stockTicker, postType, authorId, initialPosts }: FeedListProps) {
+  const angbao = useAngBaoToast();
   const [posts, setPosts] = useState<Post[]>(initialPosts ?? []);
+  const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
+
+  // Fetch following IDs once on mount
+  useEffect(() => {
+    fetch("/api/users/connections?rel_type=follow")
+      .then(r => r.ok ? r.json() : { ids: [] })
+      .then(d => setFollowingIds(new Set(d.ids ?? [])))
+      .catch(() => {});
+  }, []);
   const [page, setPage] = useState(initialPosts?.length ? 1 : 0);
   const [loading, setLoading] = useState(!initialPosts);
   const [hasMore, setHasMore] = useState(initialPosts ? initialPosts.length === 20 : true);
@@ -74,6 +85,19 @@ export function FeedList({ tab, profile, stockTicker, postType, authorId, initia
       setLoading(false);
     }
   }, [tab, stockTicker, postType]);
+
+  // Listen for feed refresh events (from logo click, sidebar feed click, etc.)
+  useEffect(() => {
+    function onRefresh() {
+      setPosts([]);
+      setPage(0);
+      setHasMore(true);
+      resettingRef.current = true;
+      fetchPosts(0, true);
+    }
+    window.addEventListener("huat:refresh-feed", onRefresh);
+    return () => window.removeEventListener("huat:refresh-feed", onRefresh);
+  }, [fetchPosts]);
 
   // On mount: skip fetch if server already provided initial posts, else fetch
   const mountedRef = useRef(false);
@@ -130,13 +154,16 @@ export function FeedList({ tab, profile, stockTicker, postType, authorId, initia
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ type }),
     });
+    if (!wasReacted) angbao.showCredit("react", 0.25);
   }
 
   async function handleSave(postId: string) {
     const post = posts.find(p => p.id === postId);
-    const method = post?.is_saved ? "DELETE" : "POST";
+    const wasSaved = post?.is_saved;
+    const method = wasSaved ? "DELETE" : "POST";
     await fetch(`/api/posts/${postId}/save`, { method });
     setPosts(prev => prev.map(p => p.id === postId ? { ...p, is_saved: !p.is_saved } : p));
+    if (!wasSaved) angbao.showCredit("save", 0.25);
   }
 
   function handleEdit(postId: string, newContent: string) {
@@ -158,6 +185,7 @@ export function FeedList({ tab, profile, stockTicker, postType, authorId, initia
         author: profile,
       },
     }));
+    angbao.showCredit("reply", 1);
   }
 
   async function handleVote(postId: string, optionId: string) {
@@ -192,11 +220,22 @@ export function FeedList({ tab, profile, stockTicker, postType, authorId, initia
       reposts_count: (p.reposts_count ?? 0) + (wasReposted ? -1 : 1),
     }));
     await fetch(`/api/posts/${postId}/repost`, { method: "POST" });
+    if (!wasReposted) angbao.showCredit("repost", 0.50);
   }
 
   const feedTopRef = useRef<HTMLDivElement>(null);
   const [quotingPost, setQuotingPost] = useState<Post | null>(null);
   const [newPostIds, setNewPostIds] = useState<Set<string>>(new Set());
+
+  async function handleFollow(userId: string) {
+    setFollowingIds(prev => new Set(prev).add(userId));
+    await fetch("/api/users/connections", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ subject_id: userId, rel_type: "follow" }),
+    });
+    angbao.showCredit("follow", 0.50);
+  }
 
   function handleQuote(post: Post) {
     setQuotingPost(post);
@@ -206,13 +245,18 @@ export function FeedList({ tab, profile, stockTicker, postType, authorId, initia
   function markNew(id: string) {
     setNewPostIds(prev => new Set(prev).add(id));
     setTimeout(() => setNewPostIds(prev => { const next = new Set(prev); next.delete(id); return next; }), 3500);
+    // Scroll the new post into view
+    requestAnimationFrame(() => {
+      const el = document.getElementById(`post-${id}`);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
   }
 
   function handleComposerPost(newPost?: Record<string, unknown>) {
     if (newPost && quotingPost) {
       const enriched = {
         ...newPost,
-        author: profile,
+        author: (newPost as Record<string, unknown>).author ?? profile,
         quoted_post: {
           id: quotingPost.id,
           content: quotingPost.content,
@@ -223,16 +267,22 @@ export function FeedList({ tab, profile, stockTicker, postType, authorId, initia
         reactions_count: { like: 0, fire: 0, rocket: 0, bear: 0, total: 0 },
         replies_count: 0,
         reposts_count: 0,
+        user_reaction: null,
+        is_saved: false,
+        user_reposted: false,
       } as unknown as Post;
       setPosts(prev => [enriched, ...prev]);
       markNew(enriched.id);
     } else if (newPost) {
       const enriched = {
         ...newPost,
-        author: profile,
+        author: (newPost as Record<string, unknown>).author ?? profile,
         reactions_count: { like: 0, fire: 0, rocket: 0, bear: 0, total: 0 },
         replies_count: 0,
         reposts_count: 0,
+        user_reaction: null,
+        is_saved: false,
+        user_reposted: false,
       } as unknown as Post;
       setPosts(prev => [enriched, ...prev]);
       markNew(enriched.id);
@@ -240,6 +290,17 @@ export function FeedList({ tab, profile, stockTicker, postType, authorId, initia
       fetchPosts(0, true);
     }
     setQuotingPost(null);
+    if (newPost) {
+      const pt = (newPost as Record<string, unknown>).post_type as string;
+      const atts = (newPost as Record<string, unknown>).attachments as { type: string }[] | undefined;
+      const hasImage = atts?.some(a => a.type === "image");
+      const hasLink = atts?.some(a => a.type === "link");
+      if (pt === "poll") angbao.showCredit("poll", 2);
+      else if (pt === "forecast") angbao.showCredit("forecast", 3);
+      else if (hasLink) angbao.showCredit("post_link", 3);
+      else if (hasImage) angbao.showCredit("post_image", 2);
+      else angbao.showCredit("post", 1);
+    }
   }
 
   const showComposer = !authorId;
@@ -290,6 +351,8 @@ export function FeedList({ tab, profile, stockTicker, postType, authorId, initia
               post={post}
               currentUserId={profile.id}
               currentUserProfile={profile}
+              followingIds={followingIds}
+              onFollow={handleFollow}
               isNew={newPostIds.has(post.id)}
               onReact={handleReact}
               onSave={handleSave}

@@ -5,19 +5,31 @@ import { ArrowLeft, Send } from "lucide-react";
 import { PostCard } from "@/components/feed/post-card";
 import { Avatar } from "@/components/ui/avatar";
 import { LoadingLink } from "@/components/ui/loading-link";
+import { useMentions } from "@/hooks/use-mentions";
+import { MentionDropdown } from "@/components/ui/mention-dropdown";
+import { useAngBaoToast } from "@/components/angbao/credit-toast";
 import type { Post, Profile } from "@/types/database";
 
-function ReplyComposer({ parentId, profile, onReply, autoFocus }: {
+function ReplyComposer({ parentId, profile, onReply, autoFocus, replyToUsername }: {
   parentId: string;
   profile: Profile;
   onReply: (post: Post) => void;
   autoFocus?: boolean;
+  replyToUsername?: string;
 }) {
-  const [content, setContent] = useState("");
+  const [content, setContent] = useState(replyToUsername ? `@${replyToUsername} ` : "");
   const [posting, setPosting] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const mentions = useMentions(textareaRef, content, setContent);
 
-  useEffect(() => { if (autoFocus) textareaRef.current?.focus(); }, [autoFocus]);
+  useEffect(() => {
+    if (autoFocus && textareaRef.current) {
+      textareaRef.current.focus();
+      // Place cursor at end (after the @username)
+      const len = textareaRef.current.value.length;
+      textareaRef.current.setSelectionRange(len, len);
+    }
+  }, [autoFocus]);
 
   async function handlePost() {
     if (!content.trim() || posting) return;
@@ -30,7 +42,7 @@ function ReplyComposer({ parentId, profile, onReply, autoFocus }: {
     if (res.ok) {
       const { post } = await res.json();
       onReply(post);
-      setContent("");
+      setContent(replyToUsername ? `@${replyToUsername} ` : "");
     }
     setPosting(false);
   }
@@ -38,16 +50,27 @@ function ReplyComposer({ parentId, profile, onReply, autoFocus }: {
   return (
     <div className="flex gap-3 px-5 py-4 border-b border-[#282828] bg-[#080808]">
       <Avatar src={profile.avatar_url} alt={profile.display_name} size="sm" />
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 relative">
         <textarea
           ref={textareaRef}
           value={content}
-          onChange={e => setContent(e.target.value)}
-          onKeyDown={e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handlePost(); }}
+          onChange={e => mentions.handleChange(e.target.value)}
+          onKeyDown={e => {
+            if (mentions.handleKeyDown(e)) return;
+            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handlePost();
+          }}
           placeholder="Write a reply…"
           rows={2}
           className="w-full bg-transparent text-sm text-[#F0F0F0] placeholder:text-[#555555] resize-none focus:outline-none leading-relaxed"
         />
+        {mentions.mentionActive && (
+          <MentionDropdown
+            results={mentions.mentionResults}
+            selectedIndex={mentions.selectedIndex}
+            onSelect={mentions.selectMention}
+            loading={mentions.mentionLoading}
+          />
+        )}
         <div className="flex items-center justify-between mt-2">
           <span className="text-xs text-[#555555]">{content.length > 900 ? `${1000 - content.length} left` : ""}</span>
           <button
@@ -76,6 +99,7 @@ export function PostThreadClient({ initialPost, initialReplies, profile, autoRep
   const [post, setPost] = useState<Post>(initialPost);
   const [replies, setReplies] = useState<Post[]>(initialReplies);
   const isGuest = !profile;
+  const angbao = useAngBaoToast();
 
   function gateLogin() {
     router.push("/login");
@@ -98,16 +122,21 @@ export function PostThreadClient({ initialPost, initialReplies, profile, autoRep
     };
     if (post.id === postId) setPost(p => update(p));
     setReplies(rs => rs.map(update));
+    const target = post.id === postId ? post : replies.find(r => r.id === postId);
+    const wasReacted = !!target?.user_reaction;
     fetch(`/api/posts/${postId}/react`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type }) });
+    if (!wasReacted) angbao.showCredit("react", 0.25);
   }
 
   function handleSave(postId: string) {
     if (isGuest) { gateLogin(); return; }
-    const update = (p: Post): Post => p.id === postId ? { ...p, is_saved: !p.is_saved } : p;
-    if (post.id === postId) setPost(p => update(p));
-    setReplies(rs => rs.map(update));
     const p = post.id === postId ? post : replies.find(r => r.id === postId);
-    fetch(`/api/posts/${postId}/save`, { method: p?.is_saved ? "DELETE" : "POST" });
+    const wasSaved = p?.is_saved;
+    const update = (pp: Post): Post => pp.id === postId ? { ...pp, is_saved: !pp.is_saved } : pp;
+    if (post.id === postId) setPost(pp => update(pp));
+    setReplies(rs => rs.map(update));
+    fetch(`/api/posts/${postId}/save`, { method: wasSaved ? "DELETE" : "POST" });
+    if (!wasSaved) angbao.showCredit("save", 0.25);
   }
 
   function handleDelete(postId: string) {
@@ -132,6 +161,8 @@ export function PostThreadClient({ initialPost, initialReplies, profile, autoRep
     if (post.id === postId) setPost(p => update(p));
     setReplies(rs => rs.map(update));
     fetch(`/api/posts/${postId}/repost`, { method: "POST" });
+    const rp = post.id === postId ? post : replies.find(r => r.id === postId);
+    if (!rp?.user_reposted) angbao.showCredit("repost", 0.50);
   }
 
   function handleVote(postId: string, optionId: string) {
@@ -153,6 +184,7 @@ export function PostThreadClient({ initialPost, initialReplies, profile, autoRep
   function handleReply(newPost: Post) {
     setReplies(rs => [...rs, newPost]);
     setPost(p => ({ ...p, replies_count: (p.replies_count ?? 0) + 1 }));
+    angbao.showCredit("reply", 1);
   }
 
   return (
@@ -178,7 +210,7 @@ export function PostThreadClient({ initialPost, initialReplies, profile, autoRep
       />
 
       {profile ? (
-        <ReplyComposer parentId={post.id} profile={profile} onReply={handleReply} autoFocus={autoReply} />
+        <ReplyComposer parentId={post.id} profile={profile} onReply={handleReply} autoFocus={autoReply} replyToUsername={post.author?.username !== profile?.username ? post.author?.username : undefined} />
       ) : (
         <div className="px-5 py-5">
           <div className="flex flex-col items-center gap-3 py-4">

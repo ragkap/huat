@@ -93,6 +93,10 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
               <span className="text-[#F0F0F0] font-bold text-sm">{postsCountRes.count ?? 0}</span>
               <span className="text-[#9CA3AF] text-sm ml-1">Posts</span>
             </div>
+            <div>
+              <span className="text-[#E8311A] font-bold text-sm">🧧 ${(profile.angbao_balance as number ?? 0).toFixed(2)}</span>
+              <span className="text-[#9CA3AF] text-sm ml-1">AngBao</span>
+            </div>
           </div>
         </div>
       </div>

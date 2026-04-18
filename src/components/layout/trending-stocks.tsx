@@ -1,3 +1,4 @@
+import { TrendingUp } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getStocksBySlugs } from "@/lib/stocks-db/client";
 import { RippleLink } from "@/components/ui/ripple-link";
@@ -55,7 +56,10 @@ export async function TrendingStocks() {
     <div className="space-y-3">
       {/* Trending widget */}
       <div className="border border-[#282828] rounded-lg p-4">
-        <p className="text-xs font-bold text-[#9CA3AF] uppercase tracking-wider mb-3">Trending Stocks</p>
+        <div className="flex items-center gap-2 mb-3">
+          <TrendingUp className="w-3.5 h-3.5 text-[#9CA3AF]" />
+          <p className="text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">Trending Stocks</p>
+        </div>
         {trending.length === 0 ? (
           <p className="text-xs text-[#555555]">No activity yet this week</p>
         ) : (

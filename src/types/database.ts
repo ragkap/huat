@@ -25,6 +25,16 @@ export interface Profile {
   website: string | null;
   country: Country;
   is_verified: boolean;
+  angbao_balance: number;
+  created_at: string;
+}
+
+export interface AngBaoTransaction {
+  id: string;
+  user_id: string;
+  amount: number;
+  reason: string;
+  ref_id: string | null;
   created_at: string;
 }
 

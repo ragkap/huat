@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Clock } from "lucide-react";
 import { ripple } from "@/lib/utils";
 
 function fullyDecode(s: string): string {
@@ -52,7 +53,10 @@ export function LastVisitedWidget() {
 
   return (
     <div className="border border-[#282828] rounded-lg p-4">
-      <p className="text-xs font-bold text-[#9CA3AF] uppercase tracking-wider mb-3">Last Visited</p>
+      <div className="flex items-center gap-2 mb-3">
+        <Clock className="w-3.5 h-3.5 text-[#9CA3AF]" />
+        <p className="text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">Last Visited</p>
+      </div>
       <div className="space-y-0.5">
         {visited.map((s, i) => (
           <Link

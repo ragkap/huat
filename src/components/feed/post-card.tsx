@@ -26,26 +26,45 @@ function shortenUrl(url: string): string {
 }
 
 function renderTextWithLinks(text: string) {
-  const parts = text.split(/(https?:\/\/[^\s]+)/g);
-  return parts.map((part, i) =>
-    /^https?:\/\//.test(part) ? (
-      <a key={i} href={part} target="_blank" rel="noopener noreferrer"
-        className="text-[#E8311A]/50 hover:text-[#E8311A]/80 transition-colors"
-        onClick={e => e.stopPropagation()}
-      >{shortenUrl(part)}</a>
-    ) : part
-  );
+  // Split on URLs and @mentions
+  const parts = text.split(/(https?:\/\/[^\s]+|@[\w.]+)/g);
+  return parts.map((part, i) => {
+    if (/^https?:\/\//.test(part)) {
+      return (
+        <a key={i} href={part} target="_blank" rel="noopener noreferrer"
+          className="text-[#E8311A]/50 hover:text-[#E8311A]/80 transition-colors"
+          onClick={e => e.stopPropagation()}
+        >{shortenUrl(part)}</a>
+      );
+    }
+    if (/^@[\w.]+$/.test(part)) {
+      const username = part.slice(1);
+      return (
+        <a key={i} href={`/profile/${username}`}
+          className="text-[#E8311A]/70 hover:text-[#E8311A] transition-colors"
+          onClick={e => e.stopPropagation()}
+        >{part}</a>
+      );
+    }
+    return part;
+  });
 }
-import { Heart, MessageCircle, Repeat2, RefreshCw, Upload, Bookmark, MoreHorizontal, TrendingUp, TrendingDown, Flag, Pencil, Trash2, Send, PenLine, X, Check } from "lucide-react";
+import { Heart, MessageCircle, Repeat2, RefreshCw, Upload, Bookmark, MoreHorizontal, TrendingUp, TrendingDown, MoveHorizontal, Flag, Pencil, Trash2, Send, PenLine, X, Check } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn, timeAgo, timeLeft, formatPrice, ripple } from "@/lib/utils";
+import { useMentions } from "@/hooks/use-mentions";
+import { MentionDropdown } from "@/components/ui/mention-dropdown";
 import type { Post, Sentiment, Profile } from "@/types/database";
+
+import { useAngBaoToast } from "@/components/angbao/credit-toast";
 
 interface PostCardProps {
   post: Post;
   currentUserId?: string;
   currentUserProfile?: Profile;
+  followingIds?: Set<string>;
+  onFollow?: (userId: string) => void;
   onReact?: (postId: string, type: string) => void;
   onSave?: (postId: string) => void;
   onRepost?: (postId: string) => void;
@@ -62,6 +81,7 @@ function SentimentIcon({ sentiment }: { sentiment: Sentiment | null }) {
   if (!sentiment) return null;
   if (sentiment === "bullish") return <TrendingUp className="w-3.5 h-3.5 text-[#22C55E]" />;
   if (sentiment === "bearish") return <TrendingDown className="w-3.5 h-3.5 text-[#EF4444]" />;
+  if (sentiment === "neutral") return <MoveHorizontal className="w-3.5 h-3.5 text-[#9CA3AF]" />;
   return null;
 }
 
@@ -481,7 +501,7 @@ function MoreMenu({
 
 interface OgData { og_title?: string | null; og_description?: string | null; og_image?: string | null; og_site_name?: string | null; }
 
-export function PostCard({ post, currentUserId, currentUserProfile, onReact, onSave, onRepost, onEdit, onDelete, onReply, onQuote, onVote, isNew }: PostCardProps) {
+export function PostCard({ post, currentUserId, currentUserProfile, followingIds, onFollow, onReact, onSave, onRepost, onEdit, onDelete, onReply, onQuote, onVote, isNew }: PostCardProps) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -493,6 +513,7 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
   const [localRepliesCount, setLocalRepliesCount] = useState(post.replies_count ?? 0);
   const [repostMenuOpen, setRepostMenuOpen] = useState(false);
   const replyRef = useRef<HTMLTextAreaElement>(null);
+  const replyMentions = useMentions(replyRef, replyContent, setReplyContent);
 
   useEffect(() => {
     if (post.post_type !== "post") return;
@@ -549,7 +570,7 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
         />
       )}
 
-      <article className={cn("px-5 pt-5 pb-4 hover:bg-[#0D0D0D] transition-colors group relative", isNew && "animate-highlight")}>
+      <article id={`post-${post.id}`} className={cn("px-5 pt-5 pb-4 hover:bg-[#0D0D0D] transition-colors group relative", isNew && "animate-highlight")}>
         <div className="flex gap-3">
           {/* Avatar */}
           <Link href={`/profile/${post.author?.username}`} className="flex-shrink-0">
@@ -564,6 +585,15 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
                 <Link href={`/profile/${post.author?.username}`} className="font-bold text-[#9CA3AF] hover:underline text-sm">
                   {post.author?.display_name}
                 </Link>
+                <span className="text-[#555555] text-xs">@{post.author?.username}</span>
+                {followingIds && post.author_id !== currentUserId && !followingIds.has(post.author_id) && onFollow && (
+                  <button
+                    onClick={e => { e.stopPropagation(); onFollow(post.author_id); }}
+                    className="text-[#E8311A] text-xs font-semibold hover:text-[#c9280f] transition-colors"
+                  >
+                    +Follow
+                  </button>
+                )}
                 <span className="text-[#9CA3AF] text-xs">·</span>
                 <span className="text-[#9CA3AF] text-xs">{timeAgo(post.created_at)}</span>
                 {post.updated_at !== post.created_at && (
@@ -585,8 +615,13 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
                         key={ticker}
                         href={`/stocks/${ticker}`}
                         onClick={e => { e.stopPropagation(); ripple(e); }}
-                        className="relative overflow-hidden inline-flex items-center gap-0.5 text-xs font-mono tracking-wider mr-1.5 border border-[#333333] rounded px-1.5 py-0.5 text-[#F0F0F0] bg-[#1C1C1C] hover:bg-[#282828] transition-colors"
-                        style={{ verticalAlign: "middle" }}
+                        className="relative overflow-hidden inline-flex items-center gap-0.5 text-xs font-mono tracking-wider mr-1.5 border rounded px-1.5 py-0.5 text-[#F0F0F0] hover:brightness-125 transition-all"
+                        style={{
+                          verticalAlign: "middle",
+                          borderColor: post.sentiment === "bullish" ? "#22C55E" : post.sentiment === "bearish" ? "#EF4444" : "#333333",
+                          backgroundColor: post.sentiment === "bullish" ? "rgba(34,197,94,0.1)" : post.sentiment === "bearish" ? "rgba(239,68,68,0.1)" : "rgba(60,60,60,0.3)",
+                          color: post.sentiment === "bullish" ? "#22C55E" : post.sentiment === "bearish" ? "#EF4444" : "#9CA3AF",
+                        }}
                       >
                         {post.sentiment && (
                           <span style={{ color: sentimentColor, marginRight: 3 }}>
@@ -627,6 +662,7 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
                       <div className="flex items-center gap-2 mb-1.5">
                         <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ color: badgeColor, backgroundColor: `${badgeColor}15` }}>{badge}</span>
                         {source && !/^smartkarma$/i.test(source) && <span className="text-[10px] text-[#555555]">{source}</span>}
+                        <span className="text-[10px] text-[#444444]">{timeAgo(post.created_at)}</span>
                       </div>
                       <p className="text-sm font-medium text-[#F0F0F0] leading-snug line-clamp-2">{title}</p>
                       {summary && <p className="text-xs text-[#9CA3AF] leading-relaxed mt-1.5 line-clamp-3">{summary}</p>}
@@ -696,6 +732,7 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
                   <span className="text-[10px] text-[#555555] font-medium uppercase tracking-wider">Quoting</span>
                   <span className="text-[10px] text-[#555555]">·</span>
                   <span className="text-xs font-semibold text-[#71717A]">{post.quoted_post.author?.display_name}</span>
+                  <span className="text-[10px] text-[#555555]">@{post.quoted_post.author?.username}</span>
                   <span className="text-[10px] text-[#444444]">{timeAgo(post.quoted_post.created_at)}</span>
                 </div>
                 <p className="text-xs text-[#9CA3AF] line-clamp-3 leading-relaxed mt-1">{post.quoted_post.content}</p>
@@ -719,7 +756,22 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
               {/* Comment */}
               <div className="flex items-center ml-2">
                 <button
-                  onClick={e => { e.stopPropagation(); setReplyOpen(o => !o); setTimeout(() => replyRef.current?.focus(), 50); }}
+                  onClick={e => {
+                    e.stopPropagation();
+                    setReplyOpen(o => {
+                      if (!o && post.author?.username && post.author_id !== currentUserId) {
+                        setReplyContent(`@${post.author.username} `);
+                      }
+                      return !o;
+                    });
+                    setTimeout(() => {
+                      if (replyRef.current) {
+                        replyRef.current.focus();
+                        const len = replyRef.current.value.length;
+                        replyRef.current.setSelectionRange(len, len);
+                      }
+                    }, 50);
+                  }}
                   className={cn("flex items-center justify-center w-8 h-8 rounded-full transition-colors", (replyOpen || localRepliesCount > 0) ? "text-[#E8311A]" : "text-[#555555] hover:text-[#9CA3AF]")}
                 >
                   <MessageCircle className="w-[16px] h-[16px]" />
@@ -784,12 +836,20 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
         {post.latest_reply && !replyOpen && (
           <Link
             href={`/post/${post.id}`}
-            className="flex items-center gap-2.5 mt-3 ml-11 mr-0 pl-3 py-2 rounded-lg bg-[#111111] border border-[#222222] hover:border-[#333333] hover:bg-[#151515] transition-colors"
+            className="block mt-3 ml-11 mr-0 px-3 py-2.5 rounded-lg bg-[#111111] border border-[#222222] hover:border-[#333333] hover:bg-[#151515] transition-colors"
             onClick={e => e.stopPropagation()}
           >
-            <Avatar src={post.latest_reply.author?.avatar_url ?? null} alt={post.latest_reply.author?.display_name ?? "User"} size="xs" />
-            <span className="text-xs font-semibold text-[#71717A] whitespace-nowrap">{post.latest_reply.author?.display_name}</span>
-            <span className="text-xs text-[#444444] line-clamp-1 flex-1 min-w-0 pr-3">{post.latest_reply.content}</span>
+            <div className="flex items-center gap-2 mb-1.5">
+              <MessageCircle className="w-3 h-3 text-[#555555]" />
+              <span className="text-[10px] font-semibold text-[#555555] uppercase tracking-wider">Reply</span>
+              <span className="text-[10px] text-[#444444]">{timeAgo(post.latest_reply.created_at)}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Avatar src={post.latest_reply.author?.avatar_url ?? null} alt={post.latest_reply.author?.display_name ?? "User"} size="xs" />
+              <span className="text-xs font-semibold text-[#9CA3AF]">{post.latest_reply.author?.display_name}</span>
+              <span className="text-[10px] text-[#555555]">@{post.latest_reply.author?.username}</span>
+            </div>
+            <p className="text-xs text-[#71717A] line-clamp-2 leading-relaxed mt-1.5 ml-6">{post.latest_reply.content}</p>
           </Link>
         )}
       </article>
@@ -797,12 +857,13 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
       {/* Inline reply composer */}
       {replyOpen && currentUserProfile && (
         <div className="px-5 pb-4 bg-[#080808]" onClick={e => e.stopPropagation()}>
-          <div className="ml-11">
+          <div className="ml-11 relative">
             <textarea
               ref={replyRef}
               value={replyContent}
-              onChange={e => setReplyContent(e.target.value)}
+              onChange={e => replyMentions.handleChange(e.target.value)}
               onKeyDown={async e => {
+                if (replyMentions.handleKeyDown(e)) return;
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
                   if (!replyContent.trim() || replyPosting) return;
@@ -826,6 +887,14 @@ export function PostCard({ post, currentUserId, currentUserProfile, onReact, onS
               rows={3}
               className="w-full bg-transparent text-sm text-[#F0F0F0] placeholder:text-[#555555] resize-none focus:outline-none leading-relaxed border border-[#333333] rounded-lg px-3 py-2.5 focus:border-[#555555] transition-colors"
             />
+            {replyMentions.mentionActive && (
+              <MentionDropdown
+                results={replyMentions.mentionResults}
+                selectedIndex={replyMentions.selectedIndex}
+                onSelect={replyMentions.selectMention}
+                loading={replyMentions.mentionLoading}
+              />
+            )}
             <div className="flex justify-end mt-2">
               <button
                 onClick={async () => {

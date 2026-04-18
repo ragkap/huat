@@ -1,9 +1,11 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
-import { Image as ImageIcon, BarChart2, TrendingUp, TrendingDown, X, Plus, Crosshair } from "lucide-react";
+import { Image as ImageIcon, BarChart2, TrendingUp, TrendingDown, MoveHorizontal, X, Plus, Crosshair } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { useMentions } from "@/hooks/use-mentions";
+import { MentionDropdown } from "@/components/ui/mention-dropdown";
 import type { Profile, Sentiment, PostType } from "@/types/database";
 
 interface PollOption { id: string; text: string; }
@@ -38,6 +40,7 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
   const stockInputRef = useRef<HTMLInputElement>(null);
   const stockContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const mentions = useMentions(textareaRef, content, setContent);
   const [pollOptions, setPollOptions] = useState<PollOption[]>([
     { id: "1", text: "" }, { id: "2", text: "" },
   ]);
@@ -263,18 +266,34 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
             <div className="flex gap-2 items-start">
               <span className="text-xs font-black text-[#555555] pt-2.5 leading-none flex-shrink-0 w-3 text-center">2</span>
               <div className="flex-1 min-w-0 space-y-2">
-                <textarea
-                  ref={textareaRef}
-                  value={content}
-                  onChange={e => setContent(e.target.value.slice(0, MAX_CHARS))}
-                  placeholder={
-                    postType === "poll" ? "Ask a question..." :
-                    postType === "forecast" ? "What's your thesis?" :
-                    "What are your thoughts? 发!"
-                  }
-                  className="w-full bg-[#141414] border border-[#333333] rounded-lg px-3 py-2.5 text-[#F0F0F0] placeholder:text-[#9CA3AF] text-sm resize-none focus:outline-none focus:border-[#444444] min-h-[80px] transition-colors"
-                  rows={3}
-                />
+                <div className="relative">
+                  <textarea
+                    ref={textareaRef}
+                    value={content}
+                    onChange={e => {
+                      const val = e.target.value.slice(0, MAX_CHARS);
+                      mentions.handleChange(val);
+                    }}
+                    onKeyDown={e => {
+                      if (mentions.handleKeyDown(e)) return;
+                    }}
+                    placeholder={
+                      postType === "poll" ? "Ask a question..." :
+                      postType === "forecast" ? "What's your thesis?" :
+                      "What are your thoughts? 发!"
+                    }
+                    className="w-full bg-[#141414] border border-[#333333] rounded-lg px-3 py-2.5 text-[#F0F0F0] placeholder:text-[#9CA3AF] text-sm resize-none focus:outline-none focus:border-[#444444] min-h-[80px] transition-colors"
+                    rows={3}
+                  />
+                  {mentions.mentionActive && (
+                    <MentionDropdown
+                      results={mentions.mentionResults}
+                      selectedIndex={mentions.selectedIndex}
+                      onSelect={mentions.selectMention}
+                      loading={mentions.mentionLoading}
+                    />
+                  )}
+                </div>
                 {/* Link preview */}
                 {linkPreview && !linkPreviewDismissed && (linkPreview.og_title || linkPreview.og_image) && (
                   <div className="relative flex items-stretch border border-[#282828] rounded-lg overflow-hidden bg-[#0D0D0D]">
@@ -465,7 +484,7 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
                 {([
                   { value: "bullish", color: "#22C55E", icon: <TrendingUp className="w-3 h-3" /> },
                   { value: "bearish", color: "#EF4444", icon: <TrendingDown className="w-3 h-3" /> },
-                  { value: "neutral", color: "#C0C0C0", icon: null },
+                  { value: "neutral", color: "#9CA3AF", icon: <MoveHorizontal className="w-3 h-3" /> },
                 ] as { value: Sentiment; color: string; icon: React.ReactNode }[]).map(({ value: s, color, icon }) => (
                   <button
                     key={s}

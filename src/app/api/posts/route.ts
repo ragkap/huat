@@ -274,5 +274,12 @@ export async function POST(request: Request) {
     }
   }
 
-  return NextResponse.json({ post }, { status: 201 });
+  // Re-fetch with author join so the response is consistent
+  const { data: fullPost } = await supabase
+    .from("posts")
+    .select(`*, author:profiles!posts_author_id_fkey(id, username, display_name, avatar_url, is_verified, country)`)
+    .eq("id", post.id)
+    .single();
+
+  return NextResponse.json({ post: fullPost ?? post }, { status: 201 });
 }

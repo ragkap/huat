@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Home, Compass, LayoutDashboard, X, Star, Sparkles } from "lucide-react";
 import { cn, ripple } from "@/lib/utils";
 import { useEffect, useState, useRef } from "react";
@@ -158,6 +158,7 @@ function StockDrawer({ ticker, data, onClose }: { ticker: string; data: StockPan
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Extract ticker from /stocks/[ticker]
@@ -181,7 +182,15 @@ export function Sidebar() {
               <Link
                 key={href}
                 href={href}
-                onClick={ripple}
+                onClick={e => {
+                  ripple(e);
+                  if (active && href === "/feed") {
+                    e.preventDefault();
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                    window.dispatchEvent(new Event("huat:refresh-feed"));
+                    router.refresh();
+                  }
+                }}
                 className={cn(
                   "relative overflow-hidden flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium transition-colors",
                   active
@@ -219,7 +228,14 @@ export function Sidebar() {
             <Link
               key={href}
               href={href}
-              onClick={ripple}
+              onClick={e => {
+                ripple(e);
+                if (active && href === "/feed") {
+                  e.preventDefault();
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                  router.refresh();
+                }
+              }}
               className={cn(
                 "relative overflow-hidden flex-1 flex flex-col items-center justify-center gap-1 py-3 text-xs font-medium transition-colors",
                 active ? "text-[#F0F0F0]" : "text-[#555555]"

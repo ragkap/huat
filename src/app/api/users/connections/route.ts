@@ -2,6 +2,23 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+export async function GET(request: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { searchParams } = new URL(request.url);
+  const relType = searchParams.get("rel_type") ?? "follow";
+
+  const { data } = await supabase
+    .from("social_graph")
+    .select("subject_id")
+    .eq("actor_id", user.id)
+    .eq("rel_type", relType);
+
+  return NextResponse.json({ ids: (data ?? []).map(r => r.subject_id) });
+}
+
 const Schema = z.object({
   subject_id: z.string().uuid(),
   rel_type: z.enum(["follow", "connect_request", "connect"]),
