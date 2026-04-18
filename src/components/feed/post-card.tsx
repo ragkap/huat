@@ -21,7 +21,9 @@ function shortenUrl(url: string): string {
   try {
     const { hostname, pathname } = new URL(url);
     const host = hostname.replace(/^www\./, "");
-    return pathname.length > 1 ? `${host}/…` : host;
+    if (pathname.length <= 1) return host;
+    const short = pathname.length > 40 ? pathname.slice(0, 40) + "…" : pathname;
+    return `${host}${short}`;
   } catch { return url; }
 }
 
