@@ -34,7 +34,7 @@ function renderTextWithLinks(text: string) {
     if (/^https?:\/\//.test(part)) {
       return (
         <a key={i} href={part} target="_blank" rel="noopener noreferrer"
-          className="text-[#E8311A]/50 hover:text-[#E8311A]/80 transition-colors"
+          className="text-[#E8311A]/70 hover:text-[#E8311A] transition-colors"
           onClick={e => e.stopPropagation()}
         >{shortenUrl(part)}</a>
       );
