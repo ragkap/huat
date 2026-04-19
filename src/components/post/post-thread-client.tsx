@@ -102,7 +102,7 @@ export function PostThreadClient({ initialPost, initialReplies, profile, autoRep
   const angbao = useAngBaoToast();
 
   function gateLogin() {
-    router.push("/login");
+    router.push(`/login?redirect=${encodeURIComponent(`/post/${post.id}`)}`);
   }
 
   function handleReact(postId: string, type: string) {
@@ -216,7 +216,7 @@ export function PostThreadClient({ initialPost, initialReplies, profile, autoRep
           <div className="flex flex-col items-center gap-3 py-4">
             <p className="text-sm text-[#9CA3AF]">Join the conversation on Huat.co</p>
             <LoadingLink
-              href="/login"
+              href={`/login?redirect=${encodeURIComponent(`/post/${post.id}`)}`}
               className="inline-flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-semibold rounded bg-[#E8311A] text-white hover:bg-[#c9280f] transition-colors"
             >
               Sign up to reply — it&apos;s free

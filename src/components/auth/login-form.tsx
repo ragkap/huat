@@ -15,11 +15,16 @@ export function LoginForm() {
   const router = useRouter();
   const supabase = createClient();
 
+  // Read redirect destination from URL params (e.g. /login?redirect=/post/abc)
+  const redirectTo = typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search).get("redirect") ?? "/feed"
+    : "/feed";
+
   async function handleGoogle() {
     setLoading(true);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectTo)}` },
     });
     if (error) { setError(error.message); setLoading(false); }
   }
@@ -38,7 +43,7 @@ export function LoginForm() {
     setError("");
     const { error } = await supabase.auth.verifyOtp({ phone, token: otp, type: "sms" });
     if (error) { setError(error.message); }
-    else { router.push("/feed"); }
+    else { router.push(redirectTo); }
     setLoading(false);
   }
 
@@ -58,7 +63,7 @@ export function LoginForm() {
       const { token } = await verRes.json();
       if (token) {
         await supabase.auth.setSession(token);
-        router.push("/feed");
+        router.push(redirectTo);
       }
     } catch (e: unknown) {
       setError((e as Error).message ?? "Passkey authentication failed");

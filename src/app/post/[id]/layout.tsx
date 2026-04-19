@@ -8,7 +8,8 @@ import { AngBaoToastProvider } from "@/components/angbao/credit-toast";
 import { TrendingStocks } from "@/components/layout/trending-stocks";
 import type { Profile } from "@/types/database";
 
-export default async function PostLayout({ children }: { children: React.ReactNode }) {
+export default async function PostLayout({ children, params }: { children: React.ReactNode; params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -23,8 +24,8 @@ export default async function PostLayout({ children }: { children: React.ReactNo
               <span className="text-[#E8311A] font-black text-2xl">发</span>
             </a>
             <div className="flex items-center gap-3">
-              <LoadingLink href="/login" className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-[#9CA3AF] hover:text-[#F0F0F0] transition-colors">Log in</LoadingLink>
-              <LoadingLink href="/login" className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded bg-[#E8311A] text-white hover:bg-[#c9280f] transition-colors">Sign up</LoadingLink>
+              <LoadingLink href={`/login?redirect=${encodeURIComponent(`/post/${id}`)}`} className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-[#9CA3AF] hover:text-[#F0F0F0] transition-colors">Log in</LoadingLink>
+              <LoadingLink href={`/login?redirect=${encodeURIComponent(`/post/${id}`)}`} className="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded bg-[#E8311A] text-white hover:bg-[#c9280f] transition-colors">Sign up</LoadingLink>
             </div>
           </div>
         </header>
