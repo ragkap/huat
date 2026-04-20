@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   const supabase = await createClient();
   const { data: profiles } = await supabase
     .from("profiles")
-    .select("username, display_name, country")
+    .select("id, username, display_name, avatar_url, country")
     .or(`username.ilike.%${q}%,display_name.ilike.%${q}%`)
     .limit(5);
 

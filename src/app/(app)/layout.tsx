@@ -7,6 +7,7 @@ import { RightAside } from "@/components/layout/right-aside";
 import { TrendingStocks } from "@/components/layout/trending-stocks";
 import { AngBaoLeaderboard } from "@/components/layout/angbao-leaderboard";
 import { AngBaoToastProvider } from "@/components/angbao/credit-toast";
+import { FloatingChat } from "@/components/messaging/floating-chat";
 import type { Profile } from "@/types/database";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -46,6 +47,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </RightAside>
         </div>
       </div>
+      <FloatingChat currentUserId={user.id} profile={profile as Profile} />
     </AngBaoToastProvider>
   );
 }

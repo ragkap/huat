@@ -20,7 +20,27 @@ export async function GET() {
     .eq("user_id", user.id)
     .order("joined_at", { ascending: false });
 
-  return NextResponse.json({ threads: participations ?? [] });
+  // Enrich with other participant's profile
+  const threadIds = (participations ?? []).map(p => p.thread_id);
+  const { data: allParticipants } = threadIds.length
+    ? await supabase
+        .from("thread_participants")
+        .select("thread_id, profile:profiles(id, username, display_name, avatar_url)")
+        .in("thread_id", threadIds)
+        .neq("user_id", user.id)
+    : { data: [] };
+
+  const otherByThread: Record<string, unknown> = {};
+  for (const p of allParticipants ?? []) {
+    otherByThread[p.thread_id] = p.profile;
+  }
+
+  const enriched = (participations ?? []).map(p => ({
+    ...p,
+    other: otherByThread[p.thread_id] ?? null,
+  }));
+
+  return NextResponse.json({ threads: enriched });
 }
 
 const CreateSchema = z.object({
