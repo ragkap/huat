@@ -64,3 +64,6 @@ CREATE POLICY "Messages: participants can insert"
       SELECT thread_id FROM public.thread_participants WHERE user_id = auth.uid()
     )
   );
+
+-- Enable Realtime for messages
+ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;

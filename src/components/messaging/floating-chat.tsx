@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { MessageSquare, X, Send, ChevronDown, Search } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { cn, timeAgo, ripple } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 import type { Profile } from "@/types/database";
 
 interface ChatThread {
@@ -80,22 +81,47 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
     if (open && threads.length === 0) fetchThreads();
   }, [open, fetchThreads, threads.length]);
 
-  // Load messages when thread selected + poll every 3s
+  // Load messages when thread selected + subscribe to realtime
   useEffect(() => {
     if (!activeThread) { setMessages([]); return; }
     fetchMessages(activeThread.thread_id, false);
-    const interval = setInterval(() => {
-      fetchMessages(activeThread.thread_id, true);
-    }, 3000);
-    return () => clearInterval(interval);
+
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`chat:${activeThread.thread_id}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages", filter: `thread_id=eq.${activeThread.thread_id}` },
+        (payload) => {
+          const newMsg = payload.new as ChatMessage;
+          // Skip if we already have this message (optimistic insert)
+          setMessages(prev => {
+            if (prev.some(m => m.id === newMsg.id)) return prev;
+            return [...prev, newMsg];
+          });
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, [activeThread, fetchMessages]);
 
-  // Poll thread list every 10s when panel is open but no active thread
+  // Subscribe to new messages across all threads (for thread list updates)
   useEffect(() => {
-    if (!open || activeThread) return;
-    const interval = setInterval(fetchThreads, 10000);
-    return () => clearInterval(interval);
-  }, [open, activeThread, fetchThreads]);
+    if (!open) return;
+
+    const supabase = createClient();
+    const channel = supabase
+      .channel("chat:threads")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages" },
+        () => { fetchThreads(); }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [open, fetchThreads]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
