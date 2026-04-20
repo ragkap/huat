@@ -34,12 +34,17 @@ export async function middleware(request: NextRequest) {
     /^\/post\/[^/]+$/.test(pathname);
 
   if (!user && !isPublic) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    const loginRedirect = NextResponse.redirect(new URL("/login", request.url));
+    supabaseResponse.cookies.getAll().forEach(c => loginRedirect.cookies.set(c.name, c.value));
+    return loginRedirect;
   }
 
   if (user && pathname === "/login") {
     const redirect = request.nextUrl.searchParams.get("redirect") ?? "/feed";
-    return NextResponse.redirect(new URL(redirect, request.url));
+    const redirectResponse = NextResponse.redirect(new URL(redirect, request.url));
+    // Carry over any cookie changes from the Supabase auth refresh
+    supabaseResponse.cookies.getAll().forEach(c => redirectResponse.cookies.set(c.name, c.value));
+    return redirectResponse;
   }
 
   // Check onboarding completion for authenticated users
