@@ -177,7 +177,7 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
       {!open && (
         <button
           onClick={e => { ripple(e); setOpen(true); }}
-          className="fixed bottom-20 lg:bottom-6 right-4 lg:right-6 z-40 w-14 h-14 rounded-full bg-[#E8311A] text-white flex items-center justify-center shadow-lg shadow-black/30 hover:bg-[#c9280f] transition-colors active:scale-95 relative overflow-hidden"
+          className="fixed bottom-24 lg:bottom-6 right-4 lg:right-6 z-50 w-14 h-14 rounded-full bg-[#E8311A] text-white flex items-center justify-center shadow-lg shadow-black/30 hover:bg-[#c9280f] transition-colors active:scale-95 relative overflow-hidden"
         >
           <MessageSquare className="w-6 h-6" />
         </button>
@@ -185,7 +185,7 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
 
       {/* Chat panel */}
       {open && (
-        <div className="fixed bottom-20 lg:bottom-6 right-4 lg:right-6 z-40 w-[340px] h-[480px] bg-[#141414] border border-[#282828] rounded-2xl shadow-2xl shadow-black/40 flex flex-col overflow-hidden">
+        <div className="fixed bottom-24 lg:bottom-6 right-4 lg:right-6 z-50 w-[340px] h-[480px] bg-[#141414] border border-[#282828] rounded-2xl shadow-2xl shadow-black/40 flex flex-col overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#282828] bg-[#1C1C1C] flex-shrink-0">
             {activeThread ? (
