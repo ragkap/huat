@@ -100,6 +100,25 @@ export function PostThreadClient({ initialPost, initialReplies, profile, autoRep
   const [replies, setReplies] = useState<Post[]>(initialReplies);
   const isGuest = !profile;
   const angbao = useAngBaoToast();
+  const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (isGuest) return;
+    fetch("/api/users/connections?rel_type=follow")
+      .then(r => r.ok ? r.json() : { ids: [] })
+      .then(d => setFollowingIds(new Set(d.ids ?? [])))
+      .catch(() => {});
+  }, [isGuest]);
+
+  async function handleFollow(userId: string) {
+    setFollowingIds(prev => new Set(prev).add(userId));
+    await fetch("/api/users/connections", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ subject_id: userId, rel_type: "follow" }),
+    });
+    angbao.showCredit("follow", 0.50);
+  }
 
   function gateLogin() {
     router.push(`/login?redirect=${encodeURIComponent(`/post/${post.id}`)}`);
@@ -201,6 +220,8 @@ export function PostThreadClient({ initialPost, initialReplies, profile, autoRep
         post={post}
         currentUserId={profile?.id}
         currentUserProfile={profile ?? undefined}
+        followingIds={followingIds}
+        onFollow={handleFollow}
         onReact={handleReact}
         onSave={handleSave}
         onRepost={handleRepost}
@@ -244,6 +265,8 @@ export function PostThreadClient({ initialPost, initialReplies, profile, autoRep
               post={reply}
               currentUserId={profile?.id}
               currentUserProfile={profile ?? undefined}
+              followingIds={followingIds}
+              onFollow={handleFollow}
               onReact={handleReact}
               onSave={handleSave}
               onRepost={handleRepost}
