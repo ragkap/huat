@@ -55,7 +55,7 @@ export async function middleware(request: NextRequest) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("country, username")
-      .eq("id", user.id)
+      .eq("id", user?.id ?? session?.user?.id ?? "")
       .single();
 
     if (!profile?.country || !profile?.username) {
