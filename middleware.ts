@@ -21,7 +21,11 @@ export async function middleware(request: NextRequest) {
     }
   );
 
+  // Use getUser() for auth verification (contacts Supabase Auth server)
   const { data: { user } } = await supabase.auth.getUser();
+  // Also check session from cookies (faster, for redirect decisions)
+  const { data: { session } } = await supabase.auth.getSession();
+  const isAuthenticated = !!user || !!session;
   const { pathname } = request.nextUrl;
 
   const publicPaths = ["/", "/login", "/auth/callback"];
@@ -33,13 +37,13 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/api/stocks/") ||
     /^\/post\/[^/]+$/.test(pathname);
 
-  if (!user && !isPublic) {
+  if (!isAuthenticated && !isPublic) {
     const loginRedirect = NextResponse.redirect(new URL("/login", request.url));
     supabaseResponse.cookies.getAll().forEach(c => loginRedirect.cookies.set(c.name, c.value));
     return loginRedirect;
   }
 
-  if (user && pathname === "/login") {
+  if (isAuthenticated && pathname === "/login") {
     const redirect = request.nextUrl.searchParams.get("redirect") ?? "/feed";
     const redirectResponse = NextResponse.redirect(new URL(redirect, request.url));
     // Carry over any cookie changes from the Supabase auth refresh
@@ -48,7 +52,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Check onboarding completion for authenticated users
-  if (user && !isPublic && pathname !== "/onboarding") {
+  if (isAuthenticated && !isPublic && pathname !== "/onboarding") {
     const { data: profile } = await supabase
       .from("profiles")
       .select("country, username")
