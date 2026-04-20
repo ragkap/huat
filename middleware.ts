@@ -21,12 +21,11 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Use getUser() for auth verification (contacts Supabase Auth server)
   const { data: { user } } = await supabase.auth.getUser();
-  // Also check session from cookies (faster, for redirect decisions)
   const { data: { session } } = await supabase.auth.getSession();
   const isAuthenticated = !!user || !!session;
   const { pathname } = request.nextUrl;
+
 
   const publicPaths = ["/", "/login", "/auth/callback"];
   const isPublic =

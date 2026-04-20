@@ -1,10 +1,18 @@
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 import { LoginForm } from "@/components/auth/login-form";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = { title: "Join Huat.co — Invest Together, Prosper Together" };
 
-export default function LoginPage() {
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ redirect?: string }> }) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    const { redirect: redirectTo } = await searchParams;
+    redirect(redirectTo ?? "/feed");
+  }
   return (
     <div className="min-h-screen bg-[#0A0A0A] flex justify-center">
       <div className="w-full max-w-6xl flex">
