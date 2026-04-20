@@ -1,4 +1,5 @@
-import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabase } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -49,6 +50,7 @@ const CreateSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  try {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -58,7 +60,7 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: "Invalid data" }, { status: 400 });
 
   const { recipient_id, content } = parsed.data;
-  const admin = await createServiceClient();
+  const admin = createSupabase(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
   // Verify connection
   const { data: connection } = await supabase
@@ -94,12 +96,15 @@ export async function POST(request: Request) {
   }
 
   if (!threadId) {
-    const { data: newThread } = await admin
+    const { data: newThread, error: threadErr } = await admin
       .from("message_threads")
       .insert({})
       .select()
       .single();
-    if (!newThread) return NextResponse.json({ error: "Failed to create thread" }, { status: 500 });
+    if (threadErr || !newThread) {
+      console.error("[messages] Failed to create thread:", threadErr);
+      return NextResponse.json({ error: "Failed to create thread" }, { status: 500 });
+    }
     threadId = newThread.id as string;
 
     await admin.from("thread_participants").insert([
@@ -121,4 +126,8 @@ export async function POST(request: Request) {
     .eq("id", threadId);
 
   return NextResponse.json({ message, thread_id: threadId }, { status: 201 });
+  } catch (err) {
+    console.error("[POST /api/messages] error:", err);
+    return NextResponse.json({ error: String(err) }, { status: 500 });
+  }
 }

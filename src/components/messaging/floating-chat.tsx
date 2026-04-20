@@ -63,15 +63,15 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
     }
   }, []);
 
-  // Fetch messages for active thread
-  const fetchMessages = useCallback(async (threadId: string) => {
-    setLoadingMessages(true);
+  // Fetch messages for active thread (silent=true skips loading spinner for polls)
+  const fetchMessages = useCallback(async (threadId: string, silent = false) => {
+    if (!silent) setLoadingMessages(true);
     try {
       const res = await fetch(`/api/messages/${threadId}`);
       const data = await res.json();
       setMessages(data.messages ?? []);
     } finally {
-      setLoadingMessages(false);
+      if (!silent) setLoadingMessages(false);
     }
   }, []);
 
@@ -80,14 +80,22 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
     if (open && threads.length === 0) fetchThreads();
   }, [open, fetchThreads, threads.length]);
 
-  // Load messages when thread selected
+  // Load messages when thread selected + poll every 3s
   useEffect(() => {
-    if (activeThread) {
-      fetchMessages(activeThread.thread_id);
-    } else {
-      setMessages([]);
-    }
+    if (!activeThread) { setMessages([]); return; }
+    fetchMessages(activeThread.thread_id, false);
+    const interval = setInterval(() => {
+      fetchMessages(activeThread.thread_id, true);
+    }, 3000);
+    return () => clearInterval(interval);
   }, [activeThread, fetchMessages]);
+
+  // Poll thread list every 10s when panel is open but no active thread
+  useEffect(() => {
+    if (!open || activeThread) return;
+    const interval = setInterval(fetchThreads, 10000);
+    return () => clearInterval(interval);
+  }, [open, activeThread, fetchThreads]);
 
   // Scroll to bottom on new messages
   useEffect(() => {

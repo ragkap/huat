@@ -1,5 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabase } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+
+const admin = () => createSupabase(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
 export async function GET(request: Request, { params }: { params: Promise<{ threadId: string }> }) {
   const { threadId } = await params;
@@ -7,8 +10,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ thre
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const db = admin();
+
   // Verify participant
-  const { data: participation } = await supabase
+  const { data: participation } = await db
     .from("thread_participants")
     .select("thread_id")
     .eq("thread_id", threadId)
@@ -21,7 +26,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ thre
   const page = Number(searchParams.get("page") ?? 0);
   const PAGE_SIZE = 50;
 
-  const { data: messages } = await supabase
+  const { data: messages } = await db
     .from("messages")
     .select(`
       *,
@@ -31,11 +36,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ thre
     .order("created_at", { ascending: false })
     .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
-  // Get all participants
-  const { data: participants } = await supabase
+  // Get other participants
+  const { data: participants } = await db
     .from("thread_participants")
     .select(`profile:profiles(id, username, display_name, avatar_url)`)
-    .eq("thread_id", threadId);
+    .eq("thread_id", threadId)
+    .neq("user_id", user.id);
 
   return NextResponse.json({
     messages: (messages ?? []).reverse(),
@@ -49,8 +55,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ thr
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const db = admin();
+
   // Verify participant
-  const { data: participation } = await supabase
+  const { data: participation } = await db
     .from("thread_participants")
     .select("thread_id")
     .eq("thread_id", threadId)
@@ -62,13 +70,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ thr
   const { content } = await request.json();
   if (!content?.trim()) return NextResponse.json({ error: "Empty message" }, { status: 400 });
 
-  const { data: message } = await supabase
+  const { data: message } = await db
     .from("messages")
     .insert({ thread_id: threadId, sender_id: user.id, content })
     .select("*, sender:profiles!messages_sender_id_fkey(id, username, display_name, avatar_url)")
     .single();
 
-  await supabase
+  await db
     .from("message_threads")
     .update({ last_msg_at: new Date().toISOString() })
     .eq("id", threadId);
