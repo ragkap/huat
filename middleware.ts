@@ -38,7 +38,8 @@ export async function middleware(request: NextRequest) {
   }
 
   if (user && pathname === "/login") {
-    return NextResponse.redirect(new URL("/feed", request.url));
+    const redirect = request.nextUrl.searchParams.get("redirect") ?? "/feed";
+    return NextResponse.redirect(new URL(redirect, request.url));
   }
 
   // Check onboarding completion for authenticated users
