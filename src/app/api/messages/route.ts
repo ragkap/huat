@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -58,6 +58,7 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: "Invalid data" }, { status: 400 });
 
   const { recipient_id, content } = parsed.data;
+  const admin = await createServiceClient();
 
   // Verify connection
   const { data: connection } = await supabase
@@ -93,7 +94,7 @@ export async function POST(request: Request) {
   }
 
   if (!threadId) {
-    const { data: newThread } = await supabase
+    const { data: newThread } = await admin
       .from("message_threads")
       .insert({})
       .select()
@@ -101,21 +102,20 @@ export async function POST(request: Request) {
     if (!newThread) return NextResponse.json({ error: "Failed to create thread" }, { status: 500 });
     threadId = newThread.id as string;
 
-    await supabase.from("thread_participants").insert([
+    await admin.from("thread_participants").insert([
       { thread_id: threadId, user_id: user.id },
       { thread_id: threadId, user_id: recipient_id },
     ]);
   }
 
-  // Insert message
-  const { data: message } = await supabase
+  // Insert message + update last_msg_at (use admin to bypass RLS)
+  const { data: message } = await admin
     .from("messages")
     .insert({ thread_id: threadId, sender_id: user.id, content })
     .select()
     .single();
 
-  // Update last_msg_at
-  await supabase
+  await admin
     .from("message_threads")
     .update({ last_msg_at: new Date().toISOString() })
     .eq("id", threadId);
