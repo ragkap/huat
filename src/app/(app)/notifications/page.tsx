@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { Avatar } from "@/components/ui/avatar";
 import { timeAgo } from "@/lib/utils";
+import { ConnectActions } from "@/components/profile/connect-actions";
 import type { Notification } from "@/types/database";
 
 export const metadata = { title: "Notifications — Huat.co" };
@@ -69,6 +70,9 @@ export default async function NotificationsPage() {
                   {notifLabel[notif.type] ?? notif.type}
                 </p>
                 <p className="text-xs text-[#71717A] mt-0.5">{timeAgo(notif.created_at)}</p>
+                {notif.type === "connect_request" && notif.actor && (
+                  <ConnectActions actorId={notif.actor.id} />
+                )}
               </div>
             </div>
           ))}

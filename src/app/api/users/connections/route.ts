@@ -73,12 +73,23 @@ export async function DELETE(request: Request) {
 
   const { subject_id, rel_type } = await request.json();
 
+  // Delete in both directions for the given rel_type
   await supabase
     .from("social_graph")
     .delete()
     .eq("actor_id", user.id)
     .eq("subject_id", subject_id)
     .eq("rel_type", rel_type);
+
+  // Also delete the reverse direction (e.g. declining an incoming connect_request)
+  if (rel_type === "connect_request") {
+    await supabase
+      .from("social_graph")
+      .delete()
+      .eq("actor_id", subject_id)
+      .eq("subject_id", user.id)
+      .eq("rel_type", "connect_request");
+  }
 
   // If disconnecting, also remove the other direction
   if (rel_type === "connect") {

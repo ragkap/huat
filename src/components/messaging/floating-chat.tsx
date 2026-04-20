@@ -177,7 +177,7 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
       {!open && (
         <button
           onClick={e => { ripple(e); setOpen(true); }}
-          className="fixed bottom-24 lg:bottom-6 right-4 lg:right-6 z-50 w-14 h-14 rounded-full bg-[#E8311A] text-white flex items-center justify-center shadow-lg shadow-black/30 hover:bg-[#c9280f] transition-colors active:scale-95 relative overflow-hidden"
+          className="fixed bottom-24 lg:bottom-6 right-4 lg:right-6 z-50 w-14 h-14 rounded-full bg-[#E8311A] text-white flex items-center justify-center shadow-lg shadow-black/30 hover:bg-[#c9280f] transition-colors active:scale-95 overflow-hidden"
         >
           <MessageSquare className="w-6 h-6" />
         </button>
