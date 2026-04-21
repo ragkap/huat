@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 import type { Metadata } from "next";
 
@@ -13,7 +12,7 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
     .single();
 
   const name = referrer?.display_name ?? "A friend";
-  const title = `${name} invited you to Huat.co!`;
+  const title = `${name} invited you to Huat!`;
   const description = `Join Singapore's investing community and earn AngBao social credits. Invest together, prosper together!`;
   const ogImage = `https://www.huat.co/ref/${code}/opengraph-image`;
 
@@ -35,5 +34,20 @@ export default async function ReferralPage({ params }: { params: Promise<{ code:
     .single();
 
   const refName = referrer?.display_name ?? "";
-  redirect(`/login?redirect=/feed&ref=${encodeURIComponent(code)}&refname=${encodeURIComponent(refName)}`);
+  const loginUrl = `/login?redirect=/feed&ref=${encodeURIComponent(code)}&refname=${encodeURIComponent(refName)}`;
+
+  // Render a page with meta tags (for OG crawlers) + client-side redirect (for browsers)
+  return (
+    <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
+      <meta httpEquiv="refresh" content={`0;url=${loginUrl}`} />
+      <script dangerouslySetInnerHTML={{ __html: `window.location.replace(${JSON.stringify(loginUrl)})` }} />
+      <div className="text-center">
+        <div className="flex items-baseline gap-2 justify-center mb-4">
+          <span className="text-[#E8311A] font-black text-4xl tracking-tighter">Huat</span>
+          <span className="text-[#E8311A] font-black text-4xl">发</span>
+        </div>
+        <p className="text-[#9CA3AF] text-sm">Redirecting you to sign up...</p>
+      </div>
+    </div>
+  );
 }
