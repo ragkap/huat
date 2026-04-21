@@ -96,7 +96,7 @@ export async function POST(request: Request) {
       await db.from("messages").insert({
         thread_id: thread.id,
         sender_id: referredBy,
-        content: `Hey ${display_name}! 👋 Welcome to Huat.co! I'm ${referrerName} — glad you joined. Feel free to ask me anything about the platform. Huat ah! 🧧发`,
+        content: `Heya 👋 Glad you joined! Feel free to ask me anything about the platform. Huat ah! 🧧发`,
       });
 
       await db.from("message_threads")

@@ -46,18 +46,20 @@ export function FeedList({ tab, profile, stockTicker, postType, authorId, initia
   const [posts, setPosts] = useState<Post[]>(initialPosts ?? []);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
 
-  // Check for pending referral code on mount
+  // Check for pending referral code on mount (delay to let WebSocket connect first)
   useEffect(() => {
     const ref = localStorage.getItem("huat_ref");
     if (ref) {
       localStorage.removeItem("huat_ref");
-      fetch("/api/profile/link-referral", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ referral_code: ref }),
-      }).then(r => r.json()).then(d => {
-        if (d.success) angbao.showCredit("referral_welcome", 8.88);
-      }).catch(() => {});
+      setTimeout(() => {
+        fetch("/api/profile/link-referral", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ referral_code: ref }),
+        }).then(r => r.json()).then(d => {
+          if (d.success) angbao.showCredit("referral_welcome", 8.88);
+        }).catch(() => {});
+      }, 3000);
     }
   }, [angbao]);
 
