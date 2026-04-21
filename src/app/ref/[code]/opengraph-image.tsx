@@ -9,11 +9,13 @@ export default async function OgImage({ params }: { params: Promise<{ code: stri
   const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
   const { data: referrer } = await supabase
     .from("profiles")
-    .select("display_name, username")
+    .select("display_name, username, avatar_url")
     .eq("referral_code", code)
     .single();
 
   const name = referrer?.display_name ?? "A friend";
+  const username = referrer?.username ?? "";
+  const initial = name[0]?.toUpperCase() ?? "?";
 
   return new ImageResponse(
     (
@@ -37,37 +39,65 @@ export default async function OgImage({ params }: { params: Promise<{ code: stri
             position: "absolute",
             inset: 0,
             backgroundImage:
-              "linear-gradient(rgba(232,49,26,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(232,49,26,0.05) 1px, transparent 1px)",
+              "linear-gradient(rgba(232,49,26,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(232,49,26,0.04) 1px, transparent 1px)",
             backgroundSize: "60px 60px",
           }}
         />
 
-        {/* Glow */}
+        {/* Glow behind avatar */}
         <div
           style={{
             position: "absolute",
-            width: 600,
-            height: 400,
-            background: "radial-gradient(ellipse, rgba(232,49,26,0.2) 0%, transparent 70%)",
-            top: "50%",
+            width: 500,
+            height: 500,
+            background: "radial-gradient(ellipse, rgba(232,49,26,0.18) 0%, transparent 70%)",
+            top: "30%",
             left: "50%",
             transform: "translate(-50%, -50%)",
           }}
         />
 
-        {/* Wordmark */}
-        <div style={{ display: "flex", alignItems: "baseline", gap: 16, marginBottom: 24 }}>
-          <span style={{ color: "#E8311A", fontSize: 80, fontWeight: 900, letterSpacing: "-3px", lineHeight: 1 }}>
-            Huat
-          </span>
-          <span style={{ color: "#E8311A", fontSize: 80, fontWeight: 900, lineHeight: 1 }}>
-            发
-          </span>
+        {/* Wordmark — top left */}
+        <div style={{ position: "absolute", top: 40, left: 56, display: "flex", alignItems: "baseline", gap: 10 }}>
+          <span style={{ color: "#E8311A", fontSize: 48, fontWeight: 900, letterSpacing: "-2px" }}>Huat</span>
+          <span style={{ color: "#E8311A", fontSize: 44, fontWeight: 900 }}>发</span>
+        </div>
+
+        {/* Avatar circle */}
+        <div
+          style={{
+            width: 100,
+            height: 100,
+            borderRadius: 50,
+            background: "#E8311A",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            marginBottom: 20,
+            border: "3px solid rgba(232,49,26,0.4)",
+            boxShadow: "0 0 40px rgba(232,49,26,0.3)",
+          }}
+        >
+          {referrer?.avatar_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={referrer.avatar_url}
+              alt=""
+              width={100}
+              height={100}
+              style={{ borderRadius: 50, objectFit: "cover" }}
+            />
+          ) : (
+            <span style={{ color: "white", fontSize: 44, fontWeight: 900 }}>{initial}</span>
+          )}
         </div>
 
         {/* Invite text */}
-        <p style={{ color: "#F0F0F0", fontSize: 36, fontWeight: 700, margin: "0 0 8px 0", textAlign: "center" }}>
+        <p style={{ color: "#F0F0F0", fontSize: 42, fontWeight: 900, margin: 0, textAlign: "center", letterSpacing: "-1px" }}>
           {name} invited you!
+        </p>
+        <p style={{ color: "#71717A", fontSize: 20, margin: "4px 0 0 0" }}>
+          @{username} on Huat.co
         </p>
 
         {/* AngBao bonus */}
@@ -78,24 +108,21 @@ export default async function OgImage({ params }: { params: Promise<{ code: stri
             gap: 12,
             background: "rgba(34,197,94,0.1)",
             border: "1px solid rgba(34,197,94,0.3)",
-            borderRadius: 16,
-            padding: "12px 28px",
-            marginTop: 16,
+            borderRadius: 100,
+            padding: "10px 28px",
+            marginTop: 24,
           }}
         >
-          <span style={{ fontSize: 36 }}>🧧</span>
-          <span style={{ color: "#22C55E", fontSize: 32, fontWeight: 900 }}>+$8.88 Welcome AngBao</span>
+          <span style={{ fontSize: 28 }}>🧧</span>
+          <span style={{ color: "#22C55E", fontSize: 26, fontWeight: 900 }}>Earn AngBao social credits!</span>
         </div>
 
-        {/* Tagline */}
-        <p style={{ color: "#9CA3AF", fontSize: 22, margin: "24px 0 0 0" }}>
-          Singapore&apos;s social network for retail investors
-        </p>
-
-        {/* URL */}
-        <p style={{ color: "#555555", fontSize: 18, margin: "12px 0 0 0", letterSpacing: "1px" }}>
-          huat.co
-        </p>
+        {/* Bottom tagline */}
+        <div style={{ position: "absolute", bottom: 36, display: "flex", alignItems: "center", gap: 16 }}>
+          <span style={{ color: "#555555", fontSize: 18 }}>Join Singapore&apos;s investing community</span>
+          <span style={{ color: "#333333" }}>·</span>
+          <span style={{ color: "#555555", fontSize: 18, letterSpacing: "1px" }}>huat.co</span>
+        </div>
       </div>
     ),
     { ...size }

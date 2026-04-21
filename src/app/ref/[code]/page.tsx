@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
 
   const name = referrer?.display_name ?? "A friend";
   const title = `${name} invited you to Huat.co!`;
-  const description = `Join Singapore's investing community and get a $8.88 AngBao welcome bonus. Invest together, prosper together!`;
+  const description = `Join Singapore's investing community and earn AngBao social credits. Invest together, prosper together!`;
   const ogImage = `https://www.huat.co/ref/${code}/opengraph-image`;
 
   return {
@@ -28,6 +28,12 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
 export default async function ReferralPage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
 
-  // Store the referral code in the redirect URL so we can pick it up after signup
-  redirect(`/login?redirect=/feed&ref=${encodeURIComponent(code)}`);
+  const { data: referrer } = await admin()
+    .from("profiles")
+    .select("display_name")
+    .eq("referral_code", code)
+    .single();
+
+  const refName = referrer?.display_name ?? "";
+  redirect(`/login?redirect=/feed&ref=${encodeURIComponent(code)}&refname=${encodeURIComponent(refName)}`);
 }

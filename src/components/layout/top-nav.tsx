@@ -353,22 +353,22 @@ function SoundToggle() {
 }
 
 // Global state for referral modal — survives dropdown unmount
-let showReferralModal: ((code: string) => void) | null = null;
+let showReferralModal: ((code: string, name: string) => void) | null = null;
 
 function ReferralModalHost() {
-  const [code, setCode] = useState<string | null>(null);
+  const [data, setData] = useState<{ code: string; name: string } | null>(null);
   useEffect(() => {
-    showReferralModal = (c: string) => setCode(c);
+    showReferralModal = (code: string, name: string) => setData({ code, name });
     return () => { showReferralModal = null; };
   }, []);
-  if (!code) return null;
-  return <ReferralModal code={code} onClose={() => setCode(null)} />;
+  if (!data) return null;
+  return <ReferralModal code={data.code} name={data.name} onClose={() => setData(null)} />;
 }
 
-function ReferralButton({ code }: { code: string }) {
+function ReferralButton({ code, name }: { code: string; name: string }) {
   return (
     <button
-      onClick={() => showReferralModal?.(code)}
+      onClick={() => showReferralModal?.(code, name)}
       className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-[#E8311A] hover:text-[#F0F0F0] hover:bg-[#1C1C1C] transition-colors"
     >
       <span className="text-sm">🧧</span>
@@ -387,10 +387,11 @@ const CONFETTI = Array.from({ length: 40 }, (_, i) => ({
   drift: -20 + Math.random() * 40,
 }));
 
-function ReferralModal({ code, onClose }: { code: string; onClose: () => void }) {
+function ReferralModal({ code, name, onClose }: { code: string; name: string; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
   const [phase, setPhase] = useState<"enter" | "visible">("enter");
   const link = `https://www.huat.co/ref/${code}`;
+  const shareText = `🧧 ${name} is inviting you to Huat.co — Singapore's investing community! Join and earn AngBao social credits. ${link}`;
 
   useEffect(() => {
     requestAnimationFrame(() => setPhase("visible"));
@@ -417,9 +418,9 @@ function ReferralModal({ code, onClose }: { code: string; onClose: () => void })
   async function handleShare() {
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     if (isMobile && typeof navigator !== "undefined" && navigator.share) {
-      try { await navigator.share({ url: link }); } catch { /* */ }
+      try { await navigator.share({ text: shareText, url: link }); } catch { /* */ }
     }
-    await navigator.clipboard.writeText(link);
+    await navigator.clipboard.writeText(shareText);
     setCopied(true);
     setTimeout(() => onClose(), 3000);
   }
@@ -481,13 +482,14 @@ function ReferralModal({ code, onClose }: { code: string; onClose: () => void })
               </div>
               <div className="flex items-center gap-3 bg-[#1C1C1C] rounded-lg px-4 py-2.5 border border-[#282828]">
                 <span className="text-base">🧧</span>
-                <p className="text-sm text-[#F0F0F0]">You earn <span className="font-bold text-[#22C55E]">$18.88</span> AngBao per invite</p>
+                <p className="text-sm text-[#F0F0F0]">You earn <span className="font-bold text-[#22C55E]">18.88</span> AngBao credits</p>
               </div>
               <div className="flex items-center gap-3 bg-[#1C1C1C] rounded-lg px-4 py-2.5 border border-[#282828]">
                 <span className="text-base">🎁</span>
-                <p className="text-sm text-[#F0F0F0]">They get <span className="font-bold text-[#22C55E]">$8.88</span> welcome bonus</p>
+                <p className="text-sm text-[#F0F0F0]">They get <span className="font-bold text-[#22C55E]">8.88</span> welcome credits</p>
               </div>
             </div>
+            <p className="text-[10px] text-[#555555] mb-4 leading-relaxed">AngBao is social currency on Huat.co — not real money.</p>
 
             {/* Link display */}
             <div className="flex items-center bg-[#0A0A0A] border border-[#333333] rounded-lg px-3 py-2.5 mb-4">
@@ -570,7 +572,7 @@ function ProfileMenu({ profile }: { profile: Profile }) {
             <User className="w-4 h-4" />
             View profile
           </Link>
-          {profile.referral_code && <ReferralButton code={profile.referral_code} />}
+          {profile.referral_code && <ReferralButton code={profile.referral_code} name={profile.display_name} />}
           <ThemeToggle menuItem />
           <SoundToggle />
           <button
