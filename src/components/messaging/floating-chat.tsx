@@ -99,10 +99,10 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
     }
   }, []);
 
-  // Load threads when panel opens
+  // Load/refresh threads when panel opens
   useEffect(() => {
-    if (open && threads.length === 0) fetchThreads();
-  }, [open, fetchThreads, threads.length]);
+    if (open) fetchThreads();
+  }, [open, fetchThreads]);
 
   // Load messages when thread selected + Realtime subscription
   useEffect(() => {
@@ -269,7 +269,7 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
                 </div>
               </>
             )}
-            <button onClick={() => { setOpen(false); setActiveThread(null); }} className="text-[#71717A] hover:text-[#F0F0F0] transition-colors">
+            <button onClick={() => { setOpen(false); setActiveThread(null); setReadThreads(new Set()); }} className="text-[#71717A] hover:text-[#F0F0F0] transition-colors">
               <X className="w-4 h-4" />
             </button>
           </div>
