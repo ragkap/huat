@@ -105,7 +105,7 @@ export function MessageThread({ threadId, initialMessages, currentUserId, otherU
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-3.5rem-4rem)] lg:h-[calc(100vh-3.5rem)] overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-3.5rem)]">
       {/* Header */}
       <div className="sticky top-14 z-10 bg-[#0A0A0A]/90 backdrop-blur-md border-b border-[#282828] px-4 py-3 flex items-center gap-3">
         <button onClick={() => router.push("/messages")} className="text-[#9CA3AF] hover:text-[#F0F0F0] transition-colors">

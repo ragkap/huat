@@ -48,7 +48,7 @@ export default async function MessagesPage() {
   return (
     <div>
       {/* Header */}
-      <div className="sticky top-14 z-10 flex items-center gap-3 px-5 py-3 border-b border-[#282828] bg-[#0A0A0A]/95 backdrop-blur-md">
+      <div className="flex items-center gap-3 px-5 py-3 border-b border-[#282828]">
         <MessageSquare className="w-4 h-4 text-[#E8311A]" />
         <p className="text-sm font-bold text-[#F0F0F0]">Messages</p>
       </div>
