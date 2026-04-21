@@ -391,7 +391,7 @@ function ReferralModal({ code, name, onClose }: { code: string; name: string; on
   const [copied, setCopied] = useState(false);
   const [phase, setPhase] = useState<"enter" | "visible">("enter");
   const link = `https://www.huat.co/ref/${code}`;
-  const shareText = `🧧 ${name} is inviting you to Huat.co — Singapore's investing community! Join and earn AngBao social credits. ${link}`;
+  const shareText = `🧧 ${name} is inviting you to Huat — Singapore's investing community! Join and earn AngBao social credits.\n\n${link}`;
 
   useEffect(() => {
     requestAnimationFrame(() => setPhase("visible"));
@@ -418,7 +418,7 @@ function ReferralModal({ code, name, onClose }: { code: string; name: string; on
   async function handleShare() {
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     if (isMobile && typeof navigator !== "undefined" && navigator.share) {
-      try { await navigator.share({ text: shareText, url: link }); } catch { /* */ }
+      try { await navigator.share({ text: shareText }); } catch { /* */ }
     }
     await navigator.clipboard.writeText(shareText);
     setCopied(true);
