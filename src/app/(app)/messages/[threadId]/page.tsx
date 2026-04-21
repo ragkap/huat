@@ -43,13 +43,14 @@ export default async function ThreadPage({ params }: ThreadPageProps) {
   const other = ((participantsRes.data ?? [])[0] as any)?.profile as { id: string; username: string; display_name: string; avatar_url: string | null } | null;
 
   return (
-    <div className="-mb-16 lg:mb-0" style={{ minHeight: 0 }}>
+    <>
+      <style>{`main { min-height: 0 !important; padding-bottom: 0 !important; }`}</style>
       <MessageThread
         threadId={threadId}
         initialMessages={(messagesRes.data ?? []) as Parameters<typeof MessageThread>[0]["initialMessages"]}
         currentUserId={user.id}
         otherUser={other}
       />
-    </div>
+    </>
   );
 }
