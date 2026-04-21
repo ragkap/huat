@@ -129,6 +129,10 @@ html.light .ai-prose th { color: #777777; border-bottom-color: #E0E0E0; }
 html.light .ai-prose td { color: #1A1A1A; border-bottom-color: #EEEEEE; }
 html.light .ai-prose td:first-child { color: #777777; }
 
+/* Light mode: ensure textarea/input text is dark */
+html.light textarea, html.light input[type="text"], html.light input:not([type]) { color: #1A1A1A !important; }
+html.light textarea::placeholder, html.light input::placeholder { color: #999999 !important; }
+
 /* Button ripple */
 @keyframes btn-ripple {
   0% { transform: scale(0); opacity: 0.25; }
