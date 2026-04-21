@@ -62,6 +62,9 @@ CREATE TRIGGER on_social_graph_created
   AFTER INSERT ON public.social_graph
   FOR EACH ROW EXECUTE FUNCTION public.notify_on_follow();
 
+-- Enable Realtime for notifications
+ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
+
 -- Stock watchlist
 CREATE TABLE IF NOT EXISTS public.stock_watchlist (
   user_id    UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,

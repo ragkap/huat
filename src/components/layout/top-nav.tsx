@@ -9,6 +9,37 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { AngBaoBadge } from "@/components/angbao/balance-badge";
 import type { Profile } from "@/types/database";
 
+function LiveNotifBadge({ initialCount, userId }: { initialCount: number; userId: string }) {
+  const [count, setCount] = useState(initialCount);
+
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel("notifs")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "notifications", filter: `recipient_id=eq.${userId}` },
+        () => setCount(c => c + 1)
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [userId]);
+
+  // Reset count when user navigates to notifications
+  const pathname = usePathname();
+  useEffect(() => {
+    if (pathname === "/notifications") setCount(0);
+  }, [pathname]);
+
+  if (count <= 0) return null;
+  return (
+    <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 bg-[#E8311A] rounded-full text-[10px] font-bold text-white flex items-center justify-center px-0.5 leading-none">
+      {count > 99 ? "99+" : count}
+    </span>
+  );
+}
+
 interface SearchResult {
   type: "stock" | "profile";
   href: string;
@@ -408,11 +439,7 @@ export function TopNav({ unreadNotifs = 0, unreadMessages = 0, profile }: { unre
             className="relative overflow-hidden w-10 h-10 flex items-center justify-center rounded-lg text-[#71717A] hover:text-[#F0F0F0] hover:bg-[#141414] transition-colors"
           >
             <Bell style={{ width: 22, height: 22 }} />
-            {unreadNotifs > 0 && (
-              <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 bg-[#E8311A] rounded-full text-[10px] font-bold text-white flex items-center justify-center px-0.5 leading-none">
-                {unreadNotifs > 99 ? "99+" : unreadNotifs}
-              </span>
-            )}
+            {profile && <LiveNotifBadge initialCount={unreadNotifs} userId={profile.id} />}
           </Link>
           <Link
             href="/messages"
