@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { PostComposer } from "@/components/feed/post-composer";
 import { PostCard } from "@/components/feed/post-card";
 import { useAngBaoToast } from "@/components/angbao/credit-toast";
+import { playMessageSound } from "@/lib/sounds";
 import type { Post, Profile } from "@/types/database";
 
 function PostSkeleton() {
@@ -57,7 +58,14 @@ export function FeedList({ tab, profile, stockTicker, postType, authorId, initia
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ referral_code: ref }),
         }).then(r => r.json()).then(d => {
-          if (d.success) angbao.showCredit("referral_welcome", 8.88);
+          if (d.success) {
+            angbao.showCredit("referral_welcome", 8.88);
+            // Manually trigger chat notification since Realtime may miss it due to RLS timing
+            setTimeout(() => {
+              playMessageSound();
+              window.dispatchEvent(new Event("huat:referral-chat"));
+            }, 2000);
+          }
         }).catch(() => {});
       }, 5000);
     }

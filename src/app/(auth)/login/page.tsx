@@ -33,10 +33,10 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
               <>
                 <p className="text-[#E8311A] text-lg font-bold mb-2">🧧 You&apos;ve been invited!</p>
                 <blockquote className="text-4xl font-black text-[#F0F0F0] leading-tight tracking-tight">
-                  {refName} wants you<br />to <span className="text-[#E8311A]">Huat</span> together.
+                  Let&apos;s <span className="text-[#E8311A]">Huat</span> together.
                 </blockquote>
                 <p className="text-[#9CA3AF] mt-4 text-lg leading-relaxed">
-                  Join Singapore&apos;s investing community. Follow stocks, share insights, and prosper together.
+                  {refName} invited you to join Singapore&apos;s investing community. Follow stocks, share insights, and prosper together.
                 </p>
               </>
             ) : (

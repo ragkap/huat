@@ -128,6 +128,16 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
     return () => window.removeEventListener("huat:open-chat", onOpenChat);
   }, [fetchThreads]);
 
+  // Listen for referral chat event (manual trigger when Realtime misses due to RLS)
+  useEffect(() => {
+    function onReferralChat() {
+      setUnreadCount(c => c + 1);
+      fetchThreads();
+    }
+    window.addEventListener("huat:referral-chat", onReferralChat);
+    return () => window.removeEventListener("huat:referral-chat", onReferralChat);
+  }, [fetchThreads]);
+
   // Load/refresh threads when panel opens
   useEffect(() => {
     if (open) fetchThreads();
