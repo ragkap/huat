@@ -40,13 +40,9 @@ CREATE POLICY "Threads: only participants can view"
     )
   );
 
-CREATE POLICY "Thread participants: only members can view"
+CREATE POLICY "Thread participants: own rows"
   ON public.thread_participants FOR SELECT
-  USING (
-    thread_id IN (
-      SELECT thread_id FROM public.thread_participants WHERE user_id = auth.uid()
-    )
-  );
+  USING (user_id = auth.uid());
 
 CREATE POLICY "Messages: only participants can view"
   ON public.messages FOR SELECT

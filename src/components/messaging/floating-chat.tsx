@@ -81,12 +81,11 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
     if (open && threads.length === 0) fetchThreads();
   }, [open, fetchThreads, threads.length]);
 
-  // Load messages when thread selected + realtime + fallback polling
+  // Load messages when thread selected + Realtime subscription
   useEffect(() => {
     if (!activeThread) { setMessages([]); return; }
     fetchMessages(activeThread.thread_id, false);
 
-    // Realtime subscription (instant if Supabase Realtime is enabled)
     const supabase = createClient();
     const channel = supabase
       .channel(`chat:${activeThread.thread_id}`)
@@ -103,13 +102,10 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
       )
       .subscribe();
 
-    // Fallback polling every 5s in case Realtime isn't available
-    const poll = setInterval(() => fetchMessages(activeThread.thread_id, true), 5000);
-
-    return () => { supabase.removeChannel(channel); clearInterval(poll); };
+    return () => { supabase.removeChannel(channel); };
   }, [activeThread, fetchMessages]);
 
-  // Subscribe to thread list updates + fallback polling
+  // Realtime subscription for thread list updates
   useEffect(() => {
     if (!open) return;
 
@@ -123,9 +119,7 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
       )
       .subscribe();
 
-    const poll = setInterval(fetchThreads, 15000);
-
-    return () => { supabase.removeChannel(channel); clearInterval(poll); };
+    return () => { supabase.removeChannel(channel); };
   }, [open, fetchThreads]);
 
   // Scroll to bottom on new messages
