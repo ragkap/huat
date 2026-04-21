@@ -39,10 +39,11 @@ export function MessageThread({ threadId, initialMessages, currentUserId, otherU
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "messages", filter: `thread_id=eq.${threadId}` },
         (payload) => {
-          const newMsg = payload.new as Message & { sender: null };
+          const raw = payload.new as Record<string, unknown>;
+          const newMsg = { ...raw, sender: null } as MessageThreadProps["initialMessages"][number];
           setMessages(prev => {
             if (prev.some(m => m.id === newMsg.id)) return prev;
-            return [...prev, { ...newMsg, sender: newMsg.sender ?? null }];
+            return [...prev, newMsg];
           });
           if (newMsg.sender_id !== currentUserId) playMessageSound();
         }
