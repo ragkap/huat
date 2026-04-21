@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { TrendingUp, User, Search, X, Bell, MessageSquare, LogOut } from "lucide-react";
+import { TrendingUp, User, Search, X, Bell, MessageSquare, LogOut, Volume2, VolumeOff } from "lucide-react";
 import { cn, ripple } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -309,7 +309,7 @@ function SoundToggle() {
       onClick={() => { const next = !enabled; setEnabled(next); setSoundEnabled(next); }}
       className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-[#9CA3AF] hover:text-[#F0F0F0] hover:bg-[#1C1C1C] transition-colors"
     >
-      {enabled ? <span className="w-4 text-center">🔔</span> : <span className="w-4 text-center">🔕</span>}
+      {enabled ? <Volume2 className="w-4 h-4" /> : <VolumeOff className="w-4 h-4" />}
       {enabled ? "Sound on" : "Sound off"}
     </button>
   );
