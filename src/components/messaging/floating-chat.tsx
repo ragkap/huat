@@ -72,7 +72,7 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
       const parsed: ChatThread[] = (data.threads ?? []).map((t: Record<string, unknown>) => {
         const thread = t.thread as Record<string, unknown> | undefined;
         const msgs = (thread?.messages ?? []) as { content: string; created_at: string; sender_id: string }[];
-        const lastMsg = msgs[0];
+        const lastMsg = msgs.length ? msgs[msgs.length - 1] : undefined;
         return {
           thread_id: t.thread_id as string,
           other: t.other as ChatThread["other"],
@@ -128,22 +128,32 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
     return () => { supabase.removeChannel(channel); };
   }, [activeThread, fetchMessages]);
 
-  // Realtime subscription for thread list updates
+  // Realtime subscription for thread list updates (always active)
   useEffect(() => {
-    if (!open) return;
-
     const supabase = createClient();
     const channel = supabase
-      .channel("chat:threads")
+      .channel(`chat:threads:${currentUserId}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "messages" },
-        () => { fetchThreads(); }
+        (payload) => {
+          const msg = payload.new as ChatMessage;
+          // Update thread's last message in place
+          setThreads(prev => prev.map(t =>
+            t.thread_id === msg.thread_id
+              ? { ...t, lastMessage: msg.content, lastMessageAt: msg.created_at, lastSenderId: msg.sender_id }
+              : t
+          ));
+          // Also mark thread as unread if from someone else
+          if (msg.sender_id !== currentUserId) {
+            setReadThreads(prev => { const next = new Set(prev); next.delete(msg.thread_id); return next; });
+          }
+        }
       )
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [open, fetchThreads]);
+  }, [currentUserId]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -223,7 +233,7 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
       {/* FAB */}
       {!open && (
         <button
-          onClick={e => { ripple(e); setOpen(true); setUnreadCount(0); }}
+          onClick={e => { ripple(e); setOpen(true); }}
           className="fixed bottom-24 lg:bottom-6 right-4 lg:right-6 z-50 w-14 h-14 rounded-full bg-[#E8311A] text-white flex items-center justify-center shadow-lg shadow-black/30 hover:bg-[#c9280f] transition-colors active:scale-95"
         >
           <MessageSquare className="w-6 h-6" />
@@ -374,7 +384,7 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
                     return (
                     <button
                       key={t.thread_id}
-                      onClick={() => { setActiveThread(t); setReadThreads(prev => new Set(prev).add(t.thread_id)); }}
+                      onClick={() => { setActiveThread(t); setReadThreads(prev => new Set(prev).add(t.thread_id)); setUnreadCount(0); }}
                       className="flex items-center gap-2.5 w-full px-3 py-3 hover:bg-[#1C1C1C] transition-colors border-b border-[#1A1A1A]"
                     >
                       {isUnread && <span className="w-2 h-2 rounded-full bg-[#22C55E] flex-shrink-0" />}
