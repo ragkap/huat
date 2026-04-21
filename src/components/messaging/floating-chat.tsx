@@ -356,7 +356,7 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
             <div ref={bottomRef} />
           </div>
           {/* Composer */}
-          <div className="flex items-end gap-2 px-3 py-2 border-t border-[#282828] flex-shrink-0">
+          <div className="flex items-end gap-1.5 px-3 py-2 border-t border-[#282828] flex-shrink-0">
             <textarea
               ref={inputRef as unknown as React.RefObject<HTMLTextAreaElement>}
               value={content}
@@ -364,20 +364,21 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
               onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
               placeholder="Write a message…"
               rows={1}
-              className="flex-1 bg-[#1C1C1C] border border-[#333333] rounded-lg px-3 py-2 text-sm text-[#F0F0F0] placeholder:text-[#71717A] focus:outline-none focus:border-[#444444] transition-colors resize-none leading-relaxed"
+              className="flex-1 bg-[#1C1C1C] border border-[#333333] rounded-lg px-3 py-1.5 text-sm text-[#F0F0F0] placeholder:text-[#71717A] focus:outline-none focus:border-[#444444] transition-colors resize-none"
+              style={{ lineHeight: "20px", minHeight: "34px" }}
             />
             {content.trim() ? (
               <button
                 onClick={handleSend}
                 disabled={sending}
-                className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#E8311A] text-white hover:bg-[#c9280f] transition-all flex-shrink-0"
+                className="w-[34px] h-[34px] flex items-center justify-center rounded-lg bg-[#E8311A] text-white hover:bg-[#c9280f] transition-all flex-shrink-0"
               >
                 <Send className="w-4 h-4" />
               </button>
             ) : (
               <button
                 onClick={() => sendQuickReply("👍")}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#282828] transition-colors flex-shrink-0 text-lg active:scale-125"
+                className="w-[34px] h-[34px] flex items-center justify-center rounded-lg hover:bg-[#282828] transition-colors flex-shrink-0 text-lg active:scale-125"
               >
                 👍
               </button>
