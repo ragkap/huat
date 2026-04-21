@@ -255,12 +255,10 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
     : threads;
 
   return (
-    <div className="hidden lg:block fixed bottom-0 right-6 z-50">
-      {/* Panels row */}
-      <div className="flex items-end gap-1">
-      {/* Thread panel — pops to the left when a thread is active */}
-      {open && activeThread && (
-        <div className="w-[320px] h-[440px] bg-[#141414] border border-[#333333] rounded-t-xl flex flex-col overflow-hidden shadow-2xl shadow-black/30 flex-shrink-0">
+    <>
+    {/* Thread panel — fixed independently to the left */}
+    {open && activeThread && (
+      <div className="hidden lg:flex fixed bottom-0 right-[348px] z-50 w-[320px] h-[440px] bg-[#141414] border border-[#333333] rounded-t-xl flex-col overflow-hidden shadow-2xl shadow-black/30">
           {/* Thread header */}
           <div className="flex items-center justify-between px-3 py-2.5 border-b border-[#282828] bg-[#1C1C1C] flex-shrink-0">
             <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -322,10 +320,11 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
               <Send className="w-4 h-4" />
             </button>
           </div>
-        </div>
-      )}
+      </div>
+    )}
 
-      {/* Right panel — thread list (always visible when open) */}
+    <div className="hidden lg:block fixed bottom-0 right-6 z-50 w-[320px]">
+      {/* Thread list panel */}
       {open && (
         <div className="w-[320px] h-[400px] bg-[#141414] border border-[#333333] border-b-0 rounded-t-xl flex flex-col overflow-hidden shadow-2xl shadow-black/30 flex-shrink-0">
           {/* Header */}
@@ -415,13 +414,12 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
               </div>
         </div>
       )}
-      </div>
 
-      {/* Docked bar — always visible at bottom, width matches right panel */}
+      {/* Docked bar */}
       <button
         onClick={e => { ripple(e); setOpen(o => !o); if (!open) setUnreadCount(0); }}
         className={cn(
-          "relative overflow-hidden flex items-center gap-2 px-4 py-2.5 bg-[#1C1C1C] border border-[#333333] hover:bg-[#222222] transition-colors w-[320px] ml-auto",
+          "relative overflow-hidden flex items-center gap-2 px-4 py-2.5 bg-[#1C1C1C] border border-[#333333] hover:bg-[#222222] transition-colors w-full",
           open ? "border-t-0" : "rounded-t-xl"
         )}
       >
@@ -436,5 +434,6 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
         <ChevronDown className={cn("w-4 h-4 text-[#71717A] transition-transform", !open && "rotate-180")} />
       </button>
     </div>
+    </>
   );
 }
