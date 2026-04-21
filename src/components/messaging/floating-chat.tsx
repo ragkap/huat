@@ -172,16 +172,7 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
     setContent("");
 
     if (activeThread) {
-      // Send to existing thread
-      const optimistic: ChatMessage = {
-        id: Date.now().toString(),
-        thread_id: activeThread.thread_id,
-        sender_id: currentUserId,
-        content: text,
-        created_at: new Date().toISOString(),
-        sender: null,
-      };
-      setMessages(prev => [...prev, optimistic]);
+      // Send to existing thread — Realtime will deliver the message back
       await fetch(`/api/messages/${activeThread.thread_id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
