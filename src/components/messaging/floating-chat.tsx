@@ -37,6 +37,7 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
   const [searchResults, setSearchResults] = useState<{ username: string; display_name: string; id?: string }[]>([]);
   const [searching, setSearching] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [readThreads, setReadThreads] = useState<Set<string>>(new Set());
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const searchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -369,11 +370,11 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
                   </div>
                 ) : (
                   filteredThreads.map(t => {
-                    const isUnread = t.lastSenderId && t.lastSenderId !== currentUserId;
+                    const isUnread = t.lastSenderId && t.lastSenderId !== currentUserId && !readThreads.has(t.thread_id);
                     return (
                     <button
                       key={t.thread_id}
-                      onClick={() => setActiveThread(t)}
+                      onClick={() => { setActiveThread(t); setReadThreads(prev => new Set(prev).add(t.thread_id)); }}
                       className="flex items-center gap-2.5 w-full px-3 py-3 hover:bg-[#1C1C1C] transition-colors border-b border-[#1A1A1A]"
                     >
                       {isUnread && <span className="w-2 h-2 rounded-full bg-[#22C55E] flex-shrink-0" />}
