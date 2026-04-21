@@ -8,7 +8,9 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data: participations } = await supabase
+  const db = createSupabase(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+
+  const { data: participations } = await db
     .from("thread_participants")
     .select(`
       thread_id,
@@ -24,7 +26,7 @@ export async function GET() {
   // Enrich with other participant's profile
   const threadIds = (participations ?? []).map(p => p.thread_id);
   const { data: allParticipants } = threadIds.length
-    ? await supabase
+    ? await db
         .from("thread_participants")
         .select("thread_id, profile:profiles(id, username, display_name, avatar_url)")
         .in("thread_id", threadIds)
@@ -75,8 +77,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "You must be connected to message this user" }, { status: 403 });
   }
 
-  // Create or find existing thread
-  const { data: existingParticipation } = await supabase
+  // Create or find existing thread (use admin to bypass RLS)
+  const { data: existingParticipation } = await admin
     .from("thread_participants")
     .select("thread_id")
     .eq("user_id", user.id);
@@ -86,7 +88,7 @@ export async function POST(request: Request) {
   let threadId: string | null = null;
 
   if (myThreadIds.length) {
-    const { data: sharedThread } = await supabase
+    const { data: sharedThread } = await admin
       .from("thread_participants")
       .select("thread_id")
       .eq("user_id", recipient_id)
