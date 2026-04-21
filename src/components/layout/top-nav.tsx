@@ -322,6 +322,13 @@ function LiveMessageBadge({ initialCount, userId }: { initialCount: number; user
     return () => { supabase.removeChannel(channel); };
   }, [userId]);
 
+  // Also listen for manual referral chat trigger
+  useEffect(() => {
+    function onReferralChat() { setCount(c => c + 1); }
+    window.addEventListener("huat:referral-chat", onReferralChat);
+    return () => window.removeEventListener("huat:referral-chat", onReferralChat);
+  }, []);
+
   const pathname = usePathname();
   useEffect(() => {
     if (pathname.startsWith("/messages")) setCount(0);

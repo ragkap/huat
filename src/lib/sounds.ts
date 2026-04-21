@@ -13,10 +13,27 @@ export function setSoundEnabled(enabled: boolean) {
 
 let audioCtx: AudioContext | null = null;
 
+// Pre-initialize AudioContext on first user interaction to bypass autoplay policy
+if (typeof window !== "undefined") {
+  const initAudio = () => {
+    if (!audioCtx) {
+      audioCtx = new AudioContext();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+    }
+    document.removeEventListener("click", initAudio);
+    document.removeEventListener("touchstart", initAudio);
+    document.removeEventListener("keydown", initAudio);
+  };
+  document.addEventListener("click", initAudio, { once: false });
+  document.addEventListener("touchstart", initAudio, { once: false });
+  document.addEventListener("keydown", initAudio, { once: false });
+}
+
 export function playMessageSound() {
   if (!isSoundEnabled()) return;
   try {
     if (!audioCtx) audioCtx = new AudioContext();
+    if (audioCtx.state === "suspended") audioCtx.resume();
     const ctx = audioCtx;
 
     // First tone (C5)
