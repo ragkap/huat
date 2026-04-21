@@ -473,7 +473,11 @@ function ReferralModal({ code, name, onClose }: { code: string; name: string; on
           {/* Top gradient */}
           <div className="h-2 bg-gradient-to-r from-[#E8311A] via-[#FFD700] to-[#22C55E]" />
 
-          <div className="px-6 pt-6 pb-5 text-center">
+          <div className="px-6 pt-6 pb-5 text-center relative">
+            {/* Close button */}
+            <button onClick={onClose} className="absolute top-3 right-3 w-7 h-7 flex items-center justify-center rounded-full text-[#71717A] hover:text-[#F0F0F0] hover:bg-[#282828] transition-colors">
+              <X className="w-4 h-4" />
+            </button>
             {/* Bouncing envelope */}
             <div className="text-6xl mb-3" style={{ animation: "referral-envelope 1s ease-out" }}>
               🧧
