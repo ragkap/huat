@@ -163,28 +163,28 @@ export function MessageThread({ threadId, initialMessages, currentUserId, otherU
       </div>
 
       {/* Composer */}
-      <div className="border-t border-[#282828] px-4 py-3 flex items-end gap-3">
+      <div className="border-t border-[#282828] px-4 py-3 flex items-end gap-2">
         <textarea
           value={content}
           onChange={e => { setContent(e.target.value); handleTyping(); e.target.style.height = "auto"; e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px"; }}
           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
           placeholder="Type a message..."
           rows={1}
-          className="flex-1 bg-[#141414] border border-[#333333] rounded-xl px-3 py-2 text-sm text-[#F0F0F0] placeholder:text-[#71717A] focus:outline-none focus:border-[#444444] transition-colors resize-none leading-relaxed"
+          className="flex-1 bg-[#141414] border border-[#333333] rounded-xl px-3 py-1.5 text-sm text-[#F0F0F0] placeholder:text-[#71717A] focus:outline-none focus:border-[#444444] transition-colors resize-none"
+          style={{ lineHeight: "20px", minHeight: "36px" }}
         />
         {content.trim() ? (
-          <Button
-            size="sm"
+          <button
             onClick={handleSend}
-            loading={sending}
-            className="px-3 py-2"
+            disabled={sending}
+            className="w-[36px] h-[36px] flex items-center justify-center rounded-lg bg-[#E8311A] text-white hover:bg-[#c9280f] transition-all flex-shrink-0"
           >
             <Send className="w-4 h-4" />
-          </Button>
+          </button>
         ) : (
           <button
             onClick={() => sendQuickReply("👍")}
-            className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-[#282828] transition-colors flex-shrink-0 text-xl active:scale-125"
+            className="w-[36px] h-[36px] flex items-center justify-center rounded-lg hover:bg-[#282828] transition-colors flex-shrink-0 text-xl active:scale-125"
           >
             👍
           </button>
