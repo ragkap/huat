@@ -301,6 +301,39 @@ export function SearchBar({ autoFocus }: { autoFocus?: boolean } = {}) {
   );
 }
 
+function LiveMessageBadge({ initialCount, userId }: { initialCount: number; userId: string }) {
+  const [count, setCount] = useState(initialCount);
+
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel("nav:messages")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages" },
+        (payload) => {
+          const msg = payload.new as { sender_id: string };
+          if (msg.sender_id !== userId) setCount(c => c + 1);
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [userId]);
+
+  const pathname = usePathname();
+  useEffect(() => {
+    if (pathname.startsWith("/messages")) setCount(0);
+  }, [pathname]);
+
+  if (count <= 0) return null;
+  return (
+    <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 bg-[#E8311A] rounded-full text-[10px] font-bold text-white flex items-center justify-center px-0.5 leading-none">
+      {count > 99 ? "99+" : count}
+    </span>
+  );
+}
+
 function SoundToggle() {
   const [enabled, setEnabled] = useState(true);
   useEffect(() => { setEnabled(isSoundEnabled()); }, []);
@@ -464,11 +497,7 @@ export function TopNav({ unreadNotifs = 0, unreadMessages = 0, profile }: { unre
             className="relative overflow-hidden w-10 h-10 flex items-center justify-center rounded-lg text-[#71717A] hover:text-[#F0F0F0] hover:bg-[#141414] transition-colors"
           >
             <MessageSquare style={{ width: 22, height: 22 }} />
-            {unreadMessages > 0 && (
-              <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 bg-[#E8311A] rounded-full text-[10px] font-bold text-white flex items-center justify-center px-0.5 leading-none">
-                {unreadMessages > 99 ? "99+" : unreadMessages}
-              </span>
-            )}
+            {profile && <LiveMessageBadge initialCount={unreadMessages} userId={profile.id} />}
           </Link>
           {profile && <AngBaoBadge username={profile.username} />}
           {profile && <ProfileMenu profile={profile} />}

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabase } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
 import { MessageThread } from "@/components/messaging/message-thread";
 
@@ -12,8 +13,10 @@ export default async function ThreadPage({ params }: ThreadPageProps) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
+  const db = createSupabase(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+
   // Verify participant
-  const { data: participation } = await supabase
+  const { data: participation } = await db
     .from("thread_participants")
     .select("thread_id")
     .eq("thread_id", threadId)
@@ -23,13 +26,13 @@ export default async function ThreadPage({ params }: ThreadPageProps) {
   if (!participation) notFound();
 
   const [messagesRes, participantsRes] = await Promise.all([
-    supabase
+    db
       .from("messages")
       .select("*, sender:profiles!messages_sender_id_fkey(id, username, display_name, avatar_url)")
       .eq("thread_id", threadId)
       .order("created_at", { ascending: true })
       .limit(50),
-    supabase
+    db
       .from("thread_participants")
       .select("profile:profiles(id, username, display_name, avatar_url)")
       .eq("thread_id", threadId)
