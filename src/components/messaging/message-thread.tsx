@@ -20,7 +20,10 @@ export function MessageThread({ threadId, initialMessages, currentUserId, otherU
   const [messages, setMessages] = useState(initialMessages);
   const [content, setContent] = useState("");
   const [sending, setSending] = useState(false);
+  const [otherTyping, setOtherTyping] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const typingChannelRef = useRef<ReturnType<ReturnType<typeof createClient>["channel"]> | null>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -48,6 +51,31 @@ export function MessageThread({ threadId, initialMessages, currentUserId, otherU
 
     return () => { supabase.removeChannel(channel); };
   }, [threadId, currentUserId]);
+
+  // Typing indicator via broadcast
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase.channel(`typing:${threadId}`)
+      .on("broadcast", { event: "typing" }, (payload) => {
+        if (payload.payload?.user_id !== currentUserId) {
+          setOtherTyping(true);
+          if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+          typingTimeoutRef.current = setTimeout(() => setOtherTyping(false), 3000);
+        }
+      })
+      .subscribe();
+
+    typingChannelRef.current = channel;
+    return () => { supabase.removeChannel(channel); };
+  }, [threadId, currentUserId]);
+
+  function handleTyping() {
+    typingChannelRef.current?.send({
+      type: "broadcast",
+      event: "typing",
+      payload: { user_id: currentUserId },
+    });
+  }
 
   async function handleSend() {
     if (!content.trim() || sending) return;
@@ -108,17 +136,30 @@ export function MessageThread({ threadId, initialMessages, currentUserId, otherU
             </div>
           );
         })}
+        {otherTyping && (
+          <div className="flex items-end gap-2">
+            {otherUser && <Avatar src={otherUser.avatar_url} alt={otherUser.display_name} size="xs" />}
+            <div className="bg-[#282828] border border-[#333333] rounded-xl rounded-bl-none px-3 py-2">
+              <div className="flex gap-1 items-center">
+                <span className="w-1.5 h-1.5 bg-[#9CA3AF] rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                <span className="w-1.5 h-1.5 bg-[#9CA3AF] rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                <span className="w-1.5 h-1.5 bg-[#9CA3AF] rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+              </div>
+            </div>
+          </div>
+        )}
         <div ref={bottomRef} />
       </div>
 
       {/* Composer */}
-      <div className="border-t border-[#282828] px-4 py-3 flex items-center gap-3">
-        <input
+      <div className="border-t border-[#282828] px-4 py-3 flex items-end gap-3">
+        <textarea
           value={content}
-          onChange={e => setContent(e.target.value)}
+          onChange={e => { setContent(e.target.value); handleTyping(); e.target.style.height = "auto"; e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px"; }}
           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
           placeholder="Type a message..."
-          className="flex-1 bg-[#141414] border border-[#333333] rounded-xl px-3 py-2 text-sm text-[#F0F0F0] placeholder:text-[#71717A] focus:outline-none focus:border-[#444444] transition-colors"
+          rows={1}
+          className="flex-1 bg-[#141414] border border-[#333333] rounded-xl px-3 py-2 text-sm text-[#F0F0F0] placeholder:text-[#71717A] focus:outline-none focus:border-[#444444] transition-colors resize-none leading-relaxed"
         />
         <Button
           size="sm"

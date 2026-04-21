@@ -39,9 +39,12 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
   const [searching, setSearching] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [readThreads, setReadThreads] = useState<Set<string>>(new Set());
+  const [otherTyping, setOtherTyping] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const searchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const typingChannelRef = useRef<ReturnType<ReturnType<typeof createClient>["channel"]> | null>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Always listen for new messages (even when FAB is closed) to show unread badge
   useEffect(() => {
@@ -153,6 +156,36 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
 
     return () => { supabase.removeChannel(channel); };
   }, [activeThread, fetchMessages]);
+
+  // Typing indicator via Realtime broadcast
+  useEffect(() => {
+    if (!activeThread) { setOtherTyping(false); typingChannelRef.current = null; return; }
+
+    const supabase = createClient();
+    const channel = supabase.channel(`typing:${activeThread.thread_id}`)
+      .on("broadcast", { event: "typing" }, (payload) => {
+        if (payload.payload?.user_id !== currentUserId) {
+          setOtherTyping(true);
+          if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+          typingTimeoutRef.current = setTimeout(() => setOtherTyping(false), 3000);
+        }
+      })
+      .subscribe();
+
+    typingChannelRef.current = channel;
+    return () => { supabase.removeChannel(channel); setOtherTyping(false); };
+  }, [activeThread, currentUserId]);
+
+  // Broadcast typing event when user types
+  function handleTyping() {
+    if (typingChannelRef.current && activeThread) {
+      typingChannelRef.current.send({
+        type: "broadcast",
+        event: "typing",
+        payload: { user_id: currentUserId },
+      });
+    }
+  }
 
   // Realtime subscription for thread list updates (always active)
   useEffect(() => {
@@ -297,17 +330,29 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
                 );
               })
             )}
+            {otherTyping && (
+              <div className="flex justify-start">
+                <div className="bg-[#282828] border border-[#333333] rounded-xl rounded-bl-none px-3 py-2">
+                  <div className="flex gap-1 items-center">
+                    <span className="w-1.5 h-1.5 bg-[#9CA3AF] rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <span className="w-1.5 h-1.5 bg-[#9CA3AF] rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <span className="w-1.5 h-1.5 bg-[#9CA3AF] rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                  </div>
+                </div>
+              </div>
+            )}
             <div ref={bottomRef} />
           </div>
           {/* Composer */}
-          <div className="flex items-center gap-2 px-3 py-2 border-t border-[#282828] flex-shrink-0">
-            <input
-              ref={inputRef}
+          <div className="flex items-end gap-2 px-3 py-2 border-t border-[#282828] flex-shrink-0">
+            <textarea
+              ref={inputRef as unknown as React.RefObject<HTMLTextAreaElement>}
               value={content}
-              onChange={e => setContent(e.target.value)}
+              onChange={e => { setContent(e.target.value); handleTyping(); e.target.style.height = "auto"; e.target.style.height = Math.min(e.target.scrollHeight, 80) + "px"; }}
               onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
               placeholder="Write a message…"
-              className="flex-1 bg-[#1C1C1C] border border-[#333333] rounded-lg px-3 py-2 text-sm text-[#F0F0F0] placeholder:text-[#555555] focus:outline-none focus:border-[#444444] transition-colors"
+              rows={1}
+              className="flex-1 bg-[#1C1C1C] border border-[#333333] rounded-lg px-3 py-2 text-sm text-[#F0F0F0] placeholder:text-[#555555] focus:outline-none focus:border-[#444444] transition-colors resize-none leading-relaxed"
             />
             <button
               onClick={handleSend}
