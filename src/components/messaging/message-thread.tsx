@@ -28,7 +28,7 @@ export function MessageThread({ threadId, initialMessages, currentUserId, otherU
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, otherTyping]);
 
   // Realtime subscription for new messages
   useEffect(() => {
@@ -75,6 +75,17 @@ export function MessageThread({ threadId, initialMessages, currentUserId, otherU
       event: "typing",
       payload: { user_id: currentUserId },
     });
+  }
+
+  async function sendQuickReply(emoji: string) {
+    if (sending) return;
+    setSending(true);
+    await fetch(`/api/messages/${threadId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: emoji }),
+    });
+    setSending(false);
   }
 
   async function handleSend() {
@@ -161,15 +172,23 @@ export function MessageThread({ threadId, initialMessages, currentUserId, otherU
           rows={1}
           className="flex-1 bg-[#141414] border border-[#333333] rounded-xl px-3 py-2 text-sm text-[#F0F0F0] placeholder:text-[#71717A] focus:outline-none focus:border-[#444444] transition-colors resize-none leading-relaxed"
         />
-        <Button
-          size="sm"
-          onClick={handleSend}
-          loading={sending}
-          disabled={!content.trim()}
-          className="px-3 py-2"
-        >
-          <Send className="w-4 h-4" />
-        </Button>
+        {content.trim() ? (
+          <Button
+            size="sm"
+            onClick={handleSend}
+            loading={sending}
+            className="px-3 py-2"
+          >
+            <Send className="w-4 h-4" />
+          </Button>
+        ) : (
+          <button
+            onClick={() => sendQuickReply("👍")}
+            className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-[#282828] transition-colors flex-shrink-0 text-xl active:scale-125"
+          >
+            👍
+          </button>
+        )}
       </div>
     </div>
   );

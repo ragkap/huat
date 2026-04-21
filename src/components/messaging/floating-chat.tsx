@@ -214,10 +214,10 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
     return () => { supabase.removeChannel(channel); };
   }, [currentUserId]);
 
-  // Scroll to bottom on new messages
+  // Scroll to bottom on new messages or typing indicator
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, otherTyping]);
 
   // Search for users to start new conversation
   useEffect(() => {
@@ -234,6 +234,18 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
       }
     }, 250);
   }, [searchQuery]);
+
+  async function sendQuickReply(emoji: string) {
+    if (!activeThread || sending) return;
+    setSending(true);
+    await fetch(`/api/messages/${activeThread.thread_id}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: emoji }),
+    });
+    setSending(false);
+    inputRef.current?.focus();
+  }
 
   async function handleSend() {
     if (!content.trim() || sending) return;
@@ -352,18 +364,24 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
               onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
               placeholder="Write a message…"
               rows={1}
-              className="flex-1 bg-[#1C1C1C] border border-[#333333] rounded-lg px-3 py-2 text-sm text-[#F0F0F0] placeholder:text-[#555555] focus:outline-none focus:border-[#444444] transition-colors resize-none leading-relaxed"
+              className="flex-1 bg-[#1C1C1C] border border-[#333333] rounded-lg px-3 py-2 text-sm text-[#F0F0F0] placeholder:text-[#71717A] focus:outline-none focus:border-[#444444] transition-colors resize-none leading-relaxed"
             />
-            <button
-              onClick={handleSend}
-              disabled={!content.trim() || sending}
-              className={cn(
-                "w-8 h-8 flex items-center justify-center rounded-lg transition-all flex-shrink-0",
-                content.trim() && !sending ? "bg-[#E8311A] text-white hover:bg-[#c9280f]" : "text-[#555555]"
-              )}
-            >
-              <Send className="w-4 h-4" />
-            </button>
+            {content.trim() ? (
+              <button
+                onClick={handleSend}
+                disabled={sending}
+                className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#E8311A] text-white hover:bg-[#c9280f] transition-all flex-shrink-0"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            ) : (
+              <button
+                onClick={() => sendQuickReply("👍")}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#282828] transition-colors flex-shrink-0 text-lg active:scale-125"
+              >
+                👍
+              </button>
+            )}
           </div>
       </div>
     )}
