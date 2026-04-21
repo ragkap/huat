@@ -76,7 +76,7 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
     try {
       const res = await fetch("/api/messages");
       const data = await res.json();
-      const parsed: ChatThread[] = (data.threads ?? []).map((t: Record<string, unknown>) => {
+      const parsed: ChatThread[] = (data.threads ?? []).filter((t: Record<string, unknown>) => t.other != null).map((t: Record<string, unknown>) => {
         const thread = t.thread as Record<string, unknown> | undefined;
         const msgs = (thread?.messages ?? []) as { content: string; created_at: string; sender_id: string }[];
         const lastMsg = msgs.length ? msgs[msgs.length - 1] : undefined;
@@ -306,7 +306,7 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
   }
 
   const filteredThreads = searchQuery.trim()
-    ? threads.filter(t => t.other.display_name.toLowerCase().includes(searchQuery.toLowerCase()) || t.other.username.toLowerCase().includes(searchQuery.toLowerCase()))
+    ? threads.filter(t => t.other?.display_name?.toLowerCase().includes(searchQuery.toLowerCase()) || t.other?.username?.toLowerCase().includes(searchQuery.toLowerCase()))
     : threads;
 
   return (
