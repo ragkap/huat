@@ -103,6 +103,28 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
     }
   }, []);
 
+  // Listen for "open chat with user" events from profile page
+  useEffect(() => {
+    function onOpenChat(e: Event) {
+      const userId = (e as CustomEvent).detail as string;
+      setOpen(true);
+      fetchThreads().then(() => {
+        // Try to find existing thread with this user
+        setThreads(prev => {
+          const existing = prev.find(t => t.other.id === userId);
+          if (existing) {
+            setActiveThread(existing);
+            setReadThreads(p => new Set(p).add(existing.thread_id));
+            setUnreadCount(0);
+          }
+          return prev;
+        });
+      });
+    }
+    window.addEventListener("huat:open-chat", onOpenChat);
+    return () => window.removeEventListener("huat:open-chat", onOpenChat);
+  }, [fetchThreads]);
+
   // Load/refresh threads when panel opens
   useEffect(() => {
     if (open) fetchThreads();
