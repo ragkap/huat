@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabase } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -36,10 +37,12 @@ export async function POST(request: Request) {
   const { subject_id, rel_type } = parsed.data;
   if (subject_id === user.id) return NextResponse.json({ error: "Cannot connect to yourself" }, { status: 400 });
 
+  const db = createSupabase(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+
   // Handle connect acceptance (when subject accepts actor's request)
   if (rel_type === "connect") {
     // Verify there's a pending request from subject to actor
-    const { data: pendingReq } = await supabase
+    const { data: pendingReq } = await db
       .from("social_graph")
       .select("id")
       .eq("actor_id", subject_id)
@@ -50,15 +53,15 @@ export async function POST(request: Request) {
     if (!pendingReq) return NextResponse.json({ error: "No pending request" }, { status: 404 });
 
     // Delete the request and create bidirectional connect
-    await supabase.from("social_graph").delete().eq("id", pendingReq.id);
-    await supabase.from("social_graph").insert([
+    await db.from("social_graph").delete().eq("id", pendingReq.id);
+    await db.from("social_graph").insert([
       { actor_id: user.id, subject_id, rel_type: "connect" },
       { actor_id: subject_id, subject_id: user.id, rel_type: "connect" },
     ]);
     return NextResponse.json({ success: true });
   }
 
-  const { error } = await supabase
+  const { error } = await db
     .from("social_graph")
     .upsert({ actor_id: user.id, subject_id, rel_type });
 
@@ -72,18 +75,17 @@ export async function DELETE(request: Request) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { subject_id, rel_type } = await request.json();
+  const db = createSupabase(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
-  // Delete in both directions for the given rel_type
-  await supabase
+  await db
     .from("social_graph")
     .delete()
     .eq("actor_id", user.id)
     .eq("subject_id", subject_id)
     .eq("rel_type", rel_type);
 
-  // Also delete the reverse direction (e.g. declining an incoming connect_request)
   if (rel_type === "connect_request") {
-    await supabase
+    await db
       .from("social_graph")
       .delete()
       .eq("actor_id", subject_id)
@@ -91,9 +93,8 @@ export async function DELETE(request: Request) {
       .eq("rel_type", "connect_request");
   }
 
-  // If disconnecting, also remove the other direction
   if (rel_type === "connect") {
-    await supabase
+    await db
       .from("social_graph")
       .delete()
       .eq("actor_id", subject_id)
