@@ -170,7 +170,7 @@ export function MessageThread({ threadId, initialMessages, currentUserId, otherU
           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
           placeholder="Type a message..."
           rows={1}
-          className="flex-1 bg-[#141414] border border-[#333333] rounded-xl px-3 py-1.5 text-sm text-[#F0F0F0] placeholder:text-[#71717A] focus:outline-none focus:border-[#444444] transition-colors resize-none"
+          className="flex-1 bg-[#141414] border border-[#333333] rounded-xl px-3 py-1.5 text-sm text-text placeholder:text-[#71717A] focus:outline-none focus:border-[#444444] transition-colors resize-none"
           style={{ lineHeight: "20px", minHeight: "36px" }}
         />
         {content.trim() ? (

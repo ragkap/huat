@@ -364,7 +364,7 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
               onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
               placeholder="Write a message…"
               rows={1}
-              className="flex-1 bg-[#1C1C1C] border border-[#333333] rounded-lg px-3 py-1.5 text-sm text-[#F0F0F0] placeholder:text-[#71717A] focus:outline-none focus:border-[#444444] transition-colors resize-none"
+              className="flex-1 bg-[#1C1C1C] border border-[#333333] rounded-lg px-3 py-1.5 text-sm text-text placeholder:text-[#71717A] focus:outline-none focus:border-[#444444] transition-colors resize-none"
               style={{ lineHeight: "20px", minHeight: "34px" }}
             />
             {content.trim() ? (
@@ -406,7 +406,7 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     placeholder="Search or start new chat…"
-                    className="flex-1 bg-transparent text-sm text-[#F0F0F0] placeholder:text-[#555555] outline-none"
+                    className="flex-1 bg-transparent text-sm text-text placeholder:text-[#555555] outline-none"
                   />
                 </div>
               </div>
