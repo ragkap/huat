@@ -36,9 +36,31 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<{ username: string; display_name: string; id?: string }[]>([]);
   const [searching, setSearching] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const searchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Always listen for new messages (even when FAB is closed) to show unread badge
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel("chat:unread")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages" },
+        (payload) => {
+          const msg = payload.new as ChatMessage;
+          // Only count messages from others, and only when panel is closed or viewing a different thread
+          if (msg.sender_id !== currentUserId && (!open || activeThread?.thread_id !== msg.thread_id)) {
+            setUnreadCount(c => c + 1);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [currentUserId, open, activeThread]);
 
   // Fetch thread list
   const fetchThreads = useCallback(async () => {
@@ -209,10 +231,15 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
       {/* FAB */}
       {!open && (
         <button
-          onClick={e => { ripple(e); setOpen(true); }}
+          onClick={e => { ripple(e); setOpen(true); setUnreadCount(0); }}
           className="fixed bottom-24 lg:bottom-6 right-4 lg:right-6 z-50 w-14 h-14 rounded-full bg-[#E8311A] text-white flex items-center justify-center shadow-lg shadow-black/30 hover:bg-[#c9280f] transition-colors active:scale-95 overflow-hidden"
         >
           <MessageSquare className="w-6 h-6" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[20px] h-5 bg-[#22C55E] rounded-full text-[11px] font-bold text-white flex items-center justify-center px-1 leading-none shadow-md">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          )}
         </button>
       )}
 
