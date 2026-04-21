@@ -38,7 +38,7 @@ export function OnboardingForm() {
         const data = await res.json();
         setError(data.error ?? "Failed to set up profile");
       } else {
-        localStorage.removeItem("huat_ref");
+        // Keep huat_ref — the feed page will pick it up to send welcome message + credits
         router.push("/feed");
       }
     } finally {

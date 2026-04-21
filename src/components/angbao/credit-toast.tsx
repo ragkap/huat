@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useCallback, useEffect } from "react";
 import { formatAngBao, ANGBAO_REASONS } from "@/lib/angbao";
+import { playMessageSound } from "@/lib/sounds";
 
 interface ToastItem {
   id: number;
@@ -55,6 +56,7 @@ export function AngBaoToastProvider({ children, initialBalance = 0 }: { children
     setNextId(n => n + 1);
     setBalance(b => b + amount);
     setToasts(prev => [...prev, { id, amount, reason, showEducation: seen < EDUCATION_THRESHOLD }]);
+    playMessageSound();
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id));
     }, 5000);

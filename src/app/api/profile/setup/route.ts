@@ -71,38 +71,8 @@ export async function POST(request: Request) {
       { actor_id: referredBy, subject_id: user.id, rel_type: "connect" },
     ], { onConflict: "actor_id,subject_id,rel_type" });
 
-    // Get referrer's name for the welcome message
-    const { data: referrerProfile } = await db
-      .from("profiles")
-      .select("display_name")
-      .eq("id", referredBy)
-      .single();
-
-    const referrerName = referrerProfile?.display_name ?? "Someone";
-
-    // Create a message thread and send welcome message from the referrer
-    const { data: thread } = await db
-      .from("message_threads")
-      .insert({})
-      .select()
-      .single();
-
-    if (thread) {
-      await db.from("thread_participants").insert([
-        { thread_id: thread.id, user_id: referredBy },
-        { thread_id: thread.id, user_id: user.id },
-      ]);
-
-      await db.from("messages").insert({
-        thread_id: thread.id,
-        sender_id: referredBy,
-        content: `Heya 👋 Glad you joined! Feel free to ask me anything about the platform. Huat ah! 🧧发`,
-      });
-
-      await db.from("message_threads")
-        .update({ last_msg_at: new Date().toISOString() })
-        .eq("id", thread.id);
-    }
+    // Welcome message is sent from the feed page via /api/profile/link-referral
+    // after WebSocket is connected, so the user gets sound + badge notification
   }
 
   return NextResponse.json({ success: true });

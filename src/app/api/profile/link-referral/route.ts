@@ -59,7 +59,7 @@ export async function POST(request: Request) {
     await db.from("messages").insert({
       thread_id: thread.id,
       sender_id: referrer.id,
-      content: `Heya 👋 Glad you joined! Feel free to ask me anything about the platform. Huat ah! 🧧发`,
+      content: `Glad you joined. Look forward to chatting here...`,
     });
     await db.from("message_threads")
       .update({ last_msg_at: new Date().toISOString() })

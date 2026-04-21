@@ -59,7 +59,7 @@ export function FeedList({ tab, profile, stockTicker, postType, authorId, initia
         }).then(r => r.json()).then(d => {
           if (d.success) angbao.showCredit("referral_welcome", 8.88);
         }).catch(() => {});
-      }, 3000);
+      }, 5000);
     }
   }, [angbao]);
 
