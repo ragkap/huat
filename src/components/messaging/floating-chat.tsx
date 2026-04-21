@@ -5,6 +5,7 @@ import { MessageSquare, X, Send, ChevronDown, Search } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { cn, timeAgo, ripple } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import { playMessageSound } from "@/lib/sounds";
 import type { Profile } from "@/types/database";
 
 interface ChatThread {
@@ -53,8 +54,11 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
         (payload) => {
           const msg = payload.new as ChatMessage;
           // Only count messages from others, and only when panel is closed or viewing a different thread
-          if (msg.sender_id !== currentUserId && (!open || activeThread?.thread_id !== msg.thread_id)) {
-            setUnreadCount(c => c + 1);
+          if (msg.sender_id !== currentUserId) {
+            playMessageSound();
+            if (!open || activeThread?.thread_id !== msg.thread_id) {
+              setUnreadCount(c => c + 1);
+            }
           }
         }
       )

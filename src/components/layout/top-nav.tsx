@@ -7,6 +7,7 @@ import { cn, ripple } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AngBaoBadge } from "@/components/angbao/balance-badge";
+import { isSoundEnabled, setSoundEnabled } from "@/lib/sounds";
 import type { Profile } from "@/types/database";
 
 function LiveNotifBadge({ initialCount, userId }: { initialCount: number; userId: string }) {
@@ -300,6 +301,20 @@ export function SearchBar({ autoFocus }: { autoFocus?: boolean } = {}) {
   );
 }
 
+function SoundToggle() {
+  const [enabled, setEnabled] = useState(true);
+  useEffect(() => { setEnabled(isSoundEnabled()); }, []);
+  return (
+    <button
+      onClick={() => { const next = !enabled; setEnabled(next); setSoundEnabled(next); }}
+      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-[#9CA3AF] hover:text-[#F0F0F0] hover:bg-[#1C1C1C] transition-colors"
+    >
+      {enabled ? <span className="w-4 text-center">🔔</span> : <span className="w-4 text-center">🔕</span>}
+      {enabled ? "Sound on" : "Sound off"}
+    </button>
+  );
+}
+
 function ProfileMenu({ profile }: { profile: Profile }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -346,6 +361,7 @@ function ProfileMenu({ profile }: { profile: Profile }) {
             View profile
           </Link>
           <ThemeToggle menuItem />
+          <SoundToggle />
           <button
             onClick={handleLogout}
             className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-[#9CA3AF] hover:text-[#EF4444] hover:bg-[#1C1C1C] transition-colors border-t border-[#282828]"
