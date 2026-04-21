@@ -81,11 +81,12 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
     if (open && threads.length === 0) fetchThreads();
   }, [open, fetchThreads, threads.length]);
 
-  // Load messages when thread selected + subscribe to realtime
+  // Load messages when thread selected + realtime + fallback polling
   useEffect(() => {
     if (!activeThread) { setMessages([]); return; }
     fetchMessages(activeThread.thread_id, false);
 
+    // Realtime subscription (instant if Supabase Realtime is enabled)
     const supabase = createClient();
     const channel = supabase
       .channel(`chat:${activeThread.thread_id}`)
@@ -94,7 +95,6 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
         { event: "INSERT", schema: "public", table: "messages", filter: `thread_id=eq.${activeThread.thread_id}` },
         (payload) => {
           const newMsg = payload.new as ChatMessage;
-          // Skip if we already have this message (optimistic insert)
           setMessages(prev => {
             if (prev.some(m => m.id === newMsg.id)) return prev;
             return [...prev, newMsg];
@@ -103,10 +103,13 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
       )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    // Fallback polling every 5s in case Realtime isn't available
+    const poll = setInterval(() => fetchMessages(activeThread.thread_id, true), 5000);
+
+    return () => { supabase.removeChannel(channel); clearInterval(poll); };
   }, [activeThread, fetchMessages]);
 
-  // Subscribe to new messages across all threads (for thread list updates)
+  // Subscribe to thread list updates + fallback polling
   useEffect(() => {
     if (!open) return;
 
@@ -120,7 +123,9 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
       )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    const poll = setInterval(fetchThreads, 15000);
+
+    return () => { supabase.removeChannel(channel); clearInterval(poll); };
   }, [open, fetchThreads]);
 
   // Scroll to bottom on new messages
