@@ -26,6 +26,8 @@ export interface Profile {
   country: Country;
   is_verified: boolean;
   angbao_balance: number;
+  referral_code: string;
+  referred_by: string | null;
   created_at: string;
 }
 

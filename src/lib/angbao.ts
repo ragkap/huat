@@ -15,6 +15,8 @@ export const ANGBAO_REASONS: Record<string, { label: string; emoji: string }> = 
   received_reply:    { label: "Someone replied to your post", emoji: "💬" },
   received_repost:   { label: "Someone reposted your post", emoji: "🚀" },
   received_save:     { label: "Someone saved your post", emoji: "⭐" },
+  referral_welcome:  { label: "Welcome bonus! Someone invited you", emoji: "🎉" },
+  referral_bonus:    { label: "Your referral signed up!", emoji: "🧧" },
 };
 
 export function formatAngBao(amount: number): string {

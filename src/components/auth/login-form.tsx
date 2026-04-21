@@ -15,10 +15,16 @@ export function LoginForm() {
   const router = useRouter();
   const supabase = createClient();
 
-  // Read redirect destination from URL params (e.g. /login?redirect=/post/abc)
+  // Read redirect destination and referral code from URL params
   const redirectTo = typeof window !== "undefined"
     ? new URLSearchParams(window.location.search).get("redirect") ?? "/feed"
     : "/feed";
+
+  // Persist referral code in localStorage so it survives OAuth redirects
+  if (typeof window !== "undefined") {
+    const ref = new URLSearchParams(window.location.search).get("ref");
+    if (ref) localStorage.setItem("huat_ref", ref);
+  }
 
   async function handleGoogle() {
     setLoading(true);

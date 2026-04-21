@@ -27,12 +27,18 @@ export function OnboardingForm() {
       const res = await fetch("/api/profile/setup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, display_name: displayName, country }),
+        body: JSON.stringify({
+          username,
+          display_name: displayName,
+          country,
+          referral_code: typeof window !== "undefined" ? localStorage.getItem("huat_ref") : null,
+        }),
       });
       if (!res.ok) {
         const data = await res.json();
         setError(data.error ?? "Failed to set up profile");
       } else {
+        localStorage.removeItem("huat_ref");
         router.push("/feed");
       }
     } finally {

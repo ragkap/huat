@@ -1,8 +1,9 @@
 "use client";
 import Link from "next/link";
+import { createPortal } from "react-dom";
 import { useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { TrendingUp, User, Search, X, Bell, MessageSquare, LogOut, Volume2, VolumeOff } from "lucide-react";
+import { TrendingUp, User, Search, X, Bell, MessageSquare, LogOut, Volume2, VolumeOff, Check } from "lucide-react";
 import { cn, ripple } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -351,6 +352,179 @@ function SoundToggle() {
   );
 }
 
+// Global state for referral modal — survives dropdown unmount
+let showReferralModal: ((code: string) => void) | null = null;
+
+function ReferralModalHost() {
+  const [code, setCode] = useState<string | null>(null);
+  useEffect(() => {
+    showReferralModal = (c: string) => setCode(c);
+    return () => { showReferralModal = null; };
+  }, []);
+  if (!code) return null;
+  return <ReferralModal code={code} onClose={() => setCode(null)} />;
+}
+
+function ReferralButton({ code }: { code: string }) {
+  return (
+    <button
+      onClick={() => showReferralModal?.(code)}
+      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-[#E8311A] hover:text-[#F0F0F0] hover:bg-[#1C1C1C] transition-colors"
+    >
+      <span className="text-sm">🧧</span>
+      Invite & Prosper
+    </button>
+  );
+}
+
+const CONFETTI = Array.from({ length: 40 }, (_, i) => ({
+  left: Math.random() * 100,
+  delay: Math.random() * 2,
+  duration: 2 + Math.random() * 2,
+  size: 4 + Math.random() * 6,
+  color: ["#E8311A", "#FFD700", "#22C55E", "#FF6B35", "#3B82F6", "#E8311A", "#FFD700", "#22C55E"][i % 8],
+  rotation: Math.random() * 360,
+  drift: -20 + Math.random() * 40,
+}));
+
+function ReferralModal({ code, onClose }: { code: string; onClose: () => void }) {
+  const [copied, setCopied] = useState(false);
+  const [phase, setPhase] = useState<"enter" | "visible">("enter");
+  const link = `https://www.huat.co/ref/${code}`;
+
+  useEffect(() => {
+    requestAnimationFrame(() => setPhase("visible"));
+    try {
+      const ctx = new AudioContext();
+      const t = ctx.currentTime;
+      [523, 659, 784, 1047, 1319].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.1, t + i * 0.07);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.07 + 0.25);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(t + i * 0.07);
+        osc.stop(t + i * 0.07 + 0.25);
+      });
+    } catch { /* */ }
+    // Lock body scroll
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
+  async function handleShare() {
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (isMobile && typeof navigator !== "undefined" && navigator.share) {
+      try { await navigator.share({ url: link }); } catch { /* */ }
+    }
+    await navigator.clipboard.writeText(link);
+    setCopied(true);
+    setTimeout(() => onClose(), 3000);
+  }
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center"
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" style={{ opacity: phase === "enter" ? 0 : 1, transition: "opacity 300ms" }} />
+
+      {/* Confetti rain */}
+      {phase === "visible" && CONFETTI.map((c, i) => (
+        <span
+          key={i}
+          className="absolute pointer-events-none"
+          style={{
+            left: `${c.left}%`,
+            top: -10,
+            width: c.size,
+            height: c.size * 0.6,
+            background: c.color,
+            borderRadius: 1,
+            transform: `rotate(${c.rotation}deg)`,
+            animation: `confetti-fall ${c.duration}s ease-in ${c.delay}s infinite`,
+            "--drift": `${c.drift}px`,
+          } as React.CSSProperties}
+        />
+      ))}
+
+      {/* Modal card */}
+      <div
+        className="relative w-[380px] max-w-[90vw]"
+        onClick={e => e.stopPropagation()}
+        style={{
+          transform: phase === "enter" ? "scale(0.5) translateY(40px)" : "scale(1) translateY(0)",
+          opacity: phase === "enter" ? 0 : 1,
+          transition: "all 500ms cubic-bezier(0.34, 1.56, 0.64, 1)",
+        }}
+      >
+        <div className="bg-[#141414] border border-[#282828] rounded-2xl shadow-2xl shadow-[#E8311A]/10 overflow-hidden">
+          {/* Top gradient */}
+          <div className="h-2 bg-gradient-to-r from-[#E8311A] via-[#FFD700] to-[#22C55E]" />
+
+          <div className="px-6 pt-6 pb-5 text-center">
+            {/* Bouncing envelope */}
+            <div className="text-6xl mb-3" style={{ animation: "referral-envelope 1s ease-out" }}>
+              🧧
+            </div>
+
+            <h2 className="text-2xl font-black text-[#F0F0F0] mb-1">Invite & Prosper</h2>
+            <p className="text-xs text-[#71717A] mb-5">Huat ah! Share the prosperity 发</p>
+
+            <div className="space-y-2 text-left mb-5">
+              <div className="flex items-center gap-3 bg-[#1C1C1C] rounded-lg px-4 py-2.5 border border-[#282828]">
+                <span className="text-base">👥</span>
+                <p className="text-sm text-[#F0F0F0]">Grow your <span className="font-bold text-[#22C55E]">followers & connections</span></p>
+              </div>
+              <div className="flex items-center gap-3 bg-[#1C1C1C] rounded-lg px-4 py-2.5 border border-[#282828]">
+                <span className="text-base">🧧</span>
+                <p className="text-sm text-[#F0F0F0]">You earn <span className="font-bold text-[#22C55E]">$18.88</span> AngBao per invite</p>
+              </div>
+              <div className="flex items-center gap-3 bg-[#1C1C1C] rounded-lg px-4 py-2.5 border border-[#282828]">
+                <span className="text-base">🎁</span>
+                <p className="text-sm text-[#F0F0F0]">They get <span className="font-bold text-[#22C55E]">$8.88</span> welcome bonus</p>
+              </div>
+            </div>
+
+            {/* Link display */}
+            <div className="flex items-center bg-[#0A0A0A] border border-[#333333] rounded-lg px-3 py-2.5 mb-4">
+              <p className="flex-1 text-xs text-[#9CA3AF] font-mono truncate select-all">{link}</p>
+            </div>
+
+            <button
+              onClick={e => { e.stopPropagation(); handleShare(); }}
+              className="w-full py-3 rounded-xl bg-[#E8311A] text-white font-bold text-sm hover:bg-[#c9280f] transition-all active:scale-[0.97] shadow-lg shadow-[#E8311A]/20"
+            >
+              {copied ? "✓ Copied to clipboard!" : "Copy & Share Link"}
+            </button>
+
+            <button onClick={onClose} className="mt-3 text-xs text-[#555555] hover:text-[#9CA3AF] transition-colors">
+              Maybe later
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes confetti-fall {
+          0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 1; }
+          100% { transform: translateY(100vh) translateX(var(--drift)) rotate(720deg); opacity: 0; }
+        }
+        @keyframes referral-envelope {
+          0% { transform: scale(0) rotate(-20deg); }
+          50% { transform: scale(1.3) rotate(5deg); }
+          70% { transform: scale(0.9) rotate(-3deg); }
+          100% { transform: scale(1) rotate(0deg); }
+        }
+      `}</style>
+    </div>,
+    document.body
+  );
+}
+
 function ProfileMenu({ profile }: { profile: Profile }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -396,6 +570,7 @@ function ProfileMenu({ profile }: { profile: Profile }) {
             <User className="w-4 h-4" />
             View profile
           </Link>
+          {profile.referral_code && <ReferralButton code={profile.referral_code} />}
           <ThemeToggle menuItem />
           <SoundToggle />
           <button
@@ -470,6 +645,8 @@ function LogoLink() {
 
 export function TopNav({ unreadNotifs = 0, unreadMessages = 0, profile }: { unreadNotifs?: number; unreadMessages?: number; profile?: Profile }) {
   return (
+    <>
+    <ReferralModalHost />
     <header className="fixed top-0 left-0 right-0 z-30 bg-[#0A0A0A]/95 backdrop-blur-md border-b border-[#282828] h-14">
       <div className="max-w-[1290px] mx-auto h-full flex items-center">
         {/* Logo — aligns with sidebar width */}
@@ -507,5 +684,6 @@ export function TopNav({ unreadNotifs = 0, unreadMessages = 0, profile }: { unre
         </div>
       </div>
     </header>
+    </>
   );
 }
