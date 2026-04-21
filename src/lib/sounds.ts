@@ -18,56 +18,38 @@ export function playMessageSound() {
   try {
     if (!audioCtx) audioCtx = new AudioContext();
     const ctx = audioCtx;
-    const t = ctx.currentTime;
 
-    // Ka-ching! Cash register sound
-    // 1. Short metallic "ka" — noise burst
-    const noiseLen = 0.04;
-    const noiseBuffer = ctx.createBuffer(1, ctx.sampleRate * noiseLen, ctx.sampleRate);
-    const noiseData = noiseBuffer.getChannelData(0);
-    for (let i = 0; i < noiseData.length; i++) noiseData[i] = (Math.random() * 2 - 1) * 0.6;
-    const noise = ctx.createBufferSource();
-    noise.buffer = noiseBuffer;
-    const noiseGain = ctx.createGain();
-    noiseGain.gain.setValueAtTime(0.15, t);
-    noiseGain.gain.exponentialRampToValueAtTime(0.001, t + noiseLen);
-    const noiseFilter = ctx.createBiquadFilter();
-    noiseFilter.type = "highpass";
-    noiseFilter.frequency.value = 4000;
-    noise.connect(noiseFilter).connect(noiseGain).connect(ctx.destination);
-    noise.start(t);
+    // First tone (C5)
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = "sine";
+    osc1.frequency.value = 523;
+    gain1.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+    osc1.connect(gain1).connect(ctx.destination);
+    osc1.start(ctx.currentTime);
+    osc1.stop(ctx.currentTime + 0.15);
 
-    // 2. "Ching" — bright metallic ring (two detuned high sines)
-    const ring1 = ctx.createOscillator();
-    const ring1Gain = ctx.createGain();
-    ring1.type = "sine";
-    ring1.frequency.value = 3520; // A7
-    ring1Gain.gain.setValueAtTime(0.12, t + 0.03);
-    ring1Gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
-    ring1.connect(ring1Gain).connect(ctx.destination);
-    ring1.start(t + 0.03);
-    ring1.stop(t + 0.35);
+    // Second tone (E5) — slightly delayed
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = "sine";
+    osc2.frequency.value = 659;
+    gain2.gain.setValueAtTime(0.15, ctx.currentTime + 0.1);
+    gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+    osc2.connect(gain2).connect(ctx.destination);
+    osc2.start(ctx.currentTime + 0.1);
+    osc2.stop(ctx.currentTime + 0.3);
 
-    const ring2 = ctx.createOscillator();
-    const ring2Gain = ctx.createGain();
-    ring2.type = "sine";
-    ring2.frequency.value = 4698; // D8
-    ring2Gain.gain.setValueAtTime(0.08, t + 0.03);
-    ring2Gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
-    ring2.connect(ring2Gain).connect(ctx.destination);
-    ring2.start(t + 0.03);
-    ring2.stop(t + 0.3);
-
-    // 3. Coin shimmer — quick descending sparkle
-    const shimmer = ctx.createOscillator();
-    const shimmerGain = ctx.createGain();
-    shimmer.type = "triangle";
-    shimmer.frequency.setValueAtTime(6000, t + 0.05);
-    shimmer.frequency.exponentialRampToValueAtTime(2000, t + 0.2);
-    shimmerGain.gain.setValueAtTime(0.06, t + 0.05);
-    shimmerGain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
-    shimmer.connect(shimmerGain).connect(ctx.destination);
-    shimmer.start(t + 0.05);
-    shimmer.stop(t + 0.25);
+    // Third tone (G5) — happy ascending
+    const osc3 = ctx.createOscillator();
+    const gain3 = ctx.createGain();
+    osc3.type = "sine";
+    osc3.frequency.value = 784;
+    gain3.gain.setValueAtTime(0.12, ctx.currentTime + 0.2);
+    gain3.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.45);
+    osc3.connect(gain3).connect(ctx.destination);
+    osc3.start(ctx.currentTime + 0.2);
+    osc3.stop(ctx.currentTime + 0.45);
   } catch { /* audio not available */ }
 }
