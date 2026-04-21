@@ -377,26 +377,30 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
                     </p>
                   </div>
                 ) : (
-                  filteredThreads.map(t => (
+                  filteredThreads.map(t => {
+                    const isUnread = t.lastSenderId && t.lastSenderId !== currentUserId;
+                    return (
                     <button
                       key={t.thread_id}
                       onClick={() => setActiveThread(t)}
                       className="flex items-center gap-2.5 w-full px-3 py-3 hover:bg-[#1C1C1C] transition-colors border-b border-[#1A1A1A]"
                     >
+                      {isUnread && <span className="w-2 h-2 rounded-full bg-[#22C55E] flex-shrink-0" />}
                       <Avatar src={t.other.avatar_url} alt={t.other.display_name} size="sm" />
                       <div className="flex-1 min-w-0 text-left">
                         <div className="flex items-center justify-between">
-                          <p className="text-sm font-semibold text-[#F0F0F0] truncate">{t.other.display_name}</p>
-                          {t.lastMessageAt && <span className="text-[10px] text-[#555555] flex-shrink-0 ml-2">{timeAgo(t.lastMessageAt)}</span>}
+                          <p className={cn("text-sm truncate", isUnread ? "font-bold text-[#F0F0F0]" : "font-semibold text-[#F0F0F0]")}>{t.other.display_name}</p>
+                          {t.lastMessageAt && <span className={cn("text-[10px] flex-shrink-0 ml-2", isUnread ? "text-[#22C55E]" : "text-[#555555]")}>{timeAgo(t.lastMessageAt)}</span>}
                         </div>
                         {t.lastMessage && (
-                          <p className="text-xs text-[#71717A] truncate mt-0.5">
+                          <p className={cn("text-xs truncate mt-0.5", isUnread ? "text-[#F0F0F0]" : "text-[#71717A]")}>
                             {t.lastSenderId === currentUserId ? "You: " : ""}{t.lastMessage}
                           </p>
                         )}
                       </div>
                     </button>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </>
