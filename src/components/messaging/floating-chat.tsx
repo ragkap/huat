@@ -255,85 +255,84 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
     : threads;
 
   return (
-    <div className="hidden lg:flex flex-col fixed bottom-0 right-6 z-50 w-[320px]">
-      {/* Expanded panel */}
-      {open && (
-        <div className="w-full h-[400px] bg-[#141414] border border-[#333333] border-b-0 rounded-t-xl flex flex-col overflow-hidden shadow-2xl shadow-black/30">
-
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#282828] bg-[#1C1C1C] flex-shrink-0">
-            {activeThread ? (
-              <>
-                <button onClick={() => setActiveThread(null)} className="text-[#9CA3AF] hover:text-[#F0F0F0] transition-colors mr-2">
-                  <ChevronDown className="w-4 h-4 rotate-90" />
-                </button>
-                <Avatar src={activeThread.other.avatar_url} alt={activeThread.other.display_name} size="xs" />
-                <div className="flex-1 min-w-0 ml-2">
-                  <p className="text-sm font-semibold text-[#F0F0F0] truncate">{activeThread.other.display_name}</p>
-                  <p className="text-[10px] text-[#555555]">@{activeThread.other.username}</p>
-                </div>
-              </>
-            ) : (
-              <p className="text-sm font-semibold text-[#F0F0F0]">Conversations</p>
-            )}
-            <button onClick={() => { setOpen(false); setActiveThread(null); setReadThreads(new Set()); }} className="text-[#71717A] hover:text-[#F0F0F0] transition-colors">
+    <div className="hidden lg:flex items-end fixed bottom-0 right-6 z-50 gap-0">
+      {/* Thread panel — pops to the left when a thread is active */}
+      {open && activeThread && (
+        <div className="w-[320px] h-[440px] bg-[#141414] border border-[#333333] rounded-t-xl flex flex-col overflow-hidden shadow-2xl shadow-black/30 mr-[-1px]">
+          {/* Thread header */}
+          <div className="flex items-center justify-between px-3 py-2.5 border-b border-[#282828] bg-[#1C1C1C] flex-shrink-0">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <Avatar src={activeThread.other.avatar_url} alt={activeThread.other.display_name} size="xs" />
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-[#F0F0F0] truncate">{activeThread.other.display_name}</p>
+                <p className="text-[10px] text-[#555555]">@{activeThread.other.username}</p>
+              </div>
+            </div>
+            <button onClick={() => setActiveThread(null)} className="text-[#71717A] hover:text-[#F0F0F0] transition-colors">
               <X className="w-4 h-4" />
             </button>
           </div>
 
-          {activeThread ? (
-            /* Thread view */
-            <>
-              <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
-                {loadingMessages ? (
-                  <div className="flex items-center justify-center h-full">
-                    <span className="w-5 h-5 border-2 border-[#333333] border-t-[#E8311A] rounded-full animate-spin" />
+          {/* Messages area inside left panel */}
+          <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
+            {loadingMessages ? (
+              <div className="flex items-center justify-center h-full">
+                <span className="w-5 h-5 border-2 border-[#333333] border-t-[#E8311A] rounded-full animate-spin" />
+              </div>
+            ) : (
+              messages.map(msg => {
+                const isMe = msg.sender_id === currentUserId;
+                return (
+                  <div key={msg.id} className={cn("flex", isMe ? "justify-end" : "justify-start")}>
+                    <div className={cn(
+                      "max-w-[80%] px-3 py-2 rounded-xl text-sm",
+                      isMe
+                        ? "bg-[#E8311A] text-white rounded-br-none"
+                        : "bg-[#282828] text-[#F0F0F0] border border-[#333333] rounded-bl-none"
+                    )}>
+                      <p>{msg.content}</p>
+                      <p className={cn("text-[10px] mt-0.5", isMe ? "text-white/50" : "text-[#555555]")}>{timeAgo(msg.created_at)}</p>
+                    </div>
                   </div>
-                ) : (
-                  messages.map(msg => {
-                    const isMe = msg.sender_id === currentUserId;
-                    return (
-                      <div key={msg.id} className={cn("flex", isMe ? "justify-end" : "justify-start")}>
-                        <div className={cn(
-                          "max-w-[80%] px-3 py-2 rounded-xl text-sm",
-                          isMe
-                            ? "bg-[#E8311A] text-white rounded-br-none"
-                            : "bg-[#282828] text-[#F0F0F0] border border-[#333333] rounded-bl-none"
-                        )}>
-                          <p>{msg.content}</p>
-                          <p className={cn("text-[10px] mt-0.5", isMe ? "text-white/50" : "text-[#555555]")}>{timeAgo(msg.created_at)}</p>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-                <div ref={bottomRef} />
-              </div>
-              {/* Composer */}
-              <div className="flex items-center gap-2 px-3 py-2 border-t border-[#282828] flex-shrink-0">
-                <input
-                  ref={inputRef}
-                  value={content}
-                  onChange={e => setContent(e.target.value)}
-                  onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                  placeholder="Write a message…"
-                  className="flex-1 bg-[#1C1C1C] border border-[#333333] rounded-lg px-3 py-2 text-sm text-[#F0F0F0] placeholder:text-[#555555] focus:outline-none focus:border-[#444444] transition-colors"
-                />
-                <button
-                  onClick={handleSend}
-                  disabled={!content.trim() || sending}
-                  className={cn(
-                    "w-8 h-8 flex items-center justify-center rounded-lg transition-all flex-shrink-0",
-                    content.trim() && !sending ? "bg-[#E8311A] text-white hover:bg-[#c9280f]" : "text-[#555555]"
-                  )}
-                >
-                  <Send className="w-4 h-4" />
-                </button>
-              </div>
-            </>
-          ) : (
-            /* Thread list */
-            <>
+                );
+              })
+            )}
+            <div ref={bottomRef} />
+          </div>
+          {/* Composer */}
+          <div className="flex items-center gap-2 px-3 py-2 border-t border-[#282828] flex-shrink-0">
+            <input
+              ref={inputRef}
+              value={content}
+              onChange={e => setContent(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+              placeholder="Write a message…"
+              className="flex-1 bg-[#1C1C1C] border border-[#333333] rounded-lg px-3 py-2 text-sm text-[#F0F0F0] placeholder:text-[#555555] focus:outline-none focus:border-[#444444] transition-colors"
+            />
+            <button
+              onClick={handleSend}
+              disabled={!content.trim() || sending}
+              className={cn(
+                "w-8 h-8 flex items-center justify-center rounded-lg transition-all flex-shrink-0",
+                content.trim() && !sending ? "bg-[#E8311A] text-white hover:bg-[#c9280f]" : "text-[#555555]"
+              )}
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Right panel — thread list (always visible when open) */}
+      {open && (
+        <div className="w-[320px] h-[400px] bg-[#141414] border border-[#333333] border-b-0 rounded-t-xl flex flex-col overflow-hidden shadow-2xl shadow-black/30">
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[#282828] bg-[#1C1C1C] flex-shrink-0">
+            <p className="text-sm font-semibold text-[#F0F0F0]">Conversations</p>
+            <button onClick={() => { setOpen(false); setActiveThread(null); setReadThreads(new Set()); }} className="text-[#71717A] hover:text-[#F0F0F0] transition-colors">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
               {/* Search */}
               <div className="px-3 py-2 border-b border-[#282828] flex-shrink-0">
                 <div className="flex items-center gap-2 bg-[#1C1C1C] border border-[#333333] rounded-lg px-2.5 py-1.5">
@@ -412,8 +411,6 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
                   })
                 )}
               </div>
-            </>
-          )}
         </div>
       )}
 
@@ -433,7 +430,7 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
           </span>
         )}
         <div className="flex-1" />
-        <ChevronDown className={cn("w-4 h-4 text-[#71717A] transition-transform", open && "rotate-180")} />
+        <ChevronDown className={cn("w-4 h-4 text-[#71717A] transition-transform", !open && "rotate-180")} />
       </button>
     </div>
   );
