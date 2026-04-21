@@ -255,26 +255,11 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
     : threads;
 
   return (
-    <div className="hidden lg:block fixed bottom-0 right-6 z-50">
-      {/* Docked bar — always visible */}
-      <button
-        onClick={e => { ripple(e); setOpen(o => !o); if (!open) setUnreadCount(0); }}
-        className="relative overflow-hidden flex items-center gap-2 px-4 py-2.5 bg-[#1C1C1C] border border-b-0 border-[#333333] rounded-t-xl hover:bg-[#222222] transition-colors w-[300px]"
-      >
-        <MessageSquare className="w-4 h-4 text-[#E8311A]" />
-        <span className="text-sm font-semibold text-[#F0F0F0]">Messaging</span>
-        {unreadCount > 0 && (
-          <span className="min-w-[18px] h-[18px] bg-[#22C55E] rounded-full text-[10px] font-bold text-white flex items-center justify-center px-1 leading-none">
-            {unreadCount > 99 ? "99+" : unreadCount}
-          </span>
-        )}
-        <div className="flex-1" />
-        <ChevronDown className={cn("w-4 h-4 text-[#71717A] transition-transform", open && "rotate-180")} />
-      </button>
-
+    <div className="hidden lg:flex flex-col fixed bottom-0 right-6 z-50 w-[320px]">
       {/* Expanded panel */}
       {open && (
-        <div className="absolute bottom-full right-0 w-[340px] h-[480px] bg-[#141414] border border-[#282828] rounded-t-xl shadow-2xl shadow-black/40 flex flex-col overflow-hidden mb-0">
+        <div className="w-full h-[400px] bg-[#141414] border border-[#333333] border-b-0 rounded-t-xl flex flex-col overflow-hidden shadow-2xl shadow-black/30">
+
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#282828] bg-[#1C1C1C] flex-shrink-0">
             {activeThread ? (
@@ -431,6 +416,25 @@ export function FloatingChat({ currentUserId, profile }: { currentUserId: string
           )}
         </div>
       )}
+
+      {/* Docked bar — always visible at bottom */}
+      <button
+        onClick={e => { ripple(e); setOpen(o => !o); if (!open) setUnreadCount(0); }}
+        className={cn(
+          "relative overflow-hidden flex items-center gap-2 px-4 py-2.5 bg-[#1C1C1C] border border-[#333333] hover:bg-[#222222] transition-colors w-full",
+          open ? "border-t-0" : "rounded-t-xl"
+        )}
+      >
+        <MessageSquare className="w-4 h-4 text-[#E8311A]" />
+        <span className="text-sm font-semibold text-[#F0F0F0]">Messaging</span>
+        {unreadCount > 0 && (
+          <span className="min-w-[18px] h-[18px] bg-[#22C55E] rounded-full text-[10px] font-bold text-white flex items-center justify-center px-1 leading-none">
+            {unreadCount > 99 ? "99+" : unreadCount}
+          </span>
+        )}
+        <div className="flex-1" />
+        <ChevronDown className={cn("w-4 h-4 text-[#71717A] transition-transform", open && "rotate-180")} />
+      </button>
     </div>
   );
 }
