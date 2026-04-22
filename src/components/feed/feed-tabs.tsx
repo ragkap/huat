@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { FeedList } from "@/components/feed/feed-list";
-import { cn } from "@/lib/utils";
+import { cn, ripple } from "@/lib/utils";
 import type { Post, Profile } from "@/types/database";
 
 const TABS = [
@@ -27,9 +27,9 @@ export function FeedTabs({ profile, initialPosts }: FeedTabsProps) {
         {TABS.map(t => (
           <button
             key={t.id}
-            onClick={() => { setTab(t.id); window.scrollTo({ top: 0 }); }}
+            onClick={e => { ripple(e); setTab(t.id); window.scrollTo({ top: 0 }); }}
             className={cn(
-              "flex-1 py-3.5 text-sm font-medium cursor-pointer",
+              "relative overflow-hidden flex-1 py-3.5 text-sm font-medium cursor-pointer",
               t.id === tab ? "text-[#F0F0F0]" : "text-[#9CA3AF] hover:text-[#F0F0F0]"
             )}
             style={{

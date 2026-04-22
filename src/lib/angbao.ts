@@ -19,6 +19,7 @@ export const ANGBAO_REASONS: Record<string, { label: string; emoji: string }> = 
   referral_bonus:    { label: "Your referral signed up!", emoji: "🧧" },
 };
 
-export function formatAngBao(amount: number): string {
+export function formatAngBao(amount: number, compact = false): string {
+  if (compact) return `$${Math.floor(amount)}`;
   return `$${amount.toFixed(2)}`;
 }

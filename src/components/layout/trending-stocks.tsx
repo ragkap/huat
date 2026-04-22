@@ -1,6 +1,6 @@
 import { TrendingUp } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { getStocksBySlugs } from "@/lib/stocks-db/client";
+import { getStockNamesByTickers, getStockBySlugOrTicker } from "@/lib/stocks-db/client";
 import { RippleLink } from "@/components/ui/ripple-link";
 import { LastVisitedWidget } from "@/components/layout/last-visited-widget";
 
@@ -30,20 +30,22 @@ async function getTrendingStocks() {
       .slice(0, 10)
       .map(([ticker, count]) => ({ ticker, count }));
 
-    // Resolve names in a single batch query instead of N individual lookups
+    // Resolve names by bloomberg ticker
     const tickers = top.map(t => t.ticker);
-    const stocks = await getStocksBySlugs(tickers).catch(() => []);
-    const stockMap = new Map(stocks.map(s => [s.slug, s]));
+    const nameMap = await getStockNamesByTickers(tickers).catch(() => ({} as Record<string, string>));
 
-    return top.map(({ ticker, count }) => {
-      const stock = stockMap.get(ticker);
+    // Resolve slugs for links
+    const resolved = await Promise.all(top.map(async ({ ticker, count }) => {
+      const stock = await getStockBySlugOrTicker(ticker).catch(() => null);
       return {
         ticker,
         count,
-        name: stock?.name ?? ticker,
+        name: nameMap[ticker] ?? ticker,
         slug: stock?.slug ?? ticker,
       };
-    });
+    }));
+
+    return resolved;
   } catch {
     return [];
   }
@@ -68,16 +70,16 @@ export async function TrendingStocks() {
               <RippleLink
                 key={s.ticker}
                 href={`/stocks/${encodeURIComponent(s.slug)}`}
-                className="flex items-center justify-between hover:bg-[#141414] -mx-2 px-2 py-1.5 rounded transition-colors group"
+                className="flex items-center hover:bg-[#141414] -mx-2 px-2 py-1.5 rounded transition-colors group"
               >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <span className="text-[10px] font-bold text-[#555555] w-4 flex-shrink-0">{i + 1}</span>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-[#E0E0E0] truncate group-hover:text-white leading-tight">{s.name}</p>
+                <span className="text-[10px] font-bold text-[#555555] w-4 flex-shrink-0">{i + 1}</span>
+                <div className="flex-1 min-w-0 ml-2.5">
+                  <p className="text-xs font-bold text-[#E0E0E0] truncate group-hover:text-white leading-tight">{s.name}</p>
+                  <div className="flex items-center justify-between">
                     <p className="text-[10px] text-[#555555] font-mono">{s.ticker}</p>
+                    <span className="text-[10px] text-[#555555] flex-shrink-0">{s.count} post{s.count !== 1 ? "s" : ""}</span>
                   </div>
                 </div>
-                <span className="text-[10px] text-[#555555] flex-shrink-0 ml-2">{s.count} post{s.count !== 1 ? "s" : ""}</span>
               </RippleLink>
             ))}
           </div>

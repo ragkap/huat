@@ -203,6 +203,14 @@ export function Sidebar() {
               </Link>
             );
           })}
+          {/* Invite link */}
+          <button
+            onClick={e => { ripple(e); window.dispatchEvent(new CustomEvent("huat:open-referral", { detail: { code: "", name: "" } })); }}
+            className="relative overflow-hidden flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium text-[#E8311A] hover:bg-[#E8311A]/10 transition-colors mt-1"
+          >
+            <span className="text-lg leading-none">🧧</span>
+            Invite & Prosper
+          </button>
         </nav>
 
         {stockTicker && (

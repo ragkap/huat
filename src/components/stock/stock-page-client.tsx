@@ -876,9 +876,9 @@ export function StockPageClient({
           {TOP_TABS.map(({ id, label }) => (
             <button
               key={id}
-              onClick={() => switchTab(id)}
+              onClick={e => { ripple(e as React.MouseEvent<HTMLElement>); switchTab(id); }}
               className={cn(
-                "flex-1 py-3 text-sm font-semibold cursor-pointer",
+                "relative overflow-hidden flex-1 py-3 text-sm font-semibold cursor-pointer",
                 topTab === id ? "text-[#F0F0F0]" : "text-[#555555] hover:text-[#9CA3AF]"
               )}
               style={{

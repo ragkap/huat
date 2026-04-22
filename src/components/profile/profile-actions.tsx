@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { UserPlus, UserCheck, Link2, Clock, MessageSquare, Check } from "lucide-react";
+import { UserPlus, Link2, Clock, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAngBaoToast } from "@/components/angbao/credit-toast";
 
@@ -20,14 +20,21 @@ export function ProfileActions({ profileId, isFollowing: initFollow, isConnected
 
   async function handleFollow() {
     setLoading(true);
-    if (following) {
-      await fetch("/api/users/connections", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subject_id: profileId, rel_type: "follow" }),
-      });
-      setFollowing(false);
-    } else {
+    await fetch("/api/users/connections", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ subject_id: profileId, rel_type: "follow" }),
+    });
+    setFollowing(true);
+    angbao.showCredit("follow", 0.50);
+    setLoading(false);
+  }
+
+  async function handleConnect() {
+    if (pending || connected) return;
+    setLoading(true);
+    // Connect implies follow — do both
+    if (!following) {
       await fetch("/api/users/connections", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -36,12 +43,6 @@ export function ProfileActions({ profileId, isFollowing: initFollow, isConnected
       setFollowing(true);
       angbao.showCredit("follow", 0.50);
     }
-    setLoading(false);
-  }
-
-  async function handleConnect() {
-    if (pending || connected) return;
-    setLoading(true);
     await fetch("/api/users/connections", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -51,48 +52,42 @@ export function ProfileActions({ profileId, isFollowing: initFollow, isConnected
     setLoading(false);
   }
 
+  // Connected — only show Message button
+  if (connected) {
+    return (
+      <Button variant="primary" size="sm" onClick={() => window.dispatchEvent(new CustomEvent("huat:open-chat", { detail: profileId }))}>
+        <MessageSquare className="w-3.5 h-3.5 mr-1" />Message
+      </Button>
+    );
+  }
+
   return (
     <div className="flex flex-col items-end gap-2">
-      {/* Action buttons */}
       <div className="flex items-center gap-2">
-        <Button
-          variant={following ? "secondary" : "primary"}
-          size="sm"
-          onClick={handleFollow}
-          loading={loading}
-        >
-          {following ? <><UserCheck className="w-3.5 h-3.5 mr-1" />Following</> : <><UserPlus className="w-3.5 h-3.5 mr-1" />Follow</>}
-        </Button>
-
-        {connected ? (
-          <Button variant="secondary" size="sm" disabled>
-            <Check className="w-3.5 h-3.5 mr-1" />Connected
+        {/* Show Follow only if not yet following */}
+        {!following && (
+          <Button variant="primary" size="sm" onClick={handleFollow} loading={loading}>
+            <UserPlus className="w-3.5 h-3.5 mr-1" />Follow
           </Button>
-        ) : pending ? (
+        )}
+
+        {/* Connect / Pending */}
+        {pending ? (
           <Button variant="secondary" size="sm" disabled>
             <Clock className="w-3.5 h-3.5 mr-1" />Pending
           </Button>
         ) : (
-          <Button variant="secondary" size="sm" onClick={handleConnect} loading={loading}>
+          <Button variant={following ? "primary" : "secondary"} size="sm" onClick={handleConnect} loading={loading}>
             <Link2 className="w-3.5 h-3.5 mr-1" />Connect
-          </Button>
-        )}
-
-        {connected && (
-          <Button variant="secondary" size="sm" onClick={() => window.dispatchEvent(new CustomEvent("huat:open-chat", { detail: profileId }))}>
-            <MessageSquare className="w-3.5 h-3.5 mr-1" />Message
           </Button>
         )}
       </div>
 
-      {/* Explanation text */}
       <p className="text-[10px] text-[#555555] text-right max-w-[260px] leading-relaxed">
-        {!following && !connected && "Follow to see their posts in your feed. Connect to message them."}
-        {following && !connected && !pending && "You're following. Connect to start messaging."}
+        {!following && !pending && "Follow to see their posts. Connect to message them."}
+        {following && !pending && "You're following. Connect to start messaging."}
         {following && pending && "You're following. Connection request pending."}
-        {following && connected && "You're connected! You can message each other."}
-        {!following && connected && "You're connected. Follow to also see their posts."}
-        {!following && pending && "Connection request pending. Follow to see their posts."}
+        {!following && pending && "Connection request sent. Follow to see their posts."}
       </p>
     </div>
   );

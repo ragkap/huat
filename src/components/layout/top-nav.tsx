@@ -3,7 +3,7 @@ import Link from "next/link";
 import { createPortal } from "react-dom";
 import { useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { TrendingUp, User, Search, X, Bell, MessageSquare, LogOut, Volume2, VolumeOff, Check } from "lucide-react";
+import { TrendingUp, User, Search, X, Bell, MessageSquare, LogOut, Volume2, VolumeOff, Check, MoreVertical } from "lucide-react";
 import { cn, ripple } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -361,18 +361,27 @@ function SoundToggle() {
 
 // Global state for referral modal — survives dropdown unmount
 let showReferralModal: ((code: string, name: string) => void) | null = null;
+let storedReferralData: { code: string; name: string } | null = null;
 
 function ReferralModalHost() {
   const [data, setData] = useState<{ code: string; name: string } | null>(null);
   useEffect(() => {
     showReferralModal = (code: string, name: string) => setData({ code, name });
-    return () => { showReferralModal = null; };
+    // Also listen for global event (from sidebar, angbao badge, etc.)
+    function onOpenReferral(e: Event) {
+      const detail = (e as CustomEvent).detail as { code: string; name: string } | undefined;
+      if (detail?.code) setData(detail);
+      else if (storedReferralData) setData(storedReferralData);
+    }
+    window.addEventListener("huat:open-referral", onOpenReferral);
+    return () => { showReferralModal = null; window.removeEventListener("huat:open-referral", onOpenReferral); };
   }, []);
   if (!data) return null;
   return <ReferralModal code={data.code} name={data.name} onClose={() => setData(null)} />;
 }
 
 function ReferralButton({ code, name }: { code: string; name: string }) {
+  storedReferralData = { code, name };
   return (
     <button
       onClick={() => showReferralModal?.(code, name)}
@@ -562,11 +571,19 @@ function ProfileMenu({ profile }: { profile: Profile }) {
       <button
         onClick={e => { ripple(e); setOpen(o => !o); }}
         className={cn(
-          "relative overflow-hidden w-8 h-8 rounded-full bg-[#282828] border flex items-center justify-center text-xs font-bold transition-colors",
-          open ? "border-[#555555] text-[#F0F0F0]" : "border-[#333333] text-[#9CA3AF] hover:border-[#555555] hover:text-[#F0F0F0]"
+          "relative overflow-hidden w-8 h-8 rounded-full flex items-center justify-center transition-colors",
+          open ? "text-[#F0F0F0]" : "text-[#9CA3AF] hover:text-[#F0F0F0]"
         )}
       >
-        {profile.display_name[0]?.toUpperCase()}
+        <MoreVertical className="w-5 h-5 sm:hidden" />
+        {profile.avatar_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={profile.avatar_url} alt={profile.display_name} className="hidden sm:block w-10 h-10 rounded-full object-cover" />
+        ) : (
+          <span className="hidden sm:flex w-10 h-10 rounded-full bg-[#282828] border border-[#333333] items-center justify-center text-xs font-bold text-[#9CA3AF]">
+            {profile.display_name[0]?.toUpperCase()}
+          </span>
+        )}
       </button>
 
       {open && (
@@ -649,7 +666,7 @@ function LogoLink() {
       }}
       className="flex items-center gap-2 flex-shrink-0 lg:w-80 px-4"
     >
-      <span className="text-[#E8311A] font-black text-2xl tracking-tighter leading-none">Huat</span>
+      <span className="hidden sm:inline text-[#E8311A] font-black text-2xl tracking-tighter leading-none">Huat</span>
       <span className="text-[#E8311A] font-black text-2xl">发</span>
       {loading && <span className="ml-1 inline-block w-4 h-4 border-2 border-[#E8311A]/30 border-t-[#E8311A] rounded-full animate-spin" />}
     </button>
@@ -657,6 +674,10 @@ function LogoLink() {
 }
 
 export function TopNav({ unreadNotifs = 0, unreadMessages = 0, profile }: { unreadNotifs?: number; unreadMessages?: number; profile?: Profile }) {
+  // Store referral data for sidebar/badge to use
+  if (profile?.referral_code) {
+    storedReferralData = { code: profile.referral_code, name: profile.display_name };
+  }
   return (
     <>
     <ReferralModalHost />
@@ -692,7 +713,7 @@ export function TopNav({ unreadNotifs = 0, unreadMessages = 0, profile }: { unre
             <MessageSquare style={{ width: 22, height: 22 }} />
             {profile && <LiveMessageBadge initialCount={unreadMessages} userId={profile.id} />}
           </Link>
-          {profile && <AngBaoBadge username={profile.username} />}
+          {profile && <AngBaoBadge />}
           {profile && <ProfileMenu profile={profile} />}
         </div>
       </div>
