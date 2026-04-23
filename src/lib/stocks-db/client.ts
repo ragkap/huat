@@ -123,7 +123,7 @@ async function _getStockNamesByTickers(tickers: string[]): Promise<Record<string
 export const getStockNamesByTickers = unstable_cache(
   _getStockNamesByTickers,
   ["stock-names"],
-  { revalidate: 300 }
+  { revalidate: 86400 }
 );
 
 export interface StockIdentity {

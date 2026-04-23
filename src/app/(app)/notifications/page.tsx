@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabase } from "@supabase/supabase-js";
 import { Avatar } from "@/components/ui/avatar";
 import { timeAgo } from "@/lib/utils";
 import { ConnectActions } from "@/components/profile/connect-actions";
@@ -18,18 +19,23 @@ const notifLabel: Record<string, string> = {
 
 export default async function NotificationsPage() {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const db = createSupabase(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
-  const { data: notifications } = await supabase
-    .from("notifications")
-    .select("*, actor:profiles!notifications_actor_id_fkey(id, username, display_name, avatar_url)")
-    .order("created_at", { ascending: false })
-    .limit(50);
-
-  // Mark all as read
-  await supabase
-    .from("notifications")
-    .update({ is_read: true })
-    .eq("is_read", false);
+  // Fetch and mark as read in parallel
+  const [{ data: notifications }] = await Promise.all([
+    db
+      .from("notifications")
+      .select("*, actor:profiles!notifications_actor_id_fkey(id, username, display_name, avatar_url)")
+      .eq("recipient_id", user?.id ?? "")
+      .order("created_at", { ascending: false })
+      .limit(50),
+    db
+      .from("notifications")
+      .update({ is_read: true })
+      .eq("recipient_id", user?.id ?? "")
+      .eq("is_read", false),
+  ]);
 
   return (
     <div>

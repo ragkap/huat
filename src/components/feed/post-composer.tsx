@@ -305,7 +305,7 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
                     </button>
                     <div className="w-1/3 min-h-[160px] flex-shrink-0 bg-[#141414] flex items-center justify-center overflow-hidden">
                       {linkPreview.og_image ? (
-                        <img src={linkPreview.og_image} alt="" className="w-full h-full object-cover" />
+                        <img src={linkPreview.og_image} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                       ) : (
                         <svg className="w-6 h-6 text-[#333333]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                           <rect x="3" y="3" width="18" height="18" rx="2" />
@@ -446,7 +446,7 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
                       <div key={i} className="relative w-20 h-20 rounded overflow-hidden border border-[#333333] bg-[#141414] flex items-center justify-center">
                         {att.type === "image" ? (
                           /* eslint-disable-next-line @next/next/no-img-element */
-                          <img src={att.url} alt="" className="w-full h-full object-cover" />
+                          <img src={att.url} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                         ) : att.type === "video" ? (
                           <div className="flex flex-col items-center gap-1 text-[#9CA3AF]">
                             <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polygon points="5 3 19 12 5 21" /></svg>

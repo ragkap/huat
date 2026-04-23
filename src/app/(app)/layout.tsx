@@ -15,21 +15,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [profileRes, notifsRes, messagesRes] = await Promise.all([
-    supabase.from("profiles").select("*").eq("id", user.id).single(),
-    supabase.from("notifications").select("id", { count: "exact", head: true }).eq("recipient_id", user.id).eq("is_read", false),
-    supabase.from("messages").select("id", { count: "exact", head: true }).eq("is_read", false).neq("sender_id", user.id),
-  ]);
-  const profile = profileRes.data;
+  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single();
   if (!profile) redirect("/onboarding");
-
-  const unreadNotifs = notifsRes.count ?? 0;
-  const unreadMessages = messagesRes.count ?? 0;
 
   return (
     <AngBaoToastProvider initialBalance={(profile as Profile)?.angbao_balance ?? 0}>
       <div className="min-h-screen bg-[#0A0A0A]">
-        <TopNav unreadNotifs={unreadNotifs} unreadMessages={unreadMessages} profile={profile as Profile} />
+        <TopNav profile={profile as Profile} />
         <FloatingChat currentUserId={user.id} profile={profile as Profile} />
         <div className="flex max-w-[1290px] mx-auto pt-14">
           <Sidebar />

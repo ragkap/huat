@@ -653,7 +653,7 @@ export function PostCard({ post, currentUserId, currentUserProfile, followingIds
                 return (
                   <>
                     {(tickerPrefix || userText.trim()) && (
-                      <p className="text-sm text-[#F0F0F0] leading-relaxed mb-2">
+                      <p className="text-sm text-[#F0F0F0] leading-relaxed mb-2 whitespace-pre-wrap">
                         {tickerPrefix}{renderTextWithLinks(userText.trim())}
                       </p>
                     )}
@@ -672,7 +672,7 @@ export function PostCard({ post, currentUserId, currentUserProfile, followingIds
                 );
               }
               return (
-                <p className="text-sm text-[#F0F0F0] leading-relaxed">
+                <p className="text-sm text-[#F0F0F0] leading-relaxed whitespace-pre-wrap">
                   {tickerPrefix}{renderTextWithLinks(localContent)}
                 </p>
               );

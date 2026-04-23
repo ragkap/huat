@@ -5,14 +5,22 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { TrendingUp, User, Search, X, Bell, MessageSquare, LogOut, Volume2, VolumeOff, Check, MoreVertical, Settings } from "lucide-react";
 import { cn, ripple } from "@/lib/utils";
+import { Avatar } from "@/components/ui/avatar";
 import { createClient } from "@/lib/supabase/client";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AngBaoBadge } from "@/components/angbao/balance-badge";
 import { isSoundEnabled, setSoundEnabled } from "@/lib/sounds";
 import type { Profile } from "@/types/database";
 
-function LiveNotifBadge({ initialCount, userId }: { initialCount: number; userId: string }) {
-  const [count, setCount] = useState(initialCount);
+function LiveNotifBadge({ userId }: { userId: string }) {
+  const [count, setCount] = useState(0);
+
+  // Fetch initial unread count
+  useEffect(() => {
+    fetch("/api/me/unread-counts").then(r => r.ok ? r.json() : {}).then(d => {
+      if (d.notifications) setCount(d.notifications);
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     const supabase = createClient();
@@ -302,8 +310,15 @@ export function SearchBar({ autoFocus }: { autoFocus?: boolean } = {}) {
   );
 }
 
-function LiveMessageBadge({ initialCount, userId }: { initialCount: number; userId: string }) {
-  const [count, setCount] = useState(initialCount);
+function LiveMessageBadge({ userId }: { userId: string }) {
+  const [count, setCount] = useState(0);
+
+  // Fetch initial unread count
+  useEffect(() => {
+    fetch("/api/me/unread-counts").then(r => r.ok ? r.json() : {}).then(d => {
+      if (d.messages) setCount(d.messages);
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     const supabase = createClient();
@@ -576,14 +591,9 @@ function ProfileMenu({ profile }: { profile: Profile }) {
         )}
       >
         <MoreVertical className="w-5 h-5 sm:hidden" />
-        {profile.avatar_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={profile.avatar_url} alt={profile.display_name} className="hidden sm:block w-10 h-10 rounded-full object-cover" />
-        ) : (
-          <span className="hidden sm:flex w-10 h-10 rounded-full bg-[#282828] border border-[#333333] items-center justify-center text-xs font-bold text-[#9CA3AF]">
-            {profile.display_name[0]?.toUpperCase()}
-          </span>
-        )}
+        <span className="hidden sm:block">
+          <Avatar src={profile.avatar_url} alt={profile.display_name} size="md" />
+        </span>
       </button>
 
       {open && (
@@ -679,7 +689,7 @@ function LogoLink() {
   );
 }
 
-export function TopNav({ unreadNotifs = 0, unreadMessages = 0, profile }: { unreadNotifs?: number; unreadMessages?: number; profile?: Profile }) {
+export function TopNav({ profile }: { profile?: Profile }) {
   // Store referral data for sidebar/badge to use
   if (profile?.referral_code) {
     storedReferralData = { code: profile.referral_code, name: profile.display_name };
@@ -708,7 +718,7 @@ export function TopNav({ unreadNotifs = 0, unreadMessages = 0, profile }: { unre
             className="relative overflow-hidden w-10 h-10 flex items-center justify-center rounded-lg text-[#71717A] hover:text-[#F0F0F0] hover:bg-[#141414] transition-colors"
           >
             <Bell style={{ width: 22, height: 22 }} />
-            {profile && <LiveNotifBadge initialCount={unreadNotifs} userId={profile.id} />}
+            {profile && <LiveNotifBadge userId={profile.id} />}
           </Link>
           <Link
             href="/messages"
@@ -717,7 +727,7 @@ export function TopNav({ unreadNotifs = 0, unreadMessages = 0, profile }: { unre
             className="relative overflow-hidden w-10 h-10 flex items-center justify-center rounded-lg text-[#71717A] hover:text-[#F0F0F0] hover:bg-[#141414] transition-colors"
           >
             <MessageSquare style={{ width: 22, height: 22 }} />
-            {profile && <LiveMessageBadge initialCount={unreadMessages} userId={profile.id} />}
+            {profile && <LiveMessageBadge userId={profile.id} />}
           </Link>
           {profile && <AngBaoBadge />}
           {profile && <ProfileMenu profile={profile} />}
