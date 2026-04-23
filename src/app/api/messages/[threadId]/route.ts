@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createSupabase } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { triggerMessageEmail } from "@/lib/email/triggers";
 
 const admin = () => createSupabase(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
@@ -80,6 +81,19 @@ export async function POST(request: Request, { params }: { params: Promise<{ thr
     .from("message_threads")
     .update({ last_msg_at: new Date().toISOString() })
     .eq("id", threadId);
+
+  // Email notification to other participants
+  const { data: others } = await db
+    .from("thread_participants")
+    .select("user_id")
+    .eq("thread_id", threadId)
+    .neq("user_id", user.id);
+  const senderName = (message as Record<string, unknown>)?.sender
+    ? ((message as Record<string, unknown>).sender as Record<string, string>)?.display_name ?? "Someone"
+    : "Someone";
+  for (const p of others ?? []) {
+    triggerMessageEmail(p.user_id, senderName, content);
+  }
 
   return NextResponse.json({ message }, { status: 201 });
 }
