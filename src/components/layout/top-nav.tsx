@@ -3,7 +3,7 @@ import Link from "next/link";
 import { createPortal } from "react-dom";
 import { useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { TrendingUp, User, Search, X, Bell, MessageSquare, LogOut, Volume2, VolumeOff, Check, MoreVertical } from "lucide-react";
+import { TrendingUp, User, Search, X, Bell, MessageSquare, LogOut, Volume2, VolumeOff, Check, MoreVertical, Settings } from "lucide-react";
 import { cn, ripple } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -601,8 +601,14 @@ function ProfileMenu({ profile }: { profile: Profile }) {
             View profile
           </Link>
           {profile.referral_code && <ReferralButton code={profile.referral_code} name={profile.display_name} />}
-          <ThemeToggle menuItem />
-          <SoundToggle />
+          <Link
+            href="/settings/notifications"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2 px-3 py-2.5 text-sm text-[#9CA3AF] hover:text-[#F0F0F0] hover:bg-[#1C1C1C] transition-colors"
+          >
+            <Settings className="w-4 h-4" />
+            Settings
+          </Link>
           <button
             onClick={handleLogout}
             className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-[#9CA3AF] hover:text-[#EF4444] hover:bg-[#1C1C1C] transition-colors border-t border-[#282828]"
