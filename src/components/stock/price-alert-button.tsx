@@ -63,15 +63,15 @@ export function PriceAlertButton({ ticker, currentPrice }: { ticker: string; cur
       <button
         onClick={() => setOpen(o => !o)}
         className={cn(
-          "flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs font-medium transition-colors",
+          "flex items-center gap-1.5 px-3 py-1.5 rounded border text-sm font-medium transition-colors",
           hasAlerts
-            ? "text-[#22C55E] bg-[#22C55E]/10 border border-[#22C55E]/30"
-            : "text-[#9CA3AF] bg-[#1C1C1C] border border-[#333333] hover:border-[#444444]"
+            ? "text-white bg-[#22C55E] border-[#22C55E] hover:bg-[#1ea34b]"
+            : "text-[#22C55E]/60 bg-transparent border-[#22C55E]/30 hover:border-[#22C55E]/60 hover:text-[#22C55E]"
         )}
         title="Price alerts"
       >
         {hasAlerts ? <BellRing className="w-3.5 h-3.5" /> : <Bell className="w-3.5 h-3.5" />}
-        {hasAlerts && <span>{alerts.length}</span>}
+        Alert{hasAlerts ? ` (${alerts.length})` : ""}
       </button>
 
       {open && (
