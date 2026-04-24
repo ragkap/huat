@@ -235,3 +235,19 @@ html.light [style*="filter: blur"] { filter: blur(6px) !important; }
 /* Shadows for light mode */
 html.light [class*="shadow-xl"] { --tw-shadow-color: rgba(0,0,0,0.08); }
 html.light [class*="shadow-lg"] { --tw-shadow-color: rgba(0,0,0,0.06); }
+
+/* Docs code blocks: stay dark in both themes so code is always readable.
+   These override the light-mode remapping rules above. */
+.docs-code {
+  background-color: #080808 !important;
+  border: 1px solid #282828 !important;
+  color: #E5E7EB !important;
+}
+.docs-code pre,
+.docs-code code {
+  color: #E5E7EB !important;
+  background-color: transparent !important;
+}
+.docs-code-lang { color: #555555 !important; }
+.docs-code-copy { color: #9CA3AF !important; }
+.docs-code-copy:hover { color: #F0F0F0 !important; background-color: #141414 !important; }

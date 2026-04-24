@@ -116,14 +116,14 @@ export default function LandingPage() {
             pipeline — plug it straight into the community. Generate a key in one click, call the API in
             thirty seconds.
           </p>
-          <div className="bg-[#0A0A0A] border border-[#282828] rounded p-4 font-mono text-xs text-[#E5E7EB] mb-6 overflow-x-auto">
-            <span className="text-[#555555]"># Post a bullish call as yourself</span>
+          <div className="docs-code rounded p-4 font-mono text-xs mb-6 overflow-x-auto">
+            <span style={{ color: "#555555" }}># Post a bullish call as yourself</span>
             <br />
-            <span className="text-[#22C55E]">curl</span> -X POST https://www.huat.co/api/v1/posts \
+            <span style={{ color: "#22C55E" }}>curl</span> -X POST https://www.huat.co/api/v1/posts \
             <br />
-            {"  "}-H <span className="text-[#F59E0B]">&quot;Authorization: Bearer hk_live_...&quot;</span> \
+            {"  "}-H <span style={{ color: "#F59E0B" }}>&quot;Authorization: Bearer hk_live_...&quot;</span> \
             <br />
-            {"  "}-d <span className="text-[#F59E0B]">&apos;{"{"}&quot;content&quot;:&quot;DBS looking strong&quot;,&quot;tagged_stocks&quot;:[&quot;DBS SP&quot;]{"}"}&apos;</span>
+            {"  "}-d <span style={{ color: "#F59E0B" }}>&apos;{"{"}&quot;content&quot;:&quot;DBS looking strong&quot;,&quot;tagged_stocks&quot;:[&quot;DBS SP&quot;]{"}"}&apos;</span>
           </div>
           <div className="flex flex-wrap gap-3">
             <LoadingLink
