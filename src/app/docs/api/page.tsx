@@ -71,12 +71,12 @@ export default function ApiDocsPage() {
             <Terminal className="w-5 h-5 text-[#E8311A]" /> Quickstart
           </h2>
           <p className="text-sm text-[#9CA3AF] mb-4">
-            The API lives at <code className="text-[#F0F0F0] bg-[#141414] px-1.5 py-0.5 rounded text-xs">https://huat.co/api/v1</code>.
+            The API lives at <code className="text-[#F0F0F0] bg-[#141414] px-1.5 py-0.5 rounded text-xs">https://www.huat.co/api/v1</code>.
             All responses are JSON. All request bodies are JSON.
           </p>
           <CodeBlock
             lang="bash"
-            code={`curl https://huat.co/api/v1/me \\
+            code={`curl https://www.huat.co/api/v1/me \\
   -H "Authorization: Bearer hk_live_YOUR_KEY"`}
           />
         </section>
@@ -181,7 +181,7 @@ x-api-key: hk_live_xxxxxxxxxxxxxxxxxxxxxxxx`}
           <h4 className="text-xs font-bold text-[#9CA3AF] uppercase tracking-wider mt-4 mb-2">Example</h4>
           <CodeBlock
             lang="bash"
-            code={`curl "https://huat.co/api/v1/posts?ticker=D05.SI&limit=5" \\
+            code={`curl "https://www.huat.co/api/v1/posts?ticker=D05.SI&limit=5" \\
   -H "Authorization: Bearer hk_live_YOUR_KEY"`}
           />
           <CodeBlock
@@ -231,7 +231,7 @@ x-api-key: hk_live_xxxxxxxxxxxxxxxxxxxxxxxx`}
           <h4 className="text-xs font-bold text-[#9CA3AF] uppercase tracking-wider mt-4 mb-2">Example</h4>
           <CodeBlock
             lang="bash"
-            code={`curl -X POST https://huat.co/api/v1/posts \\
+            code={`curl -X POST https://www.huat.co/api/v1/posts \\
   -H "Authorization: Bearer hk_live_YOUR_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -251,7 +251,7 @@ x-api-key: hk_live_xxxxxxxxxxxxxxxxxxxxxxxx`}
         >
           <CodeBlock
             lang="bash"
-            code={`curl https://huat.co/api/v1/posts/7f2d... \\
+            code={`curl https://www.huat.co/api/v1/posts/7f2d... \\
   -H "Authorization: Bearer hk_live_YOUR_KEY"`}
           />
         </EndpointCard>
@@ -265,7 +265,7 @@ x-api-key: hk_live_xxxxxxxxxxxxxxxxxxxxxxxx`}
         >
           <CodeBlock
             lang="bash"
-            code={`curl -X DELETE https://huat.co/api/v1/posts/7f2d... \\
+            code={`curl -X DELETE https://www.huat.co/api/v1/posts/7f2d... \\
   -H "Authorization: Bearer hk_live_YOUR_KEY"`}
           />
         </EndpointCard>
@@ -279,7 +279,7 @@ x-api-key: hk_live_xxxxxxxxxxxxxxxxxxxxxxxx`}
         >
           <CodeBlock
             lang="bash"
-            code={`curl https://huat.co/api/v1/me \\
+            code={`curl https://www.huat.co/api/v1/me \\
   -H "Authorization: Bearer hk_live_YOUR_KEY"`}
           />
         </EndpointCard>
