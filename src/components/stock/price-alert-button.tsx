@@ -42,6 +42,8 @@ export function PriceAlertButton({ ticker, currentPrice }: { ticker: string; cur
       const { alert } = await res.json();
       setAlerts(prev => [...prev, alert]);
       setTargetPrice("");
+      // Auto-watch the stock
+      fetch(`/api/stocks/${encodeURIComponent(ticker)}/watch`, { method: "POST" }).catch(() => {});
     }
     setSaving(false);
   }
