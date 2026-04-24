@@ -36,6 +36,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/api/stocks/") ||
     pathname.startsWith("/ref/") ||
     pathname === "/manifest.json" ||
+    pathname === "/icon-192" ||
+    pathname === "/icon-512" ||
     /^\/post\/[^/]+$/.test(pathname);
 
   if (!isAuthenticated && !isPublic) {
