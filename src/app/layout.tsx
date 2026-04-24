@@ -34,7 +34,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full`} suppressHydrationWarning>
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full`} suppressHydrationWarning data-scroll-behavior="smooth">
       <head>
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#E8311A" />
