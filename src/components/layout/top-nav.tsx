@@ -698,7 +698,7 @@ export function TopNav({ profile }: { profile?: Profile }) {
     <>
     <ReferralModalHost />
     <header className="fixed top-0 left-0 right-0 z-30 bg-[#0A0A0A] border-b border-[#282828]" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
-      <div className="max-w-[1290px] mx-auto h-full flex items-center">
+      <div className="max-w-[1290px] mx-auto h-14 flex items-center">
         {/* Logo — aligns with sidebar width */}
         <LogoLink />
 
