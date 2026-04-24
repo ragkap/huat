@@ -17,7 +17,6 @@ const TOC = [
   { href: "#posts-list", label: "List posts" },
   { href: "#posts-create", label: "Create a post" },
   { href: "#posts-get", label: "Get a post" },
-  { href: "#posts-delete", label: "Delete a post" },
   { href: "#me", label: "Who am I" },
 ];
 
@@ -285,20 +284,6 @@ x-api-key: hk_live_xxxxxxxxxxxxxxxxxxxxxxxx`}
           <CodeBlock
             lang="bash"
             code={`curl https://www.huat.co/api/v1/posts/7f2d... \\
-  -H "Authorization: Bearer hk_live_YOUR_KEY"`}
-          />
-        </EndpointCard>
-
-        <EndpointCard
-          id="posts-delete"
-          method="DELETE"
-          path="/api/v1/posts/{id}"
-          title="Delete a post"
-          description="Only the author of the post can delete it. Returns 403 otherwise."
-        >
-          <CodeBlock
-            lang="bash"
-            code={`curl -X DELETE https://www.huat.co/api/v1/posts/7f2d... \\
   -H "Authorization: Bearer hk_live_YOUR_KEY"`}
           />
         </EndpointCard>
