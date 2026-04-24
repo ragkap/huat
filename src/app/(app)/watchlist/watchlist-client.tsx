@@ -1,7 +1,7 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
-import { TrendingUp, TrendingDown, X, Search, Plus } from "lucide-react";
+import { TrendingUp, TrendingDown, X, Search, Plus, MoreVertical, Bell, Trash2 } from "lucide-react";
 import { cn, formatPrice } from "@/lib/utils";
 import { PriceAlertButton } from "@/components/stock/price-alert-button";
 
@@ -97,6 +97,58 @@ function StockSearchRow({ onAdd }: { onAdd: (ticker: string) => void }) {
               <Plus className="w-3.5 h-3.5 text-[#555555]" />
             </button>
           ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function WatchlistMenu({ ticker, currentPrice, onRemove }: { ticker: string; currentPrice?: number | null; onRemove: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, [open]);
+
+  if (showAlert) {
+    return (
+      <div className="flex-shrink-0">
+        <PriceAlertButton ticker={ticker} currentPrice={currentPrice} />
+      </div>
+    );
+  }
+
+  return (
+    <div ref={ref} className="relative flex-shrink-0">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-7 h-7 flex items-center justify-center rounded text-[#555555] hover:text-[#9CA3AF] transition-colors"
+      >
+        <MoreVertical className="w-4 h-4" />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 z-50 bg-[#1C1C1C] border border-[#333333] rounded-lg shadow-xl py-1 min-w-[160px]">
+          <button
+            onClick={() => { setOpen(false); setShowAlert(true); }}
+            className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-[#F0F0F0] hover:bg-[#282828] transition-colors"
+          >
+            <Bell className="w-3.5 h-3.5 text-[#22C55E]" />
+            Set alert
+          </button>
+          <button
+            onClick={() => { setOpen(false); onRemove(); }}
+            className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-[#EF4444] hover:bg-[#282828] transition-colors"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            Remove from watchlist
+          </button>
         </div>
       )}
     </div>
@@ -247,13 +299,7 @@ export function WatchlistClient({ initialTickers }: { initialTickers: string[] }
                   )}
                 </div>
 
-                <PriceAlertButton ticker={item.ticker} currentPrice={item.quote?.price} compact />
-                <button
-                  onClick={() => handleRemove(item.ticker)}
-                  className="opacity-0 group-hover:opacity-100 flex-shrink-0 w-6 h-6 flex items-center justify-center rounded text-[#555555] hover:text-[#EF4444] hover:bg-[#1C1C1C] transition-all"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
+                <WatchlistMenu ticker={item.ticker} currentPrice={item.quote?.price} onRemove={() => handleRemove(item.ticker)} />
               </div>
             );
           })}
