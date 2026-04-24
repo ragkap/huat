@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
-import { Image as ImageIcon, BarChart2, TrendingUp, TrendingDown, MoveHorizontal, X, Plus, Crosshair } from "lucide-react";
+import { Image as ImageIcon, BarChart2, TrendingUp, TrendingDown, MoveHorizontal, X, Plus, Crosshair, Clock, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -51,6 +51,10 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
   const [uploading, setUploading] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
   const [posting, setPosting] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
+  const [draftSaved, setDraftSaved] = useState(false);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [scheduleValue, setScheduleValue] = useState("");
   const [attachments, setAttachments] = useState<{ url: string; type: "image" | "video" | "pdf" }[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
   const [linkPreview, setLinkPreview] = useState<{ url: string; og_title?: string | null; og_description?: string | null; og_image?: string | null; og_site_name?: string | null } | null>(null);
@@ -187,6 +191,67 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
       onPost?.(newPost);
     } finally {
       setPosting(false);
+    }
+  }
+
+  async function handleSaveDraft({ scheduledFor }: { scheduledFor?: string } = {}) {
+    if (savingDraft || posting) return;
+    if (!content.trim() && !attachments.length) return;
+    // Drafts don't support poll — scheduling a poll is weird and the drafts
+    // table only accepts post/forecast types.
+    if (postType === "poll") { alert("Polls can't be saved as drafts yet."); return; }
+    setSavingDraft(true);
+    try {
+      const body: Record<string, unknown> = {
+        content,
+        post_type: postType === "forecast" ? "forecast" : "post",
+        sentiment: postType === "forecast" ? forecastSentiment : sentiment,
+        tagged_stocks: taggedStocks,
+        attachments: [
+          ...attachments.map(a => ({ url: a.url, type: a.type === "pdf" ? "pdf" : a.type })),
+          ...(linkPreview && !linkPreviewDismissed ? [{
+            url: linkPreview.url,
+            type: "link",
+            og_title: linkPreview.og_title,
+            og_description: linkPreview.og_description,
+            og_image: linkPreview.og_image,
+            og_site_name: linkPreview.og_site_name,
+          }] : []),
+        ],
+      };
+      if (postType === "forecast" && forecast.targetPrice && forecast.targetDate && taggedStocks[0]) {
+        body.forecast_data = {
+          ticker: taggedStocks[0],
+          target_price: parseFloat(forecast.targetPrice),
+          target_date: forecast.targetDate,
+        };
+      }
+      if (scheduledFor) body.scheduled_for = scheduledFor;
+
+      const res = await fetch("/api/drafts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error ?? "Failed to save draft");
+        return;
+      }
+      // Reset composer
+      setContent("");
+      setSentiment(null);
+      setPostType("post");
+      setTaggedStocks([]);
+      setAttachments([]);
+      setLinkPreview(null);
+      setLinkPreviewDismissed(false);
+      setScheduleOpen(false);
+      setScheduleValue("");
+      setDraftSaved(true);
+      setTimeout(() => setDraftSaved(false), 2500);
+    } finally {
+      setSavingDraft(false);
     }
   }
 
@@ -538,11 +603,33 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
               </button>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               {content.length > MAX_CHARS * 0.8 && (
                 <span className={cn("text-xs tabular-nums", remaining < 20 ? "text-[#EF4444]" : "text-[#9CA3AF]")}>
                   {remaining}
                 </span>
+              )}
+              {draftSaved && <span className="text-xs text-[#22C55E]">Saved</span>}
+              {postType !== "poll" && content.trim().length > 0 && (
+                <>
+                  <button
+                    onClick={() => handleSaveDraft()}
+                    disabled={savingDraft || posting}
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-[#9CA3AF] border border-[#333333] rounded hover:border-[#444444] hover:text-[#F0F0F0] transition-colors disabled:opacity-50"
+                    title="Save as draft"
+                  >
+                    <Save className="w-3.5 h-3.5" />
+                    Draft
+                  </button>
+                  <button
+                    onClick={() => setScheduleOpen(v => !v)}
+                    disabled={savingDraft || posting}
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-[#9CA3AF] border border-[#333333] rounded hover:border-[#444444] hover:text-[#F0F0F0] transition-colors disabled:opacity-50"
+                    title="Schedule"
+                  >
+                    <Clock className="w-3.5 h-3.5" />
+                  </button>
+                </>
               )}
               <div className="relative group">
                 <Button
@@ -567,6 +654,35 @@ export function PostComposer({ profile, onPost, defaultTicker, quotedPost, onCan
               </div>
             </div>
           </div>
+
+          {scheduleOpen && (
+            <div className="mt-3 flex items-center gap-2 border border-[#282828] rounded p-3 bg-[#080808]">
+              <Clock className="w-4 h-4 text-[#E8311A] flex-shrink-0" />
+              <input
+                type="datetime-local"
+                value={scheduleValue}
+                min={new Date(Date.now() + 60_000).toISOString().slice(0, 16)}
+                onChange={e => setScheduleValue(e.target.value)}
+                className="flex-1 bg-[#141414] border border-[#333333] rounded px-2.5 py-1.5 text-sm text-[#F0F0F0] focus:outline-none focus:border-[#444444]"
+              />
+              <button
+                onClick={() => {
+                  if (!scheduleValue) return;
+                  handleSaveDraft({ scheduledFor: new Date(scheduleValue).toISOString() });
+                }}
+                disabled={!scheduleValue || savingDraft}
+                className="px-3 py-1.5 text-xs font-semibold text-white bg-[#E8311A] rounded hover:bg-[#c9280f] transition-colors disabled:opacity-50"
+              >
+                Schedule
+              </button>
+              <button
+                onClick={() => { setScheduleOpen(false); setScheduleValue(""); }}
+                className="px-2 py-1.5 text-xs text-[#9CA3AF] hover:text-[#F0F0F0]"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
