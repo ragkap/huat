@@ -117,9 +117,19 @@ function WatchlistMenu({ ticker, currentPrice, onRemove }: { ticker: string; cur
     return () => document.removeEventListener("mousedown", onClick);
   }, [open]);
 
+  // When showAlert becomes true, auto-click the PriceAlertButton after render
+  useEffect(() => {
+    if (showAlert) {
+      requestAnimationFrame(() => {
+        const btn = ref.current?.querySelector("button");
+        if (btn) btn.click();
+      });
+    }
+  }, [showAlert]);
+
   if (showAlert) {
     return (
-      <div className="flex-shrink-0">
+      <div ref={ref} className="flex-shrink-0">
         <PriceAlertButton ticker={ticker} currentPrice={currentPrice} />
       </div>
     );
@@ -162,6 +172,7 @@ export function WatchlistClient({ initialTickers }: { initialTickers: string[] }
   );
   const [sort, setSort] = useState<SortKey>("name");
   const [loading, setLoading] = useState(!cached);
+  const [removing, setRemoving] = useState<string | null>(null);
 
   const fetchData = useCallback(async ({ invalidate = false } = {}) => {
     if (invalidate) clearCache();
@@ -203,10 +214,15 @@ export function WatchlistClient({ initialTickers }: { initialTickers: string[] }
   }
 
   async function handleRemove(ticker: string) {
-    await fetch(`/api/stocks/${encodeURIComponent(ticker)}/watch`, { method: "DELETE" });
-    const next = items.filter(i => i.ticker !== ticker);
-    setItems(next);
-    writeCache(next);
+    setRemoving(ticker);
+    fetch(`/api/stocks/${encodeURIComponent(ticker)}/watch`, { method: "DELETE" }).catch(() => {});
+    // Wait for animation then remove from state
+    setTimeout(() => {
+      const next = items.filter(i => i.ticker !== ticker);
+      setItems(next);
+      writeCache(next);
+      setRemoving(null);
+    }, 400);
   }
 
   const sorted = [...items].sort((a, b) => {
@@ -270,7 +286,13 @@ export function WatchlistClient({ initialTickers }: { initialTickers: string[] }
             const displayTicker = item.ticker.replace(/ SP$/, "");
 
             return (
-              <div key={item.slug} className="flex items-center gap-3 py-3 border-b border-[#141414] group">
+              <div
+                key={item.slug}
+                className={cn(
+                  "flex items-center gap-3 py-3 border-b border-[#141414] group transition-all duration-300",
+                  removing === item.ticker && "opacity-0 -translate-x-full h-0 py-0 overflow-hidden"
+                )}
+              >
                 <Link href={`/stocks/${encodeURIComponent(item.slug)}`} className="flex-1 min-w-0 hover:opacity-80 transition-opacity">
                   <p className="text-sm font-medium text-[#F0F0F0] truncate">{item.name}</p>
                   <p className="text-xs text-[#555555] font-mono mt-0.5">{displayTicker}</p>
