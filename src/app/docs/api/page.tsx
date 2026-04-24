@@ -11,6 +11,7 @@ export const metadata = {
 const TOC = [
   { href: "#overview", label: "Overview" },
   { href: "#auth", label: "Authentication" },
+  { href: "#tickers", label: "Ticker format" },
   { href: "#errors", label: "Errors" },
   { href: "#rate-limits", label: "Rate limits" },
   { href: "#posts-list", label: "List posts" },
@@ -106,6 +107,38 @@ x-api-key: hk_live_xxxxxxxxxxxxxxxxxxxxxxxx`}
           </p>
         </section>
 
+        {/* Ticker format */}
+        <section id="tickers" className="mb-12">
+          <h2 className="text-2xl font-bold mb-3">Ticker format</h2>
+          <p className="text-sm text-[#9CA3AF] mb-3">
+            Tickers are stored and filtered in <span className="text-[#F0F0F0] font-semibold">Bloomberg format</span> —
+            ticker + space + exchange code. Examples:
+          </p>
+          <div className="border border-[#282828] rounded overflow-hidden">
+            <table className="w-full text-sm">
+              <tbody className="divide-y divide-[#282828]">
+                {[
+                  ["DBS SP", "DBS Group Holdings (Singapore)"],
+                  ["U11 SP", "UOB (Singapore)"],
+                  ["AEM SP", "AEM Holdings (Singapore)"],
+                  ["AAPL US", "Apple Inc. (NASDAQ)"],
+                  ["1299 HK", "AIA Group (Hong Kong)"],
+                ].map(([ticker, name]) => (
+                  <tr key={ticker}>
+                    <td className="px-3 py-2 font-mono text-xs text-[#F0F0F0] align-top whitespace-nowrap">{ticker}</td>
+                    <td className="px-3 py-2 text-xs text-[#9CA3AF]">{name}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="text-xs text-[#71717A] mt-3">
+            Yahoo-style tickers (<code className="bg-[#141414] px-1 rounded">D05.SI</code>) and other formats are
+            <span className="text-[#F0F0F0]"> not</span> accepted — they&apos;ll save but won&apos;t match any posts
+            or render a stock card. When filtering via query string, remember to URL-encode the space (<code className="bg-[#141414] px-1 rounded">DBS%20SP</code>).
+          </p>
+        </section>
+
         {/* Errors */}
         <section id="errors" className="mb-12">
           <h2 className="text-2xl font-bold mb-3 flex items-center gap-2">
@@ -173,7 +206,7 @@ x-api-key: hk_live_xxxxxxxxxxxxxxxxxxxxxxxx`}
             rows={[
               ["limit", "number", "1–50, default 20"],
               ["cursor", "string", "ISO timestamp — pass next_cursor from previous response"],
-              ["ticker", "string", "Filter to posts tagged with this ticker (e.g. D05.SI)"],
+              ["ticker", "string", "Filter to posts tagged with this ticker. Bloomberg format — see Ticker format above."],
               ["author_id", "uuid", "Filter to a single author"],
               ["username", "string", "Filter to a single author by username"],
             ]}
@@ -181,7 +214,7 @@ x-api-key: hk_live_xxxxxxxxxxxxxxxxxxxxxxxx`}
           <h4 className="text-xs font-bold text-[#9CA3AF] uppercase tracking-wider mt-4 mb-2">Example</h4>
           <CodeBlock
             lang="bash"
-            code={`curl "https://www.huat.co/api/v1/posts?ticker=D05.SI&limit=5" \\
+            code={`curl "https://www.huat.co/api/v1/posts?ticker=DBS%20SP&limit=5" \\
   -H "Authorization: Bearer hk_live_YOUR_KEY"`}
           />
           <CodeBlock
@@ -194,7 +227,7 @@ x-api-key: hk_live_xxxxxxxxxxxxxxxxxxxxxxxx`}
       "content": "DBS is looking strong going into earnings.",
       "post_type": "post",
       "sentiment": "bullish",
-      "tagged_stocks": ["D05.SI"],
+      "tagged_stocks": ["DBS SP"],
       "created_at": "2026-04-23T14:12:00.000Z",
       "author": {
         "username": "raghav",
@@ -222,7 +255,7 @@ x-api-key: hk_live_xxxxxxxxxxxxxxxxxxxxxxxx`}
               ["content *", "string", "1–1000 characters"],
               ["post_type", "\"post\" | \"forecast\"", "Defaults to \"post\""],
               ["sentiment", "\"bullish\" | \"bearish\" | \"neutral\"", "Optional"],
-              ["tagged_stocks", "string[]", "Up to 5 tickers, e.g. [\"D05.SI\"]"],
+              ["tagged_stocks", "string[]", "Up to 5 Bloomberg-format tickers, e.g. [\"DBS SP\"]"],
               ["parent_id", "uuid", "Set to reply to another post"],
               ["quote_of", "uuid", "Set to quote-post another post"],
               ["forecast", "object", "Required when post_type=forecast: { ticker, target_price, target_date }"],
@@ -237,7 +270,7 @@ x-api-key: hk_live_xxxxxxxxxxxxxxxxxxxxxxxx`}
   -d '{
     "content": "Taking a bullish position on DBS ahead of Q2.",
     "sentiment": "bullish",
-    "tagged_stocks": ["D05.SI"]
+    "tagged_stocks": ["DBS SP"]
   }'`}
           />
         </EndpointCard>

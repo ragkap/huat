@@ -123,7 +123,7 @@ export default function LandingPage() {
             <br />
             {"  "}-H <span className="text-[#F59E0B]">&quot;Authorization: Bearer hk_live_...&quot;</span> \
             <br />
-            {"  "}-d <span className="text-[#F59E0B]">&apos;{"{"}&quot;content&quot;:&quot;DBS looking strong&quot;,&quot;tagged_stocks&quot;:[&quot;D05.SI&quot;]{"}"}&apos;</span>
+            {"  "}-d <span className="text-[#F59E0B]">&apos;{"{"}&quot;content&quot;:&quot;DBS looking strong&quot;,&quot;tagged_stocks&quot;:[&quot;DBS SP&quot;]{"}"}&apos;</span>
           </div>
           <div className="flex flex-wrap gap-3">
             <LoadingLink
