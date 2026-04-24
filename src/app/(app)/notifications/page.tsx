@@ -69,14 +69,18 @@ export default async function NotificationsPage() {
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-[#F0F0F0]">
-                  {notif.actor && (
-                    <a href={`/profile/${notif.actor.username}`} className="font-bold hover:underline">
-                      {notif.actor.display_name}
-                    </a>
-                  )}{" "}
-                  {notifLabel[notif.type] ?? notif.type}
-                </p>
+                {notif.type === "forecast_resolved" ? (
+                  <ForecastResolvedLine notif={notif} />
+                ) : (
+                  <p className="text-sm text-[#F0F0F0]">
+                    {notif.actor && (
+                      <a href={`/profile/${notif.actor.username}`} className="font-bold hover:underline">
+                        {notif.actor.display_name}
+                      </a>
+                    )}{" "}
+                    {notifLabel[notif.type] ?? notif.type}
+                  </p>
+                )}
                 <p className="text-xs text-[#71717A] mt-0.5">{timeAgo(notif.created_at)}</p>
                 {notif.type === "connect_request" && notif.actor && (
                   <ConnectActions actorId={notif.actor.id} />
@@ -87,5 +91,36 @@ export default async function NotificationsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+function ForecastResolvedLine({ notif }: { notif: Notification }) {
+  const payload = (notif.payload ?? {}) as {
+    post_id?: string;
+    ticker?: string;
+    outcome?: "hit" | "missed";
+    target_price?: number;
+    resolved_price?: number;
+  };
+  const hit = payload.outcome === "hit";
+  const displayTicker = (payload.ticker ?? "").replace(/ SP$/, "");
+  const tickerLink = payload.post_id ? `/post/${payload.post_id}` : "#";
+
+  return (
+    <p className="text-sm text-[#F0F0F0]">
+      Your forecast on{" "}
+      <a href={tickerLink} className="font-bold hover:underline">
+        {displayTicker || "a stock"}
+      </a>{" "}
+      was{" "}
+      <span className={hit ? "text-[#22C55E] font-bold" : "text-[#EF4444] font-bold"}>
+        {hit ? "hit" : "missed"}
+      </span>
+      {payload.target_price != null && payload.resolved_price != null && (
+        <span className="text-[#9CA3AF]">
+          {" "}— target ${payload.target_price}, closed at ${payload.resolved_price.toFixed(2)}
+        </span>
+      )}
+    </p>
   );
 }
