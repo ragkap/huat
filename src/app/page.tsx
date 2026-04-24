@@ -4,6 +4,8 @@ import { LoadingLink } from "@/components/ui/loading-link";
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-[#0A0A0A] flex flex-col">
+      {/* PWA standalone mode: redirect to feed if installed */}
+      <script dangerouslySetInnerHTML={{ __html: `if(window.navigator.standalone||window.matchMedia('(display-mode:standalone)').matches){window.location.replace('/feed')}` }} />
       {/* Nav */}
       <nav className="border-b border-[#282828] px-8 py-4 flex items-center justify-between">
         <div className="flex items-baseline gap-2">

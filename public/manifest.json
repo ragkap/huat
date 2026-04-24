@@ -2,7 +2,7 @@
   "name": "Huat — Invest Together, Prosper Together",
   "short_name": "Huat 发",
   "description": "Singapore's social network for retail investors",
-  "start_url": "/feed",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#0A0A0A",
   "theme_color": "#E8311A",
