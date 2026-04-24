@@ -210,7 +210,7 @@ export default async function StockPage({ params }: StockPageProps) {
             )}
             {profile && (
               <div className="flex items-center gap-2">
-                {isFollowing && <PriceAlertButton ticker={ticker} />}
+                <PriceAlertButton ticker={ticker} />
                 <FollowButton
                   ticker={ticker}
                   initialFollowing={isFollowing}
