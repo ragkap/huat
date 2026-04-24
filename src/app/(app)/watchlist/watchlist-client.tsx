@@ -134,7 +134,7 @@ function WatchlistMenu({ ticker, currentPrice, onRemove }: { ticker: string; cur
         <MoreVertical className="w-4 h-4" />
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 bg-[#1C1C1C] border border-[#333333] rounded-lg shadow-xl py-1 min-w-[160px]">
+        <div className="absolute right-0 top-full mt-1 z-50 bg-[#1C1C1C] border border-[#333333] rounded-lg shadow-xl py-1 whitespace-nowrap">
           <button
             onClick={() => { setOpen(false); setShowAlert(true); }}
             className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-[#F0F0F0] hover:bg-[#282828] transition-colors"
