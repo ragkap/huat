@@ -209,8 +209,9 @@ export async function GET(request: Request) {
 
         return { ...post, _score: score };
       })
-      .sort((a, b) => (b as Record<string, number>)._score - (a as Record<string, number>)._score)
+      .sort((a, b) => b._score - a._score)
       .slice(0, PAGE_SIZE)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       .map(({ _score, ...post }) => post);
   }
 

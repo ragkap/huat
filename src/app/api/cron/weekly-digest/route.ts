@@ -44,7 +44,7 @@ export async function GET(request: Request) {
     .sort((a, b) => b._reactions - a._reactions)
     .slice(0, 3)
     .map(p => ({
-      author: (p.author as Record<string, string>)?.display_name ?? "Unknown",
+      author: (p.author as unknown as Record<string, string>)?.display_name ?? "Unknown",
       content: p.content as string,
       postId: p.id as string,
     }));
