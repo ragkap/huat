@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { TrendingUp, TrendingDown, X, Search, Plus } from "lucide-react";
 import { cn, formatPrice } from "@/lib/utils";
+import { PriceAlertButton } from "@/components/stock/price-alert-button";
 
 const CACHE_KEY = "watchlist_cache";
 
@@ -246,6 +247,7 @@ export function WatchlistClient({ initialTickers }: { initialTickers: string[] }
                   )}
                 </div>
 
+                <PriceAlertButton ticker={item.ticker} currentPrice={item.quote?.price} />
                 <button
                   onClick={() => handleRemove(item.ticker)}
                   className="opacity-0 group-hover:opacity-100 flex-shrink-0 w-6 h-6 flex items-center justify-center rounded text-[#555555] hover:text-[#EF4444] hover:bg-[#1C1C1C] transition-all"

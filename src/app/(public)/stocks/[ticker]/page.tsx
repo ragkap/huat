@@ -7,6 +7,7 @@ import { getPrimer } from "@/lib/smartkarma/primer";
 import { createClient } from "@/lib/supabase/server";
 import { StockPageClient } from "@/components/stock/stock-page-client";
 import { FollowButton } from "@/components/stock/follow-button";
+import { PriceAlertButton } from "@/components/stock/price-alert-button";
 import { formatPrice } from "@/lib/utils";
 import { StockPageSkeleton } from "@/components/stock/stock-page-skeleton";
 import type { Profile } from "@/types/database";
@@ -158,8 +159,23 @@ export default async function StockPage({ params }: StockPageProps) {
   const postCount = postCountRes.count ?? 0;
   const isPositiveHeader = true; // placeholder until slow data loads
 
+  // JSON-LD structured data for SEO
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FinancialProduct",
+    name: stock.name,
+    description: stock.description ?? `${stock.name} on Huat.co`,
+    url: `https://www.huat.co/stocks/${encodeURIComponent(rawTicker)}`,
+    provider: {
+      "@type": "Organization",
+      name: "Huat.co",
+      url: "https://www.huat.co",
+    },
+  };
+
   return (
     <div>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       {/* Header renders immediately with fast DB data */}
       <div className="border-b border-[#282828] px-5 py-4">
         <div className="flex items-start justify-between gap-4">
@@ -193,11 +209,14 @@ export default async function StockPage({ params }: StockPageProps) {
               </div>
             )}
             {profile && (
-              <FollowButton
-                ticker={ticker}
-                initialFollowing={isFollowing}
-                initialFollowerCount={followerCount}
-              />
+              <div className="flex items-center gap-2">
+                {isFollowing && <PriceAlertButton ticker={ticker} />}
+                <FollowButton
+                  ticker={ticker}
+                  initialFollowing={isFollowing}
+                  initialFollowerCount={followerCount}
+                />
+              </div>
             )}
           </div>
         </div>

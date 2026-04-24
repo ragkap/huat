@@ -70,7 +70,14 @@ export async function GET(request: Request) {
   if (authorId) query = query.eq("author_id", authorId);
   if (postType) query = query.eq("post_type", postType);
 
-  query = query.order("created_at", { ascending: false });
+  // For "foryou" tab: fetch more posts and rank them; otherwise chronological
+  const isForyou = tab === "foryou" && !ticker && !authorId && !postType;
+  if (isForyou && page === 0) {
+    // Fetch 60 recent posts, rank, return top 20
+    query = query.order("created_at", { ascending: false }).limit(60);
+  } else {
+    query = query.order("created_at", { ascending: false });
+  }
 
   const { data: posts, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -173,7 +180,41 @@ export async function GET(request: Request) {
     };
   });
 
-  const response = NextResponse.json({ posts: enriched });
+  // Rank posts for "For You" tab
+  let ranked = enriched;
+  if (isForyou && page === 0) {
+    const followedIds = filterIds ? new Set(filterIds) : new Set<string>();
+    // Fetch followed IDs if not already loaded
+    if (!followedIds.size) {
+      const { data: follows } = await supabase.from("social_graph").select("subject_id").eq("actor_id", user.id).eq("rel_type", "follow");
+      for (const f of follows ?? []) followedIds.add(f.subject_id as string);
+    }
+
+    const now = Date.now();
+    ranked = enriched
+      .map(post => {
+        const ageHours = (now - new Date(post.created_at).getTime()) / 3600000;
+        const reactions = (post.reactions_count as Record<string, number>)?.total ?? 0;
+        const replies = (post.replies_count as number) ?? 0;
+        const reposts = (post.reposts_count as number) ?? 0;
+        const isFollowed = followedIds.has(post.author_id);
+        const hasMedia = (post.attachments as unknown[])?.length > 0;
+
+        // Score: engagement + recency + follow boost + media boost
+        const engagementScore = reactions * 2 + replies * 3 + reposts * 4;
+        const recencyScore = Math.max(0, 100 - ageHours * 2); // decays over ~50 hours
+        const followBoost = isFollowed ? 30 : 0;
+        const mediaBoost = hasMedia ? 10 : 0;
+        const score = engagementScore + recencyScore + followBoost + mediaBoost;
+
+        return { ...post, _score: score };
+      })
+      .sort((a, b) => (b as Record<string, number>)._score - (a as Record<string, number>)._score)
+      .slice(0, PAGE_SIZE)
+      .map(({ _score, ...post }) => post);
+  }
+
+  const response = NextResponse.json({ posts: ranked });
   // Cache page 0 in browser for 10s — stale-while-revalidate for 30s
   // Subsequent pages are less time-sensitive
   if (page === 0 && !ticker && !authorId && !postType) {

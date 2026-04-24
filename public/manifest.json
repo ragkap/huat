@@ -1,0 +1,26 @@
+{
+  "name": "Huat — Invest Together, Prosper Together",
+  "short_name": "Huat 发",
+  "description": "Singapore's social network for retail investors",
+  "start_url": "/feed",
+  "display": "standalone",
+  "background_color": "#0A0A0A",
+  "theme_color": "#E8311A",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "categories": ["finance", "social"]
+}

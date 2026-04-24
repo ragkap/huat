@@ -47,7 +47,7 @@ export function FollowButton({
     <button
       onClick={toggle}
       className={following
-        ? "relative flex items-center gap-1.5 px-3 py-1.5 rounded border border-[#333333] bg-[#1C1C1C] text-[#9CA3AF] text-sm font-medium hover:border-[#EF4444] hover:text-[#EF4444] transition-colors"
+        ? "relative flex items-center gap-1.5 px-3 py-1.5 rounded border border-[#333333] bg-transparent text-[#9CA3AF] text-sm font-medium hover:border-[#EF4444] hover:text-[#EF4444] transition-colors"
         : "relative flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#E8311A] text-white text-sm font-semibold hover:bg-[#c9280f] transition-colors"
       }
     >
