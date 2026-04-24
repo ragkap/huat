@@ -46,5 +46,5 @@ export async function GET() {
     quote: quotes[i],
   }));
 
-  return NextResponse.json({ items }, { headers: { "Cache-Control": "no-store" } });
+  return NextResponse.json({ items }, { headers: { "Cache-Control": "private, s-maxage=30, stale-while-revalidate=60" } });
 }
