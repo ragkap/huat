@@ -35,6 +35,7 @@ export async function middleware(request: NextRequest) {
     /^\/stocks\/[^/]+(\/opengraph-image)?$/.test(pathname) ||
     pathname.startsWith("/api/stocks/") ||
     pathname.startsWith("/ref/") ||
+    pathname === "/manifest.json" ||
     /^\/post\/[^/]+$/.test(pathname);
 
   if (!isAuthenticated && !isPublic) {
@@ -69,6 +70,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|json)$).*)",
   ],
 };
