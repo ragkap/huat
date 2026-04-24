@@ -56,15 +56,17 @@ export default async function NotificationsPage() {
               key={notif.id}
               className={`flex items-start gap-3 px-5 py-4 border-b border-[#141414] ${!notif.is_read ? "bg-[#0D0D0D]" : ""}`}
             >
-              {!notif.is_read && (
-                <div className="w-1.5 h-1.5 rounded-full bg-[#E8311A] mt-2 flex-shrink-0" />
-              )}
               {notif.actor && (
-                <Avatar
-                  src={notif.actor.avatar_url}
-                  alt={notif.actor.display_name}
-                  size="sm"
-                />
+                <div className="relative flex-shrink-0">
+                  {!notif.is_read && (
+                    <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-[#E8311A]" />
+                  )}
+                  <Avatar
+                    src={notif.actor.avatar_url}
+                    alt={notif.actor.display_name}
+                    size="sm"
+                  />
+                </div>
               )}
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-[#F0F0F0]">

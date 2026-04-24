@@ -17,8 +17,8 @@ function LiveNotifBadge({ userId }: { userId: string }) {
 
   // Fetch initial unread count
   useEffect(() => {
-    fetch("/api/me/unread-counts").then(r => r.ok ? r.json() : {}).then(d => {
-      if (d.notifications) setCount(d.notifications);
+    fetch("/api/me/unread-counts").then(r => r.ok ? r.json() : null).then((d: Record<string, number> | null) => {
+      if (d?.notifications) setCount(d.notifications);
     }).catch(() => {});
   }, []);
 
@@ -315,8 +315,8 @@ function LiveMessageBadge({ userId }: { userId: string }) {
 
   // Fetch initial unread count
   useEffect(() => {
-    fetch("/api/me/unread-counts").then(r => r.ok ? r.json() : {}).then(d => {
-      if (d.messages) setCount(d.messages);
+    fetch("/api/me/unread-counts").then(r => r.ok ? r.json() : null).then((d: Record<string, number> | null) => {
+      if (d?.messages) setCount(d.messages);
     }).catch(() => {});
   }, []);
 
