@@ -13,16 +13,18 @@ export function LoadingLink({ className, children, ...props }: React.ComponentPr
         ripple(e);
         setLoading(true);
       }}
-      className={`relative overflow-hidden ${className ?? ""}`}
+      className={`relative overflow-hidden ${loading ? "[&>*:not([data-spinner])]:opacity-40" : ""} ${className ?? ""}`}
       {...props}
     >
-      {loading ? (
-        <>
+      {children}
+      {loading && (
+        <span
+          data-spinner
+          aria-hidden
+          className="absolute inset-0 flex items-center justify-center pointer-events-none"
+        >
           <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-          <span className="ml-2">{children}</span>
-        </>
-      ) : (
-        children
+        </span>
       )}
     </Link>
   );
