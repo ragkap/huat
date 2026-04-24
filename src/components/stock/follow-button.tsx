@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Star } from "lucide-react";
 
 interface FollowButtonProps {
@@ -26,6 +26,18 @@ export function FollowButton({
   const [following, setFollowing] = useState(initialFollowing);
   const [followerCount, setFollowerCount] = useState(initialFollowerCount);
   const [burst, setBurst] = useState(false);
+
+  // Listen for auto-watch from price alert
+  useEffect(() => {
+    function onAutoWatch(e: Event) {
+      if ((e as CustomEvent).detail === ticker && !following) {
+        setFollowing(true);
+        setFollowerCount(c => c + 1);
+      }
+    }
+    window.addEventListener("huat:auto-watch", onAutoWatch);
+    return () => window.removeEventListener("huat:auto-watch", onAutoWatch);
+  }, [ticker, following]);
 
   async function toggle() {
     if (following) {

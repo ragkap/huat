@@ -42,8 +42,9 @@ export function PriceAlertButton({ ticker, currentPrice }: { ticker: string; cur
       const { alert } = await res.json();
       setAlerts(prev => [...prev, alert]);
       setTargetPrice("");
-      // Auto-watch the stock
+      // Auto-watch the stock + notify FollowButton
       fetch(`/api/stocks/${encodeURIComponent(ticker)}/watch`, { method: "POST" }).catch(() => {});
+      window.dispatchEvent(new CustomEvent("huat:auto-watch", { detail: ticker }));
     }
     setSaving(false);
   }
