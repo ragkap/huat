@@ -260,7 +260,8 @@ export function Sidebar() {
       {stockTicker && (
         <button
           onClick={() => setDrawerOpen(true)}
-          className="xl:hidden fixed bottom-20 right-4 z-40 w-12 h-12 rounded-full bg-[#E8311A] text-white flex items-center justify-center shadow-lg shadow-black/50 transition-transform active:scale-95"
+          className="xl:hidden fixed right-4 z-40 w-12 h-12 rounded-full bg-[#E8311A] text-white flex items-center justify-center shadow-lg shadow-black/50 transition-transform active:scale-95"
+          style={{ bottom: "calc(5rem + env(safe-area-inset-bottom, 0px))" }}
           aria-label="Show analysis"
         >
           <LayoutDashboard className="w-5 h-5" />
