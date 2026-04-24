@@ -42,6 +42,11 @@ html.light {
 
 * { box-sizing: border-box; }
 
+/* PWA safe area insets for notch/dynamic island/home indicator */
+@supports (padding: env(safe-area-inset-top)) {
+  body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+}
+
 html {
   background: var(--surface);
   color: var(--text);

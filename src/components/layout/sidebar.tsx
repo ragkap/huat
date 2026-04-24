@@ -229,7 +229,7 @@ export function Sidebar() {
       </aside>
 
       {/* Mobile bottom nav */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-[#0A0A0A]/95 backdrop-blur-md border-t border-[#282828] flex">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-[#0A0A0A]/95 backdrop-blur-md border-t border-[#282828] flex" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
         {navItems.map(({ href, label, icon: Icon }) => {
           const active = pathname.startsWith(href);
           return (
