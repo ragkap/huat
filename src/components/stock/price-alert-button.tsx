@@ -13,7 +13,7 @@ interface PriceAlert {
   triggered: boolean;
 }
 
-export function PriceAlertButton({ ticker, currentPrice }: { ticker: string; currentPrice?: number | null }) {
+export function PriceAlertButton({ ticker, currentPrice, compact }: { ticker: string; currentPrice?: number | null; compact?: boolean }) {
   const [open, setOpen] = useState(false);
   const [alerts, setAlerts] = useState<PriceAlert[]>([]);
   const [targetPrice, setTargetPrice] = useState(currentPrice?.toFixed(2) ?? "");
@@ -66,15 +66,19 @@ export function PriceAlertButton({ ticker, currentPrice }: { ticker: string; cur
       <button
         onClick={() => setOpen(o => !o)}
         className={cn(
-          "flex items-center gap-1.5 px-3 py-1.5 rounded border text-sm font-medium transition-colors",
-          hasAlerts
-            ? "text-white bg-[#22C55E] border-[#22C55E] hover:bg-[#1ea34b]"
-            : "text-[#22C55E]/60 bg-transparent border-[#22C55E]/30 hover:border-[#22C55E]/60 hover:text-[#22C55E]"
+          "flex items-center justify-center rounded transition-colors",
+          compact
+            ? cn("w-7 h-7", hasAlerts ? "text-[#22C55E]" : "text-[#22C55E]/40 hover:text-[#22C55E]/70")
+            : cn("gap-1.5 px-3 py-1.5 border text-sm font-medium",
+                hasAlerts
+                  ? "text-white bg-[#22C55E] border-[#22C55E] hover:bg-[#1ea34b]"
+                  : "text-[#22C55E]/60 bg-transparent border-[#22C55E]/30 hover:border-[#22C55E]/60 hover:text-[#22C55E]"
+              )
         )}
         title="Price alerts"
       >
-        {hasAlerts ? <BellRing className="w-3.5 h-3.5" /> : <Bell className="w-3.5 h-3.5" />}
-        Alert{hasAlerts ? ` (${alerts.length})` : ""}
+        {hasAlerts ? <BellRing className={compact ? "w-4 h-4" : "w-3.5 h-3.5"} /> : <Bell className={compact ? "w-4 h-4" : "w-3.5 h-3.5"} />}
+        {!compact && <>Alert{hasAlerts ? ` (${alerts.length})` : ""}</>}
       </button>
 
       {open && (

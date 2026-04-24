@@ -247,7 +247,7 @@ export function WatchlistClient({ initialTickers }: { initialTickers: string[] }
                   )}
                 </div>
 
-                <PriceAlertButton ticker={item.ticker} currentPrice={item.quote?.price} />
+                <PriceAlertButton ticker={item.ticker} currentPrice={item.quote?.price} compact />
                 <button
                   onClick={() => handleRemove(item.ticker)}
                   className="opacity-0 group-hover:opacity-100 flex-shrink-0 w-6 h-6 flex items-center justify-center rounded text-[#555555] hover:text-[#EF4444] hover:bg-[#1C1C1C] transition-all"
