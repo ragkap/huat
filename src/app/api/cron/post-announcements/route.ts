@@ -74,6 +74,8 @@ export async function GET(request: Request) {
         display_name: BOT_DISPLAY_NAME,
         bio: BOT_BIO,
         is_verified: true,
+        is_bot: true,
+        bot_description: BOT_BIO,
         country: "SG",
       }).eq("id", botId);
       if (updateErr) {

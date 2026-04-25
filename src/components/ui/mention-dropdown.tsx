@@ -1,9 +1,10 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { BotBadge } from "@/components/ui/bot-badge";
 
 interface MentionDropdownProps {
-  results: { username: string; display_name: string }[];
+  results: { username: string; display_name: string; is_bot?: boolean }[];
   selectedIndex: number;
   onSelect: (username: string) => void;
   loading: boolean;
@@ -31,6 +32,7 @@ export function MentionDropdown({ results, selectedIndex, onSelect, loading }: M
             </div>
             <div className="min-w-0">
               <span className="text-sm text-[#F0F0F0] font-medium">{user.display_name}</span>
+              {user.is_bot && <span className="ml-1.5"><BotBadge /></span>}
               <span className="text-xs text-[#555555] ml-1.5">@{user.username}</span>
             </div>
           </button>

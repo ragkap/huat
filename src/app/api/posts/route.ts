@@ -56,7 +56,7 @@ export async function GET(request: Request) {
     .from("posts")
     .select(`
       id, author_id, content, post_type, sentiment, attachments, tagged_stocks, is_pinned, parent_id, created_at, updated_at,
-      author:profiles!posts_author_id_fkey(id, username, display_name, avatar_url, is_verified, country),
+      author:profiles!posts_author_id_fkey(id, username, display_name, avatar_url, is_verified, is_bot, country),
       poll:polls(*),
       forecast:forecasts(*)
     `)
@@ -299,7 +299,7 @@ export async function POST(request: Request) {
   if (post_type === "poll" || post_type === "forecast") {
     const { data: fullPost } = await supabase
       .from("posts")
-      .select(`*, author:profiles!posts_author_id_fkey(id, username, display_name, avatar_url, is_verified, country), poll:polls(*), forecast:forecasts(*)`)
+      .select(`*, author:profiles!posts_author_id_fkey(id, username, display_name, avatar_url, is_verified, is_bot, country), poll:polls(*), forecast:forecasts(*)`)
       .eq("id", post.id)
       .single();
     if (fullPost) {
@@ -319,7 +319,7 @@ export async function POST(request: Request) {
   // Re-fetch with author join so the response is consistent
   const { data: fullPost } = await supabase
     .from("posts")
-    .select(`*, author:profiles!posts_author_id_fkey(id, username, display_name, avatar_url, is_verified, country)`)
+    .select(`*, author:profiles!posts_author_id_fkey(id, username, display_name, avatar_url, is_verified, is_bot, country)`)
     .eq("id", post.id)
     .single();
 

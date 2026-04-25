@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { BotBadge } from "@/components/ui/bot-badge";
 import { ProfileActions } from "@/components/profile/profile-actions";
 import { FeedList } from "@/components/feed/feed-list";
 import type { Profile } from "@/types/database";
@@ -72,11 +73,15 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
             {profile.is_verified && (
               <span className="text-[#E8311A] text-sm">✓</span>
             )}
+            {profile.is_bot && <BotBadge size="sm" />}
             <span className="text-lg">{countryFlag[profile.country as string] ?? ""}</span>
           </div>
           <p className="text-[#9CA3AF] text-sm">@{profile.username as string}</p>
 
-          {profile.bio && (
+          {profile.is_bot && profile.bot_description && (
+            <p className="text-[#9CA3AF] text-sm mt-3 leading-relaxed italic">{profile.bot_description as string}</p>
+          )}
+          {profile.bio && !profile.is_bot && (
             <p className="text-[#F0F0F0] text-sm mt-3 leading-relaxed">{profile.bio as string}</p>
           )}
 

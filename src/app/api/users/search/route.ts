@@ -21,8 +21,8 @@ export async function GET(request: Request) {
   // separate queries avoids the injection surface of .or() string filters.
   const pattern = `%${q.replace(/[%_\\]/g, ch => "\\" + ch)}%`;
   const [byUser, byName] = await Promise.all([
-    supabase.from("profiles").select("id, username, display_name, avatar_url, country, is_verified").ilike("username", pattern).limit(limit),
-    supabase.from("profiles").select("id, username, display_name, avatar_url, country, is_verified").ilike("display_name", pattern).limit(limit),
+    supabase.from("profiles").select("id, username, display_name, avatar_url, country, is_verified, is_bot").ilike("username", pattern).limit(limit),
+    supabase.from("profiles").select("id, username, display_name, avatar_url, country, is_verified, is_bot").ilike("display_name", pattern).limit(limit),
   ]);
   const merged = new Map<string, Record<string, unknown>>();
   for (const row of [...(byUser.data ?? []), ...(byName.data ?? [])]) {

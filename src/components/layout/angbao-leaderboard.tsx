@@ -8,7 +8,7 @@ export async function AngBaoLeaderboard() {
     .from("profiles")
     .select("username, display_name, angbao_balance")
     .gt("angbao_balance", 0)
-    .not("username", "in", '("huat-news")')
+    .eq("is_bot", false)
     .order("angbao_balance", { ascending: false })
     .limit(10);
 

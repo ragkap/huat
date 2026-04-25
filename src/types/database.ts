@@ -35,6 +35,8 @@ export interface ProfileRow {
   website: string | null;
   country: Country;
   is_verified: boolean;
+  is_bot: boolean;
+  bot_description: string | null;
   angbao_balance: number;
   referral_code: string;
   referred_by: string | null;

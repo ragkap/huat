@@ -6,7 +6,7 @@ export async function GET(request: Request) {
 
   const { data, error } = await auth.admin
     .from("profiles")
-    .select("id, username, display_name, avatar_url, bio, country, is_verified, created_at")
+    .select("id, username, display_name, avatar_url, bio, country, is_verified, is_bot, created_at")
     .eq("id", auth.userId)
     .single();
 

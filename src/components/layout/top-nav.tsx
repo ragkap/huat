@@ -3,9 +3,10 @@ import Link from "next/link";
 import { createPortal } from "react-dom";
 import { useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { TrendingUp, User, Search, X, Bell, MessageSquare, LogOut, Volume2, VolumeOff, Check, MoreVertical, Settings, Code2, FileText } from "lucide-react";
+import { TrendingUp, User, Search, X, Bell, MessageSquare, LogOut, Volume2, VolumeOff, Check, MoreVertical, Settings, Code2, FileText, Bot } from "lucide-react";
 import { cn, ripple } from "@/lib/utils";
 import { Avatar } from "@/components/ui/avatar";
+import { BotBadge as BotBadgeInline } from "@/components/ui/bot-badge";
 import { createClient } from "@/lib/supabase/client";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AngBaoBadge } from "@/components/angbao/balance-badge";
@@ -55,6 +56,7 @@ interface SearchResult {
   href: string;
   primary: string;
   secondary: string;
+  isBot?: boolean;
 }
 
 const RECENT_KEY = "search_recent";
@@ -115,11 +117,12 @@ export function SearchBar({ autoFocus }: { autoFocus?: boolean } = {}) {
           primary: s.name,
           secondary: s.bloomberg_ticker ?? "",
         }));
-        const profileResults: SearchResult[] = (profilesRes.profiles ?? []).slice(0, 3).map((p: { username: string; display_name: string }) => ({
+        const profileResults: SearchResult[] = (profilesRes.profiles ?? []).slice(0, 3).map((p: { username: string; display_name: string; is_bot?: boolean }) => ({
           type: "profile" as const,
           href: `/profile/${p.username}`,
           primary: p.display_name,
           secondary: `@${p.username}`,
+          isBot: !!p.is_bot,
         }));
         setResults([...profileResults, ...stockResults]);
         setOpen(true);
@@ -292,7 +295,10 @@ export function SearchBar({ autoFocus }: { autoFocus?: boolean } = {}) {
                 {r.type === "stock" ? <TrendingUp className="w-3.5 h-3.5" /> : <User className="w-3.5 h-3.5" />}
               </div>
               <div className="min-w-0">
-                <p className="text-sm text-[#F0F0F0] font-medium truncate">{r.primary}</p>
+                <p className="text-sm text-[#F0F0F0] font-medium truncate flex items-center gap-1.5">
+                  <span className="truncate">{r.primary}</span>
+                  {r.isBot && <BotBadgeInline />}
+                </p>
                 <p className="text-xs text-[#71717A] font-mono truncate">{r.secondary}</p>
               </div>
             </Link>
@@ -626,6 +632,14 @@ function ProfileMenu({ profile }: { profile: Profile }) {
           >
             <Code2 className="w-4 h-4" />
             API keys
+          </Link>
+          <Link
+            href="/bots"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2 px-3 py-2.5 text-sm text-[#9CA3AF] hover:text-[#F0F0F0] hover:bg-[#1C1C1C] transition-colors"
+          >
+            <Bot className="w-4 h-4" />
+            Bots
           </Link>
           <Link
             href="/settings/notifications"

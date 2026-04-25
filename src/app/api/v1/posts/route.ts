@@ -2,7 +2,7 @@ import { z } from "zod";
 import { authenticateApiRequest, jsonError } from "@/lib/api-auth";
 
 const POST_SELECT = `id, author_id, content, post_type, sentiment, tagged_stocks, attachments, parent_id, quote_of, created_at, updated_at,
-  author:profiles!posts_author_id_fkey(id, username, display_name, avatar_url, is_verified, country)`;
+  author:profiles!posts_author_id_fkey(id, username, display_name, avatar_url, is_verified, is_bot, country)`;
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;

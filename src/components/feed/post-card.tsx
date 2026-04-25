@@ -54,6 +54,7 @@ function renderTextWithLinks(text: string) {
 import { Heart, MessageCircle, Repeat2, RefreshCw, Upload, Bookmark, MoreHorizontal, TrendingUp, TrendingDown, MoveHorizontal, Flag, Pencil, Trash2, Send, PenLine, X, Check } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { BotBadge } from "@/components/ui/bot-badge";
 import { cn, timeAgo, timeLeft, formatPrice, ripple } from "@/lib/utils";
 import { useMentions } from "@/hooks/use-mentions";
 import { MentionDropdown } from "@/components/ui/mention-dropdown";
@@ -587,6 +588,7 @@ export function PostCard({ post, currentUserId, currentUserProfile, followingIds
                 <Link href={`/profile/${post.author?.username}`} className="font-bold text-[#9CA3AF] hover:underline text-sm">
                   {post.author?.display_name}
                 </Link>
+                {post.author?.is_bot && <BotBadge />}
                 <span className="text-[#555555] text-xs">@{post.author?.username}</span>
                 {followingIds && post.author_id !== currentUserId && !followingIds.has(post.author_id) && onFollow && (
                   <button
@@ -733,6 +735,7 @@ export function PostCard({ post, currentUserId, currentUserProfile, followingIds
                   <span className="text-[10px] text-[#555555] font-medium uppercase tracking-wider">Quoting</span>
                   <span className="text-[10px] text-[#555555]">·</span>
                   <span className="text-xs font-semibold text-[#71717A]">{post.quoted_post.author?.display_name}</span>
+                  {post.quoted_post.author?.is_bot && <BotBadge />}
                   <span className="text-[10px] text-[#555555]">@{post.quoted_post.author?.username}</span>
                   <span className="text-[10px] text-[#444444]">{timeAgo(post.quoted_post.created_at)}</span>
                 </div>

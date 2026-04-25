@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getStockNamesByTickers } from "@/lib/stocks-db/client";
 
-const SELECT = `*, author:profiles!posts_author_id_fkey(id, username, display_name, avatar_url, is_verified, country), poll:polls(*), forecast:forecasts(*)`;
+const SELECT = `*, author:profiles!posts_author_id_fkey(id, username, display_name, avatar_url, is_verified, is_bot, country), poll:polls(*), forecast:forecasts(*)`;
 
 async function enrichPosts(posts: Record<string, unknown>[], userId: string, supabase: Awaited<ReturnType<typeof createClient>>) {
   const postIds = posts.map(p => p.id as string);

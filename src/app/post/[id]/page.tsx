@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 }
 
 const SELECT = `id, author_id, content, post_type, sentiment, attachments, tagged_stocks, is_pinned, parent_id, created_at, updated_at,
-  author:profiles!posts_author_id_fkey(id, username, display_name, avatar_url, is_verified, country),
+  author:profiles!posts_author_id_fkey(id, username, display_name, avatar_url, is_verified, is_bot, country),
   poll:polls(*),
   forecast:forecasts(*)`;
 
