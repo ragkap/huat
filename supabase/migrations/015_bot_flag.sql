@@ -24,8 +24,11 @@ UPDATE public.profiles
  WHERE is_bot = true;
 
 -- Update the search RPC to include is_bot in its return shape so callers can
--- render a BOT badge inline with results.
-CREATE OR REPLACE FUNCTION public.search_profiles(q TEXT, max_results INT DEFAULT 10)
+-- render a BOT badge inline with results. Postgres can't change a function's
+-- return shape via REPLACE, so drop first.
+DROP FUNCTION IF EXISTS public.search_profiles(TEXT, INT);
+
+CREATE FUNCTION public.search_profiles(q TEXT, max_results INT DEFAULT 10)
 RETURNS TABLE (
   id UUID,
   username TEXT,
