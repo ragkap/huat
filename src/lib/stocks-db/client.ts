@@ -150,6 +150,24 @@ export async function getStocksBySlugs(slugs: string[]): Promise<StockIdentity[]
   }
 }
 
+export async function getStockIdentitiesByTickers(tickers: string[]): Promise<StockIdentity[]> {
+  if (!tickers.length) return [];
+  const client = await getPool().connect();
+  try {
+    const placeholders = tickers.map((_, i) => `$${i + 1}`).join(", ");
+    const result = await client.query<StockIdentity>(
+      `SELECT e.slug, e.bloomberg_ticker, e.pretty_name AS name, e.yahoo_ticker
+       FROM entities e
+       WHERE e.bloomberg_ticker = ANY(ARRAY[${placeholders}]::text[])
+         AND e.slug IS NOT NULL`,
+      tickers
+    );
+    return result.rows;
+  } finally {
+    client.release();
+  }
+}
+
 export interface ResearchItem {
   tagline: string;
   executive_summary: string;
