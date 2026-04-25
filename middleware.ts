@@ -35,6 +35,7 @@ export async function middleware(request: NextRequest) {
     /^\/stocks\/[^/]+(\/opengraph-image)?$/.test(pathname) ||
     pathname.startsWith("/api/stocks/") ||
     pathname.startsWith("/api/v1/") ||
+    pathname.startsWith("/api/cron/") ||
     pathname.startsWith("/docs/") ||
     pathname.startsWith("/ref/") ||
     pathname === "/manifest.json" ||
