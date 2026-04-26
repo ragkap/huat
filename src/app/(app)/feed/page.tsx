@@ -115,13 +115,16 @@ export default async function FeedPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [profileRes, initialPosts] = await Promise.all([
+  const [profileRes, initialPosts, postCountRes] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user.id).single(),
     getInitialPosts(user.id),
+    supabase.from("posts").select("id", { count: "exact", head: true }).eq("author_id", user.id),
   ]);
 
   const profile = profileRes.data as Profile;
   if (!profile) redirect("/onboarding");
 
-  return <FeedTabs profile={profile} initialPosts={initialPosts} />;
+  const hasPosted = (postCountRes.count ?? 0) > 0;
+
+  return <FeedTabs profile={profile} initialPosts={initialPosts} hasPosted={hasPosted} />;
 }

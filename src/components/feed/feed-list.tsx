@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { PostComposer } from "@/components/feed/post-composer";
+import { FirstPostWizard } from "@/components/feed/first-post-wizard";
 import { PostCard } from "@/components/feed/post-card";
 import { useAngBaoToast } from "@/components/angbao/credit-toast";
 import { playMessageSound } from "@/lib/sounds";
@@ -40,9 +41,10 @@ interface FeedListProps {
   postType?: string;
   authorId?: string;
   initialPosts?: Post[];
+  hasPosted?: boolean;
 }
 
-export function FeedList({ tab, profile, stockTicker, postType, authorId, initialPosts }: FeedListProps) {
+export function FeedList({ tab, profile, stockTicker, postType, authorId, initialPosts, hasPosted }: FeedListProps) {
   const angbao = useAngBaoToast();
   const [posts, setPosts] = useState<Post[]>(initialPosts ?? []);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
@@ -329,19 +331,29 @@ export function FeedList({ tab, profile, stockTicker, postType, authorId, initia
   }
 
   const showComposer = !authorId;
+  const showWizard = showComposer && hasPosted === false && !stockTicker && !quotingPost;
+  const [wizardDismissed, setWizardDismissed] = useState(false);
   const initialLoading = loading && posts.length === 0;
 
   return (
     <div>
       <div ref={feedTopRef} />
       {showComposer && (
-        <PostComposer
-          profile={profile}
-          onPost={handleComposerPost}
-          defaultTicker={stockTicker}
-          quotedPost={quotingPost ? { id: quotingPost.id, content: quotingPost.content, author: quotingPost.author, tagged_stocks: quotingPost.tagged_stocks } : null}
-          onCancelQuote={() => setQuotingPost(null)}
-        />
+        showWizard && !wizardDismissed ? (
+          <FirstPostWizard
+            profile={profile}
+            onPost={handleComposerPost}
+            onSkip={() => setWizardDismissed(true)}
+          />
+        ) : (
+          <PostComposer
+            profile={profile}
+            onPost={handleComposerPost}
+            defaultTicker={stockTicker}
+            quotedPost={quotingPost ? { id: quotingPost.id, content: quotingPost.content, author: quotingPost.author, tagged_stocks: quotingPost.tagged_stocks } : null}
+            onCancelQuote={() => setQuotingPost(null)}
+          />
+        )
       )}
 
       {initialLoading ? (

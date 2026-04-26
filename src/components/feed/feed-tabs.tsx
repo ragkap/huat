@@ -16,9 +16,10 @@ type TabId = typeof TABS[number]["id"];
 interface FeedTabsProps {
   profile: Profile;
   initialPosts: Post[];
+  hasPosted?: boolean;
 }
 
-export function FeedTabs({ profile, initialPosts }: FeedTabsProps) {
+export function FeedTabs({ profile, initialPosts, hasPosted }: FeedTabsProps) {
   const [tab, setTab] = useState<TabId>("foryou");
 
   return (
@@ -47,6 +48,7 @@ export function FeedTabs({ profile, initialPosts }: FeedTabsProps) {
         tab={tab}
         profile={profile}
         initialPosts={tab === "foryou" ? initialPosts : undefined}
+        hasPosted={hasPosted}
       />
     </div>
   );
