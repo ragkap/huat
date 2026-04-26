@@ -24,11 +24,36 @@ interface ResearchCandidate {
   publishedAt: string;
 }
 
+// Smartkarma's executive_summary is HTML — convert to readable plain text
+// before we paste it into a post (posts render as text, not HTML).
+function htmlToPlain(html: string): string {
+  return html
+    // drop tables outright — usually not useful in a 200-char excerpt
+    .replace(/<table[\s\S]*?<\/table>/gi, "")
+    // bullets: turn each <li> into a "• " line
+    .replace(/<\s*li[^>]*>/gi, "\n• ")
+    .replace(/<\s*\/li\s*>/gi, "")
+    // block breaks
+    .replace(/<\s*\/?(p|div|ul|ol|h[1-6]|tr)[^>]*>/gi, "\n")
+    .replace(/<\s*br\s*\/?\s*>/gi, "\n")
+    // strip remaining tags
+    .replace(/<[^>]+>/g, "")
+    // decode common entities
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    // collapse runs of whitespace and tidy newlines
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/^\s+|\s+$/g, "");
+}
+
 function buildPostContent(ticker: string, tagline: string, excerpt: string): string {
-  // Title (tagline) + first 200 chars of executive summary. Strip the
-  // tagline from the excerpt if it duplicates.
-  const cleanTagline = tagline.trim();
-  const cleanExcerpt = (excerpt ?? "").trim().replace(/\s+/g, " ");
+  const cleanTagline = htmlToPlain(tagline);
+  const cleanExcerpt = htmlToPlain(excerpt ?? "");
   const truncated = cleanExcerpt.length > 200 ? cleanExcerpt.slice(0, 197) + "…" : cleanExcerpt;
   const lines = [`📊 ${ticker} · ${cleanTagline}`];
   if (truncated) lines.push("", truncated);
