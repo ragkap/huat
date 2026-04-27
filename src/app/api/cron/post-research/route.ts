@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
-import { getResearchForTicker } from "@/lib/stocks-db/client";
+import { getResearchForTicker, imperativeToSentiment } from "@/lib/stocks-db/client";
 
 const CRON_SECRET = process.env.CRON_SECRET;
 
@@ -22,6 +22,7 @@ interface ResearchCandidate {
   excerpt: string;
   author: string;
   publishedAt: string;
+  sentiment: "bullish" | "bearish" | "neutral";
 }
 
 // Smartkarma's executive_summary is HTML — convert to readable plain text
@@ -139,6 +140,7 @@ export async function GET(request: Request) {
           excerpt: item.executive_summary ?? "",
           author: item.author,
           publishedAt: item.published_at,
+          sentiment: imperativeToSentiment(item.imperative),
         });
       }
     }),
@@ -186,7 +188,7 @@ export async function GET(request: Request) {
         author_id: botId,
         content: buildPostContent(c.ticker, c.tagline, c.excerpt),
         post_type: "post",
-        sentiment: "neutral",
+        sentiment: c.sentiment,
         tagged_stocks: [c.ticker],
         attachments: [attachment],
       })

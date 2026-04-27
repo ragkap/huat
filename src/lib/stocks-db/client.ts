@@ -174,6 +174,7 @@ export interface ResearchItem {
   url: string;
   author: string;
   published_at: string;
+  imperative: string | null; // raw Smartkarma imperative (BUY/SELL/HOLD/etc)
 }
 
 export async function getResearchForTicker(bloombergTicker: string, limit = 20): Promise<ResearchItem[]> {
@@ -185,7 +186,8 @@ export async function getResearchForTicker(bloombergTicker: string, limit = 20):
          i.executive_summary,
          'https://www.smartkarma.com/insights/' || i.slug AS url,
          a.name AS author,
-         i.published_at
+         i.published_at,
+         i.imperative
        FROM insights i
        INNER JOIN entities e ON i.primary_entity_id = e.id
        INNER JOIN accounts a ON a.id = i.account_id
@@ -201,6 +203,18 @@ export async function getResearchForTicker(bloombergTicker: string, limit = 20):
   } finally {
     client.release();
   }
+}
+
+/**
+ * Map Smartkarma's `imperative` to our post sentiment. Conservative: anything
+ * we don't recognise stays neutral so we don't mislabel.
+ */
+export function imperativeToSentiment(imp: string | null | undefined): "bullish" | "bearish" | "neutral" {
+  if (!imp) return "neutral";
+  const v = imp.trim().toUpperCase();
+  if (["BUY", "STRONG_BUY", "STRONG BUY", "BULLISH", "LONG", "POSITIVE", "OVERWEIGHT"].includes(v)) return "bullish";
+  if (["SELL", "STRONG_SELL", "STRONG SELL", "BEARISH", "SHORT", "NEGATIVE", "UNDERWEIGHT"].includes(v)) return "bearish";
+  return "neutral";
 }
 
 async function _getStockBySlugOrTicker(identifier: string): Promise<SGStock | null> {
