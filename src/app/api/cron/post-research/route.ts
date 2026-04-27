@@ -46,8 +46,14 @@ function htmlToPlain(html: string): string {
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
-    // collapse runs of whitespace and tidy newlines
+    // collapse runs of whitespace
     .replace(/[ \t]+/g, " ")
+    // pull bullet markers up onto the next non-empty line. Smartkarma's HTML
+    // often nests a <p> inside <li>, which produces "• \n<content>" — fix.
+    .replace(/•\s*\n+\s*/g, "• ")
+    // drop any orphan bullets that have no content following them
+    .replace(/(^|\n)\s*•\s*(?=\n|$)/g, "$1")
+    // tidy newlines + trim
     .replace(/\n{3,}/g, "\n\n")
     .replace(/^\s+|\s+$/g, "");
 }
