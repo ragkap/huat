@@ -51,13 +51,13 @@ function htmlToPlain(html: string): string {
     .replace(/^\s+|\s+$/g, "");
 }
 
-function buildPostContent(ticker: string, tagline: string, excerpt: string): string {
-  const cleanTagline = htmlToPlain(tagline);
+function buildPostContent(ticker: string, _tagline: string, excerpt: string): string {
+  // The link card carries the tagline — body shows the first 200 chars of the
+  // excerpt so the reader has something concrete to react to.
   const cleanExcerpt = htmlToPlain(excerpt ?? "");
   const truncated = cleanExcerpt.length > 200 ? cleanExcerpt.slice(0, 197) + "…" : cleanExcerpt;
-  const lines = [`📊 ${ticker} · ${cleanTagline}`];
-  if (truncated) lines.push("", truncated);
-  return lines.join("\n");
+  if (!truncated) return `📊 New research on ${ticker}`;
+  return `📊 ${ticker}\n\n${truncated}`;
 }
 
 export async function GET(request: Request) {

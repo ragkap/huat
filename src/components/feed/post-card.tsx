@@ -688,27 +688,29 @@ export function PostCard({ post, currentUserId, currentUserProfile, followingIds
                 : null;
               const og = storedOg ?? inlineOg;
               if (!og || (!og.og_title && !og.og_image)) return null;
+              const hasImage = !!og.og_image;
+              let domain = "";
+              try { domain = new URL(og.url).hostname.replace(/^www\./, ""); } catch {}
               return (
                 <a href={og.url} target="_blank" rel="noopener noreferrer"
                   className="flex items-stretch mt-2 border border-[#282828] rounded-lg overflow-hidden bg-[#0D0D0D] hover:border-[#444444] transition-colors"
                   onClick={e => e.stopPropagation()}
                 >
-                  {/* Thumbnail — real image or placeholder */}
-                  <div className="w-1/3 min-h-[160px] flex-shrink-0 bg-[#141414] flex items-center justify-center overflow-hidden">
-                    {og.og_image ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={og.og_image} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
-                    ) : (
-                      <svg className="w-6 h-6 text-[#333333]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                        <rect x="3" y="3" width="18" height="18" rx="2" />
-                        <path d="M3 9h18M9 21V9" />
-                      </svg>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0 px-3 py-2.5 flex flex-col justify-start gap-1">
-                    {og.og_site_name && <p className="text-[10px] text-[#555555] uppercase tracking-wide">{decodeHtml(og.og_site_name)}</p>}
+                  {/* Thumbnail — only render when we actually have an image */}
+                  {hasImage && (
+                    <div className="w-1/3 min-h-[120px] flex-shrink-0 bg-[#141414] flex items-center justify-center overflow-hidden">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={og.og_image!} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0 px-3.5 py-2.5 flex flex-col justify-center gap-1">
+                    {og.og_site_name ? (
+                      <p className="text-[10px] text-[#555555] uppercase tracking-wide">{decodeHtml(og.og_site_name)}</p>
+                    ) : domain ? (
+                      <p className="text-[10px] text-[#555555] uppercase tracking-wide">{domain}</p>
+                    ) : null}
                     {og.og_title && <p className="text-sm text-[#9CA3AF] leading-snug line-clamp-3">{decodeHtml(og.og_title)}</p>}
-                    {og.og_description && <p className="text-xs text-[#555555] leading-snug line-clamp-4">{decodeHtml(og.og_description)}</p>}
+                    {og.og_description && <p className="text-xs text-[#555555] leading-snug line-clamp-3">{decodeHtml(og.og_description)}</p>}
                   </div>
                 </a>
               );

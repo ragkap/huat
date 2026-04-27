@@ -32,10 +32,10 @@ function announcementKey(title: string, pubDate: string): string {
   return createHash("sha256").update(`${title}|${pubDate}`).digest("hex").slice(0, 32);
 }
 
-function buildPostContent(stockName: string, ticker: string, title: string): string {
-  // Keep it short — leave room for replies, not editorial.
-  const cleanTitle = title.length > 200 ? title.slice(0, 197) + "..." : title;
-  return `📢 ${stockName} (${ticker})\n\n${cleanTitle}`;
+function buildPostContent(stockName: string, ticker: string, _title: string): string {
+  // The link card carries the title — body just identifies the company so the
+  // post reads cleanly even before the OG card loads.
+  return `📢 New SGX announcement from ${stockName} (${ticker})`;
 }
 
 export async function GET(request: Request) {
