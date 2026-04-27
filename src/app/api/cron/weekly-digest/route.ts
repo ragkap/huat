@@ -15,18 +15,22 @@ export async function GET(request: Request) {
   const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-  // Get all users
-  const { data: users } = await db.from("profiles").select("id, display_name");
+  // Get all human users (bots don't get digests)
+  const { data: users } = await db
+    .from("profiles")
+    .select("id, display_name")
+    .eq("is_bot", false);
   if (!users?.length) return NextResponse.json({ sent: 0 });
 
-  // Get top posts this week (by reaction count)
+  // Top posts this week (ranked by reaction count). Pulls more than 50
+  // because the freshness order otherwise excludes high-reaction posts.
   const { data: weekPosts } = await db
     .from("posts")
-    .select("id, content, author_id, created_at, author:profiles!posts_author_id_fkey(display_name)")
+    .select("id, content, author_id, tagged_stocks, created_at, author:profiles!posts_author_id_fkey(display_name)")
     .is("parent_id", null)
     .gte("created_at", since)
     .order("created_at", { ascending: false })
-    .limit(50);
+    .limit(500);
 
   // Count reactions for each post
   const postIds = (weekPosts ?? []).map(p => p.id as string);
@@ -49,10 +53,10 @@ export async function GET(request: Request) {
       postId: p.id as string,
     }));
 
-  // Trending stocks this week
+  // Trending stocks this week — count tagged_stocks across all week posts.
   const tickers: Record<string, number> = {};
   for (const p of weekPosts ?? []) {
-    for (const t of (p as Record<string, unknown>).tagged_stocks as string[] ?? []) {
+    for (const t of (p.tagged_stocks as string[] | null) ?? []) {
       tickers[t] = (tickers[t] ?? 0) + 1;
     }
   }
@@ -71,15 +75,35 @@ export async function GET(request: Request) {
   let sent = 0;
   for (const user of users) {
     try {
-      // User's stats for the week
+      // First: pull this user's own post ids in the window. Reactions and
+      // replies are scoped to these posts.
+      const { data: myPosts } = await db
+        .from("posts")
+        .select("id")
+        .eq("author_id", user.id)
+        .gte("created_at", since)
+        .limit(500);
+      const myPostIds = (myPosts ?? []).map(p => p.id as string);
+
       const [reactionsRes, followersRes, repliesRes, angbaoRes] = await Promise.all([
-        db.from("reactions").select("id", { count: "exact", head: true })
-          .in("post_id", postIds.length ? postIds : ["_"])
-          .gte("created_at", since),
+        // Reactions on the user's own posts (excluding self-reactions).
+        myPostIds.length
+          ? db.from("reactions").select("id", { count: "exact", head: true })
+              .in("post_id", myPostIds)
+              .neq("user_id", user.id)
+              .gte("created_at", since)
+          : Promise.resolve({ count: 0 }),
+        // New followers this week.
         db.from("social_graph").select("id", { count: "exact", head: true })
           .eq("subject_id", user.id).eq("rel_type", "follow").gte("created_at", since),
-        db.from("posts").select("id", { count: "exact", head: true })
-          .eq("parent_id", user.id).gte("created_at", since),
+        // Replies to the user's posts (excluding self-replies).
+        myPostIds.length
+          ? db.from("posts").select("id", { count: "exact", head: true })
+              .in("parent_id", myPostIds)
+              .neq("author_id", user.id)
+              .gte("created_at", since)
+          : Promise.resolve({ count: 0 }),
+        // AngBao earned (sum of transactions in window).
         db.from("angbao_transactions").select("amount")
           .eq("user_id", user.id).gte("created_at", since),
       ]);
